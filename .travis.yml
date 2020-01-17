@@ -1,0 +1,21 @@
+language: node_js
+sudo: false
+node_js:
+  - 'lts/*'
+  - 'stable'
+
+env:
+  global:
+    - CODECOV_TOKEN=67444dc5-229d-400b-9295-169b1decd80d
+
+before_script:
+  - date --rfc-2822
+  - yarn global add codecov
+script:
+  # - yarn run spec:coverage
+  # - yarn run typecheck
+  - yarn run lint
+  - yarn run pretty
+  - yarn run build
+after_script:
+  - cat coverage/lcov.info | codecov

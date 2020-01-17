@@ -69,6 +69,6 @@
     "jest": "^24.9.0",
     "nock": "^11.7.2",
     "prettier": "^1.19.1",
-    "typescript": "^3.8.0-beta"
+    "typescript": "^3.7.5"
   }
 }
