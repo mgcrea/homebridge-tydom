@@ -1,4 +1,4 @@
-import Hap, {Accessory, Categories, Service, Access} from 'hap-nodejs';
+import Hap, {Accessory, Categories, Service} from 'hap-nodejs';
 import {EventEmitter} from 'events';
 
 export interface HomebridgeApi extends EventEmitter {

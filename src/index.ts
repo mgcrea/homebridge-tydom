@@ -1,6 +1,5 @@
-import debug from 'src/utils/debug';
+import {PLATFORM_NAME, PLUGIN_NAME} from 'src/config/env';
 import TydomPlatform from './platform';
-import {PLUGIN_NAME, PLATFORM_NAME} from 'src/config/env';
 
 interface Homebridge {
   version: number;

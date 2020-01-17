@@ -13,6 +13,7 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
+import debug from 'src/utils/debug';
 
 const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {UUID: id, context} = accessory;
@@ -31,6 +32,7 @@ const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomCo
       callback(null, false);
     })
     .on(CharacteristicEventTypes.CHANGE, async (value: CharacteristicChange) => {
+      debug(`Setting device named="${name}" with id="${id}" value="${value.newValue}" ...`);
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
         {
           name: 'levelCmd',

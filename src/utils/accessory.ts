@@ -54,7 +54,7 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
 
 export const setupAccessoryInformationService = (accessory: PlatformAccessory, _controller: TydomController): void => {
   const {context} = accessory;
-  const {manufacturer, serialNumber, model, deviceId, endpointId} = context as TydomAccessoryContext;
+  const {manufacturer, serialNumber, model} = context as TydomAccessoryContext;
 
   const informationService = accessory.getService(Service.AccessoryInformation);
   assert(informationService, `Did not found AccessoryInformation service`);
