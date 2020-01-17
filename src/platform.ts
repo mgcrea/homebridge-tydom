@@ -3,25 +3,24 @@ import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
 import TydomController, {TydomAccessory, TydomAccessoryContext} from './controller';
 import {HomebridgeApi, Platform, PlatformAccessory} from './typings/homebridge';
 import {getTydomAccessorySetup} from './utils/accessory';
-import debug from './utils/debug';
 
-export type TydomPlatformConfig = null | {
+export type TydomPlatformConfig = {
   platform: string;
-  name: string;
+  hostname: string;
+  username: string;
+  password: string;
 };
 
 export default class TydomPlatform implements Platform {
   cleanupAccessoriesIds: Set<string>;
   accessories: Map<string, PlatformAccessory>;
-  controller: TydomController;
+  controller?: TydomController;
   api: HomebridgeApi;
   config: TydomPlatformConfig;
   disabled: boolean = false;
   log: typeof console;
 
   constructor(log: typeof console, config: TydomPlatformConfig, api: HomebridgeApi) {
-    debug('constructor');
-
     // Expose args
     this.config = config;
     this.log = log;
@@ -46,7 +45,7 @@ export default class TydomPlatform implements Platform {
   }
   async didFinishLaunching() {
     this.cleanupAccessoriesIds = new Set(this.accessories.keys());
-    await this.controller.scan();
+    await this.controller!.scan();
     this.cleanupAccessoriesIds.forEach(accessoryId => {
       const accessory = this.accessories.get(accessoryId)!;
       this.log.warn(`Deleting missing accessory with id="${accessoryId}"`);
@@ -81,7 +80,7 @@ export default class TydomPlatform implements Platform {
     this.log.info(`Updating accessory named="${name}" with id="${id}"`);
     Object.assign(accessory.context, context);
     const tydomAccessorySetup = getTydomAccessorySetup(accessory);
-    tydomAccessorySetup(accessory, this.controller);
+    tydomAccessorySetup(accessory, this.controller!);
     this.api.updatePlatformAccessories([accessory]);
   }
   // Called by homebridge with existing cached accessories

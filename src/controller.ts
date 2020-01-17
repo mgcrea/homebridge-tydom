@@ -1,11 +1,10 @@
 import {EventEmitter} from 'events';
 import {Categories, uuid} from 'hap-nodejs';
-import {find} from 'lodash';
-import {TydomConfigEndpoint, TydomConfigResponse, TydomMetaResponse} from 'src/typings/tydom';
+import {TydomConfigResponse} from 'src/typings/tydom';
 import {assert} from 'src/utils/assert';
-import debug, {dir} from 'src/utils/debug';
+import debug from 'src/utils/debug';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
-import {TydomPlatformConfig} from './TydomPlatform';
+import {TydomPlatformConfig} from './platform';
 
 export type TydomAccessoryContext = {
   deviceId: number;

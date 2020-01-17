@@ -64,7 +64,7 @@ const setupThermostat = (accessory: PlatformAccessory, controller: TydomControll
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debug(`-> SET TargetHeatingCoolingState value="${value}" for id="${id}"`);
-      const tydomValue = [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(value)
+      const tydomValue = [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(value as number)
         ? 'NORMAL'
         : 'STOP';
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
