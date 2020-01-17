@@ -1,0 +1,73 @@
+{
+  "name": "homebridge-tydom",
+  "version": "0.1.0",
+  "description": "Homebridge plugin to manage Tydom devices by Delta Dore",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "author": "Olivier Louvignes <olivier@mgcrea.io>",
+  "repository": "github:mgcrea/homebridge-tydom",
+  "license": "MIT",
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "engines": {
+    "node": ">=0.12.0",
+    "homebridge": ">=0.2.0"
+  },
+  "scripts": {
+    "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 DEBUG=homebridge-tydom homebridge -D -U ./.homebridge -P .",
+    "start:node": "NODE_TLS_REJECT_UNAUTHORIZED=0 NODE_PATH=src/ babel-node --extensions \".ts,.tsx\" src/",
+    "start:watch": "nodemon --ext \"ts,tsx\" --watch \"src/\" --exec \"yarn start\"",
+    "start:prod": "yarn spec:watch",
+    "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
+    "test": "yarn pretty && yarn lint && yarn spec",
+    "spec": "NODE_TLS_REJECT_UNAUTHORIZED=0 CI=true jest --runInBand --colors",
+    "spec:watch": "yarn spec --watch",
+    "spec:coverage": "yarn spec --coverage",
+    "lint": "eslint --ext .ts src/",
+    "pretty": "prettier --check '{src,test}/**/*.ts'",
+    "typecheck": "tsc --noEmit",
+    "build": "yarn build:source && yarn build:typings",
+    "build:source": "babel --source-maps --extensions .js,.ts --out-dir lib/ --delete-dir-on-start --ignore **/__tests__ src/",
+    "build:typings": "tsc --declaration",
+    "build:watch": "yarn build:source --watch --verbose",
+    "prepublish": "yarn build"
+  },
+  "dependencies": {
+    "debug": "^4.1.1",
+    "fakegato-history": "^0.5.6",
+    "lodash": "^4.17.15",
+    "tydom-client": "^0.5.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.3",
+    "@babel/core": "7.8.3",
+    "@babel/node": "7.8.3",
+    "@babel/plugin-proposal-class-properties": "^7.8.3",
+    "@babel/plugin-proposal-object-rest-spread": "^7.8.3",
+    "@babel/plugin-proposal-optional-chaining": "^7.8.3",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.8.3",
+    "@babel/preset-env": "7.8.3",
+    "@babel/preset-typescript": "^7.8.3",
+    "@babel/runtime": "7.8.3",
+    "@types/jest": "^24.9.0",
+    "@types/lodash": "^4.14.149",
+    "@types/node": "^13.1.7",
+    "@types/node-fetch": "^2.5.4",
+    "@types/node-persist": "^3.0.0",
+    "@types/ws": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "^2.16.0",
+    "@typescript-eslint/parser": "^2.16.0",
+    "babel-plugin-module-name-mapper": "^1.2.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "hap-nodejs": "^0.5.5",
+    "homebridge": "^0.4.50",
+    "jest": "^24.9.0",
+    "nock": "^11.7.2",
+    "prettier": "^1.19.1",
+    "typescript": "^3.8.0-beta"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "pluginAlias": "Tydom",
+  "pluginType": "platform",
+  "singular": true,
+  "headerDisplay": "Homebridge plugin to manage Tydom devices by Delta Dore",
+  "footerDisplay": "For a detailed description, see the [wiki](https://github.com/mgcrea/homebridge-tydom/wiki/Configuration)",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "hostname": {
+        "title": "Tydom Gateway",
+        "type": "string",
+        "required": true,
+        "default": "mediation.tydom.com"
+      },
+      "username": {
+        "title": "Tydom Gateway",
+        "type": "string",
+        "required": true,
+        "default": ""
+      },
+      "password": {
+        "title": "Tydom Gateway",
+        "type": "string",
+        "required": true,
+        "default": ""
+      },
+      "excludeSensorTypes": {
+        "description": "Sensor types to exclude.",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "form": ["hostname", "username", "password", "excludeSensorTypes"]
+}
