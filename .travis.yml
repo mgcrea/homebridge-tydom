@@ -17,5 +17,5 @@ script:
   - yarn run lint
   - yarn run pretty
   - yarn run build
-after_script:
-  - cat coverage/lcov.info | codecov
+# after_script:
+#   - cat coverage/lcov.info | codecov
