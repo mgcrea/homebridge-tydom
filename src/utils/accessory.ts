@@ -9,16 +9,16 @@ import {
   CharacteristicSetCallback,
   NodeCallback
 } from 'hap-nodejs';
-import setupGarageDoorOpener from 'src/accessories/garageDoorOpener';
-import setupLightbulb from 'src/accessories/lightbulb';
-import setupThermostat from 'src/accessories/thermostat';
+import {setupGarageDoorOpener} from 'src/accessories/garageDoorOpener';
+import {setupLightbulb, updateLightbulb} from 'src/accessories/lightbulb';
+import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
 import TydomController, {TydomAccessoryContext} from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import debug from 'src/utils/debug';
 import {assert} from './assert';
 import {TydomEndpointData} from 'src/typings/tydom';
 import {getTydomDeviceData} from './tydom';
-import setupFan from 'src/accessories/fan';
+import {setupFan, updateFan} from 'src/accessories/fan';
 
 export const addAccessoryService = (
   accessory: PlatformAccessory,
@@ -49,6 +49,27 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
       return setupFan;
     case Categories.GARAGE_DOOR_OPENER:
       return setupGarageDoorOpener;
+    default:
+      throw new Error(`Unsupported accessory category=${category}`);
+      break;
+  }
+};
+
+type TydomAccessoryUpdate = (accessory: PlatformAccessory, update: Record<string, unknown>[]) => void;
+
+export const getTydomAccessoryUpdate = (accessory: PlatformAccessory): TydomAccessoryUpdate => {
+  const {category} = accessory;
+  switch (category) {
+    case Categories.LIGHTBULB:
+      return updateLightbulb;
+    case Categories.THERMOSTAT:
+      return updateThermostat;
+    case Categories.FAN:
+      return updateFan;
+    case Categories.GARAGE_DOOR_OPENER:
+      return () => {
+        // no-op
+      };
     default:
       throw new Error(`Unsupported accessory category=${category}`);
       break;
@@ -119,6 +140,26 @@ export const addAccessorySwitchableService = (
     });
 
   return service;
+};
+
+export const updateAccessorySwitchableService = (
+  accessory: PlatformAccessory,
+  updates: Record<string, unknown>[],
+  serviceClass: typeof Service
+): void => {
+  updates.forEach(update => {
+    const {name} = update;
+    switch (name) {
+      case 'level': {
+        const service = accessory.getService(serviceClass);
+        assert(service, `Unexpected missing service "${serviceClass} in accessory`);
+        service.getCharacteristic(Characteristic.On)!.updateValue(update!.value === 100);
+        return;
+      }
+      default:
+        return;
+    }
+  });
 };
 
 export const assignTydomContext = (

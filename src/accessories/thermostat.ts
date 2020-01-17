@@ -19,7 +19,7 @@ import {
 import debug from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
 
-const setupThermostat = (accessory: PlatformAccessory, controller: TydomController): void => {
+export const setupThermostat = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {UUID: id, context} = accessory;
   const {client} = controller;
 
@@ -39,9 +39,16 @@ const setupThermostat = (accessory: PlatformAccessory, controller: TydomControll
       debug(`-> GET TargetHeatingCoolingState for "${id}"`);
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceThermostatData;
-        const hvacMode = data.find(prop => prop.name === 'hvacMode');
-        assert(hvacMode, 'Missing `hvacMode` data item');
-        callback(null, hvacMode!.value === 'NORMAL' ? CurrentHeatingCoolingState.HEAT : CurrentHeatingCoolingState.OFF);
+        // const hvacMode = data.find(prop => prop.name === 'hvacMode');
+        const authorization = data.find(prop => prop.name === 'authorization')!.value;
+        const setpoint = data.find(prop => prop.name === 'setpoint')!.value;
+        const temperature = data.find(prop => prop.name === 'temperature')!.value;
+        callback(
+          null,
+          authorization === 'HEATING' && setpoint > temperature
+            ? CurrentHeatingCoolingState.HEAT
+            : CurrentHeatingCoolingState.OFF
+        );
       } catch (err) {
         callback(err);
       }
@@ -55,9 +62,14 @@ const setupThermostat = (accessory: PlatformAccessory, controller: TydomControll
       debug(`-> GET TargetHeatingCoolingState for "${id}"`);
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceThermostatData;
-        const hvacMode = data.find(prop => prop.name === 'hvacMode');
-        assert(hvacMode, 'Missing `hvacMode` data item');
-        callback(null, hvacMode!.value === 'NORMAL' ? TargetHeatingCoolingState.HEAT : TargetHeatingCoolingState.OFF);
+        const hvacMode = data.find(prop => prop.name === 'hvacMode')!.value; // NORMAL | STOP | ANTI_FROST
+        const authorization = data.find(prop => prop.name === 'authorization')!.value; // STOP | HEATING
+        callback(
+          null,
+          authorization === 'HEATING' && hvacMode === 'NORMAL'
+            ? TargetHeatingCoolingState.HEAT
+            : TargetHeatingCoolingState.OFF
+        );
       } catch (err) {
         callback(err);
       }
@@ -102,6 +114,7 @@ const setupThermostat = (accessory: PlatformAccessory, controller: TydomControll
 
   service
     .getCharacteristic(CurrentTemperature)!
+    .setProps({})
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debug(`-> GET CurrentTemperature for "${id}"`);
       try {
@@ -115,7 +128,28 @@ const setupThermostat = (accessory: PlatformAccessory, controller: TydomControll
     });
 };
 
-export default setupThermostat;
+export const updateThermostat = (accessory: PlatformAccessory, updates: Record<string, unknown>[]) => {
+  const {CurrentTemperature, TargetTemperature} = Characteristic;
+  updates.forEach(update => {
+    const {name} = update;
+    switch (name) {
+      case 'setpoint': {
+        const service = accessory.getService(Service.Thermostat);
+        assert(service, `Unexpected missing service "${Service.Thermostat} in accessory`);
+        service.getCharacteristic(TargetTemperature)!.updateValue(update!.value as number);
+        return;
+      }
+      case 'temperature': {
+        const service = accessory.getService(Service.Thermostat);
+        assert(service, `Unexpected missing service "${Service.Thermostat} in accessory`);
+        service.getCharacteristic(CurrentTemperature)!.updateValue(update!.value as number);
+        return;
+      }
+      default:
+        return;
+    }
+  });
+};
 
 /*
   {

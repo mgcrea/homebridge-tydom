@@ -1,12 +1,12 @@
 import {EventEmitter} from 'events';
 import {Categories} from 'hap-nodejs';
-import {TydomConfigResponse} from 'src/typings/tydom';
+import {get} from 'lodash';
+import {TydomConfigResponse, TydomDeviceUpdateBody} from 'src/typings/tydom';
 import {assert} from 'src/utils/assert';
-import os from 'os';
 import debug from 'src/utils/debug';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
+import {TydomHttpMessage} from 'tydom-client/lib/utils/tydom';
 import {TydomPlatformConfig} from './platform';
-import {get} from 'lodash';
 
 export type TydomAccessoryContext = {
   name: string;
@@ -18,10 +18,14 @@ export type TydomAccessoryContext = {
   model: string;
 };
 
-export type TydomAccessory = {
+export type ControllerDevicePayload = {
   name: string;
-  id: string;
   category: Categories;
+  context: TydomAccessoryContext;
+};
+
+export type ControllerUpdatePayload = {
+  updates: Record<string, unknown>[];
   context: TydomAccessoryContext;
 };
 
@@ -59,6 +63,9 @@ export default class TydomController extends EventEmitter {
     assert(password, 'Missing "password" config field for platform');
     debug(`Creating tydom client with username="${username}" and hostname="${hostname}"`);
     this.client = createTydomClient({username, password, hostname});
+    this.client.on('message', message => {
+      this.handleMessage(message);
+    });
     this.client.on('connect', () => {
       this.log.info(`Successfully connected to Tydom hostname=${hostname} with username="${username}"`);
       this.emit('connect');
@@ -110,8 +117,38 @@ export default class TydomController extends EventEmitter {
           name,
           category,
           context
-        });
+        } as ControllerDevicePayload);
       }
+    });
+  }
+  handleMessage(message: TydomHttpMessage) {
+    const {uri, method, body} = message;
+    const isDeviceUpdate = uri === '/devices/data' && method === 'PUT';
+    if (!isDeviceUpdate) {
+      debug('Unkown message from Tydom client', message);
+      return;
+    }
+    if (!Array.isArray(body)) {
+      debug('Unsupported non-array device update', body);
+      return;
+    }
+    (body as TydomDeviceUpdateBody).forEach(device => {
+      const {id: deviceId, endpoints} = device;
+      if (!this.devices.has(deviceId)) {
+        return;
+      }
+      const {id: endpointId, data: updates} = endpoints[0];
+      const accessoryId = this.getAccessoryId(deviceId);
+      debug(`Device with id="${deviceId}" has updated data`, updates);
+      const context: Pick<TydomAccessoryContext, 'deviceId' | 'endpointId' | 'accessoryId'> = {
+        deviceId,
+        endpointId,
+        accessoryId
+      };
+      this.emit('update', {
+        updates,
+        context
+      } as ControllerUpdatePayload);
     });
   }
 }

@@ -1,8 +1,8 @@
 import {Categories} from 'hap-nodejs';
 import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
-import TydomController, {TydomAccessory, TydomAccessoryContext} from './controller';
+import TydomController, {ControllerDevicePayload, ControllerUpdatePayload, TydomAccessoryContext} from './controller';
 import {HomebridgeApi, Platform, PlatformAccessory} from './typings/homebridge';
-import {getTydomAccessorySetup} from './utils/accessory';
+import {getTydomAccessorySetup, getTydomAccessoryUpdate} from './utils/accessory';
 
 export type TydomPlatformConfig = {
   platform: string;
@@ -42,7 +42,8 @@ export default class TydomPlatform implements Platform {
     this.controller.on('connect', () => {
       this.log.info();
     });
-    this.controller.on('device', this.handleNewDevice.bind(this));
+    this.controller.on('device', this.handleControllerDevice.bind(this));
+    this.controller.on('update', this.handleControllerUpdate.bind(this));
   }
   async didFinishLaunching() {
     this.cleanupAccessoriesIds = new Set(this.accessories.keys());
@@ -55,7 +56,7 @@ export default class TydomPlatform implements Platform {
     });
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
   }
-  handleNewDevice({name, category, context}: TydomAccessory) {
+  handleControllerDevice({name, category, context}: ControllerDevicePayload) {
     const id = this.api.hap.uuid.generate(context.accessoryId);
     this.log.info(`Found new tydom device named="${name}" with id="${id}"`);
     this.log.debug(`Tydom device="${id}" context="${JSON.stringify(context)}"`);
@@ -68,6 +69,18 @@ export default class TydomPlatform implements Platform {
     const accessory = this.createAccessory(name, id, category, context);
     this.accessories.set(id, accessory);
     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+  }
+  handleControllerUpdate({updates, context}: ControllerUpdatePayload) {
+    const id = this.api.hap.uuid.generate(context.accessoryId);
+    this.log.debug(`Tydom device="${id}" update="${JSON.stringify(updates)} with context="${JSON.stringify(context)}"`);
+    if (!this.accessories.has(id)) {
+      return;
+    }
+    const accessory = this.accessories.get(id)!;
+    const tydomAccessoryUpdate = getTydomAccessoryUpdate(accessory);
+    if (tydomAccessoryUpdate) {
+      tydomAccessoryUpdate(accessory, updates);
+    }
   }
   createAccessory(name: string, id: string, category: Categories, context: TydomAccessoryContext) {
     this.log.info(`Creating accessory named="${name}" with id="${id}"`);

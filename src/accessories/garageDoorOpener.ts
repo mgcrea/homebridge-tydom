@@ -15,7 +15,7 @@ import {
 } from 'src/utils/accessory';
 import debug from 'src/utils/debug';
 
-const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
+export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {UUID: id, context} = accessory;
   const {client} = controller;
 
@@ -41,8 +41,6 @@ const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomCo
       ]);
     });
 };
-
-export default setupGarageDoorOpener;
 
 /*
 accessory

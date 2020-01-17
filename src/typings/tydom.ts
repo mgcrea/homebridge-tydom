@@ -50,3 +50,8 @@ export type TydomDeviceThermostatData = [
   TydomDataElement<'tempSensorOpenCirc', boolean>,
   TydomDataElement<'boostOn', boolean>
 ];
+
+export type TydomDeviceUpdateBody = {
+  id: number;
+  endpoints: {id: number; error: number; data: Record<string, unknown>[]}[];
+}[];
