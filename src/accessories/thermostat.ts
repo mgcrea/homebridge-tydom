@@ -114,7 +114,6 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
 
   service
     .getCharacteristic(CurrentTemperature)!
-    .setProps({})
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debug(`-> GET CurrentTemperature for "${id}"`);
       try {
