@@ -41,7 +41,7 @@ export default class TydomPlatform implements Platform {
     this.controller.on('connect', () => {
       this.log.info();
     });
-    this.controller.on('foundNewDevice', this.handleNewDevice.bind(this));
+    this.controller.on('device', this.handleNewDevice.bind(this));
   }
   async didFinishLaunching() {
     this.cleanupAccessoriesIds = new Set(this.accessories.keys());
@@ -54,7 +54,8 @@ export default class TydomPlatform implements Platform {
     });
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
   }
-  handleNewDevice({name, id, category, context}: TydomAccessory) {
+  handleNewDevice({name, category, context}: TydomAccessory) {
+    const id = this.api.hap.uuid.generate(context.accessoryId);
     this.log.info(`Found new tydom device named="${name}" with id="${id}"`);
     this.log.debug(`Tydom device="${id}" context="${JSON.stringify(context)}"`);
     // Prevent automatic cleanup

@@ -1,5 +1,5 @@
 import {EventEmitter} from 'events';
-import {Categories, uuid} from 'hap-nodejs';
+import {Categories} from 'hap-nodejs';
 import {TydomConfigResponse} from 'src/typings/tydom';
 import {assert} from 'src/utils/assert';
 import debug from 'src/utils/debug';
@@ -101,10 +101,8 @@ export default class TydomController extends EventEmitter {
           serialNumber: `${deviceId}`,
           model: 'N/A'
         };
-        const id = uuid.generate(accessoryId);
-        this.emit('foundNewDevice', {
+        this.emit('device', {
           name,
-          id,
           category,
           context
         });
