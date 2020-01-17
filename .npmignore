@@ -7,3 +7,4 @@
 !lib/**/*.js
 !lib/**/*.js.map
 !lib/**/*.d.ts
+!config.schema.json

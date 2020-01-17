@@ -2,11 +2,14 @@ import {EventEmitter} from 'events';
 import {Categories} from 'hap-nodejs';
 import {TydomConfigResponse} from 'src/typings/tydom';
 import {assert} from 'src/utils/assert';
+import os from 'os';
 import debug from 'src/utils/debug';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomPlatformConfig} from './platform';
+import {get} from 'lodash';
 
 export type TydomAccessoryContext = {
+  name: string;
   deviceId: number;
   endpointId: number;
   accessoryId: string;
@@ -70,7 +73,7 @@ export default class TydomController extends EventEmitter {
     return `tydom:${username.slice(6)}:accessories:${deviceId}`;
   }
   async scan() {
-    const {hostname, username} = this.config;
+    const {hostname, username, settings} = this.config;
     try {
       await this.client.connect();
     } catch (err) {
@@ -84,7 +87,8 @@ export default class TydomController extends EventEmitter {
       const {id_endpoint: endpointId, id_device: deviceId, name} = endpoint;
       // const {error, metadata} = getEndpointDetailsfromMeta(endpoint, meta);
       // const signature = map(metadata, 'name');
-      if (!SUPPORTED_USAGES.includes(endpoint.first_usage)) {
+      const categoryFromSettings = get(settings, `${deviceId}.category`);
+      if (!categoryFromSettings && !SUPPORTED_USAGES.includes(endpoint.first_usage)) {
         debug(`Unsupported usage="${endpoint.first_usage}" for endpoint with id="${endpointId}"`);
         debug({endpoint});
         return;
@@ -92,8 +96,9 @@ export default class TydomController extends EventEmitter {
       if (!this.devices.has(deviceId)) {
         this.devices.add(deviceId);
         const accessoryId = this.getAccessoryId(deviceId);
-        const category = SUPPORTED_CATEGORIES_MAP[endpoint.first_usage] as Categories;
+        const category = (categoryFromSettings || SUPPORTED_CATEGORIES_MAP[endpoint.first_usage]) as Categories;
         const context: TydomAccessoryContext = {
+          name,
           deviceId,
           endpointId,
           accessoryId,

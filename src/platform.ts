@@ -9,6 +9,7 @@ export type TydomPlatformConfig = {
   hostname: string;
   username: string;
   password: string;
+  settings: Record<string, {category?: Categories}>;
 };
 
 export default class TydomPlatform implements Platform {

@@ -8,31 +8,31 @@
     "type": "object",
     "properties": {
       "hostname": {
-        "title": "Tydom Gateway",
+        "title": "Tydom hostname",
         "type": "string",
         "required": true,
         "default": "mediation.tydom.com"
       },
       "username": {
-        "title": "Tydom Gateway",
+        "title": "Tydom username",
         "type": "string",
         "required": true,
         "default": ""
       },
       "password": {
-        "title": "Tydom Gateway",
+        "title": "Tydom password",
         "type": "string",
         "required": true,
         "default": ""
       },
-      "excludeSensorTypes": {
-        "description": "Sensor types to exclude.",
-        "type": "array",
-        "items": {
-          "type": "string"
+      "settings": {
+        "description": "Device settings",
+        "type": "object",
+        "patternProperties": {
+          "^[0-9]+$": {"type": "object"}
         }
       }
     }
   },
-  "form": ["hostname", "username", "password", "excludeSensorTypes"]
+  "form": ["hostname", "username", "password", "settings"]
 }

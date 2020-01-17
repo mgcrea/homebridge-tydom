@@ -18,6 +18,7 @@ import debug from 'src/utils/debug';
 import {assert} from './assert';
 import {TydomEndpointData} from 'src/typings/tydom';
 import {getTydomDeviceData} from './tydom';
+import setupFan from 'src/accessories/fan';
 
 export const addAccessoryService = (
   accessory: PlatformAccessory,
@@ -44,6 +45,8 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
       return setupLightbulb;
     case Categories.THERMOSTAT:
       return setupThermostat;
+    case Categories.FAN:
+      return setupFan;
     case Categories.GARAGE_DOOR_OPENER:
       return setupGarageDoorOpener;
     default:

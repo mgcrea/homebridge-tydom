@@ -7,11 +7,11 @@ import {
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 
-const setupSwitch = (accessory: PlatformAccessory, controller: TydomController): void => {
+const setupFan = (accessory: PlatformAccessory, controller: TydomController): void => {
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   // Add the actual accessory Service
   addAccessorySwitchableService(accessory, controller, Service.Fan);
 };
 
-export default setupSwitch;
+export default setupFan;
