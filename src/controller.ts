@@ -74,7 +74,7 @@ export default class TydomController extends EventEmitter {
     try {
       await this.client.connect();
     } catch (err) {
-      this.log.error(`Failed to connecto to Tydom hostname=${hostname} with username="${username}"`);
+      this.log.error(`Failed to connect to Tydom hostname=${hostname} with username="${username}"`);
       return;
     }
     const config = (await this.client.get('/configs/file')) as TydomConfigResponse;
