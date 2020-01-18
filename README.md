@@ -11,6 +11,8 @@
 
 - Rely on [node-tydom-client](https://github.com/mgcrea/node-tydom-client) to communicate with Tydom bridge.
 
+- Properly propagates external events into [Apple HomeKit](https://www.apple.com/ios/home/).
+
 - Built with [TypeScript](https://www.typescriptlang.org/) for static type checking with exported types along the library.
 
 ## Documentation
@@ -73,6 +75,8 @@ You can also use your local tydom IP (eg `192.168.0.X`) for `hostname`, however:
 | username  | Tydom username              |
 | password  | Tydom password              |
 | settings  | Device settings (overrides) |
+
+- The `settings` field enables you to override the name or homekit category of your Tydom device (check homebridge log for the device ids).
 
 ### Debug
 
