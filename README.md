@@ -7,9 +7,9 @@
 [![devDependencies status](https://david-dm.org/mgcrea/homebridge-tydom/dev-status.svg)](https://david-dm.org/mgcrea/homebridge-tydom?type=dev)
 [![coverage](https://codecov.io/gh/mgcrea/homebridge-tydom/branch/master/graph/badge.svg)](https://codecov.io/gh/mgcrea/homebridge-tydom)
 
-[Homebridge](https://homebridge.io/) plugin to easily manage [Tydom hardware](https://www.deltadore.fr/domotique/pilotage-maison-connectee/box-domotique/tydom-2-0-ref-6414118) by [Delta Dore](https://www.deltadore.fr/) from [Apple HomeKit](https://www.apple.com/ios/home/).
+[Homebridge](https://homebridge.io/) plugin to easily manage [Tydom hardware](https://www.deltadore.fr/domotique/pilotage-maison-connectee) by [Delta Dore](https://www.deltadore.fr/) from [Apple HomeKit](https://www.apple.com/ios/home/).
 
-- Rely on [node-tydom-client](https://github.com/mgcrea/node-tydom-client) to communicate with Tydom bridge.
+- Rely on [node-tydom-client](https://github.com/mgcrea/node-tydom-client) to communicate with an existing [Tydom bridge](https://www.deltadore.fr/domotique/pilotage-maison-connectee/box-domotique/tydom-2-0-ref-6414118) (required).
 
 - Properly propagates external events into [Apple HomeKit](https://www.apple.com/ios/home/).
 
