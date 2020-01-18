@@ -13,6 +13,81 @@
 
 - Built with [TypeScript](https://www.typescriptlang.org/) for static type checking with exported types along the library.
 
+## Documentation
+
+### Installation
+
+1. Add `homebridge-tydom` plugin to your homebridge install:
+
+- eg. using [oznu/docker-homebridge](https://github.com/oznu/docker-homebridge), update `./volumes/homebridge/package.json`
+
+```json
+{
+  "private": true,
+  "description": "This file keeps track of which plugins should be installed.",
+  "dependencies": {
+    "homebridge-dummy": "^0.4.0",
+    "homebridge-tydom": "^0.4.0"
+  }
+}
+```
+
+2. Configure the `homebridge-tydom` platform, providing your Tydom identifiers:
+
+```json
+{
+  "bridge": {
+    "name": "Homebridge 27C9",
+    "username": "0E:21:1B:E7:27:C9",
+    "port": 53619,
+    "pin": "031-45-154"
+  },
+  "accessories": [],
+  "platforms": [
+    {
+      "platform": "Tydom",
+      "hostname": "mediation.tydom.com",
+      "username": "001A25123456",
+      "password": "YourPassw0rd",
+      "settings": {
+        "1528565701": {"category": 3},
+        "1531745761": {"category": 3}
+      }
+    }
+  ]
+}
+```
+
+### Notes
+
+You can also use your local tydom IP (eg `192.168.0.X`) for `hostname`, however:
+
+- You must set environment var `NODE_TLS_REJECT_UNAUTHORIZED=0` to interact with the self-signed certificate.
+- Tydom 2.0 current firmware does not seem to support multiple local clients, so you would end up locking you away from the mobile app.
+
+### Configurations
+
+| **Field** | **Description**             |
+| --------- | --------------------------- |
+| hostname  | Tydom hostname              |
+| username  | Tydom username              |
+| password  | Tydom password              |
+| settings  | Device settings (overrides) |
+
+### Debug
+
+This library uses [debug](https://www.npmjs.com/package/debug) to provide high verbosity logs, just pass the following environment:
+
+```bash
+DEBUG=homebridge-tydom
+```
+
+You might also want to debug [node-tydom-client](https://github.com/mgcrea/node-tydom-client)
+
+```bash
+DEBUG=homebridge-tydom,tydom-client
+```
+
 ### Available scripts
 
 | **Script**    | **Description**              |
