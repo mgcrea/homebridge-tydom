@@ -7,7 +7,7 @@
 [![devDependencies status](https://david-dm.org/mgcrea/homebridge-tydom/dev-status.svg)](https://david-dm.org/mgcrea/homebridge-tydom?type=dev)
 [![coverage](https://codecov.io/gh/mgcrea/homebridge-tydom/branch/master/graph/badge.svg)](https://codecov.io/gh/mgcrea/homebridge-tydom)
 
-[![Banner](https://mgcrea.github.io/homebridge-tydom/logo_social_white.png)](https://mgcrea.github.io/homebridge-tydom/)
+[![Banner](https://mgcrea.github.io/homebridge-tydom/homebridge-tydom@0.5x.png)](https://mgcrea.github.io/homebridge-tydom/)
 
 [Homebridge](https://homebridge.io/) plugin to easily manage [Tydom hardware](https://www.deltadore.fr/domotique/pilotage-maison-connectee) by [Delta Dore](https://www.deltadore.fr/) from [Apple HomeKit](https://www.apple.com/ios/home/).
 
