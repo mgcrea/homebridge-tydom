@@ -94,18 +94,19 @@ export default class TydomController extends EventEmitter {
       const {id_endpoint: endpointId, id_device: deviceId, name} = endpoint;
       // const {error, metadata} = getEndpointDetailsfromMeta(endpoint, meta);
       // const signature = map(metadata, 'name');
-      const categoryFromSettings = get(settings, `${deviceId}.category`);
+      const categoryFromSettings = get(settings, `${deviceId}.category`) as Categories | undefined;
       if (!categoryFromSettings && !SUPPORTED_USAGES.includes(endpoint.first_usage)) {
         debug(`Unsupported usage="${endpoint.first_usage}" for endpoint with id="${endpointId}"`);
         debug({endpoint});
         return;
       }
+      const nameFromSetting = get(settings, `${deviceId}.name`) as string | undefined;
       if (!this.devices.has(deviceId)) {
         this.devices.add(deviceId);
         const accessoryId = this.getAccessoryId(deviceId);
         const category = (categoryFromSettings || SUPPORTED_CATEGORIES_MAP[endpoint.first_usage]) as Categories;
         const context: TydomAccessoryContext = {
-          name,
+          name: nameFromSetting || name,
           deviceId,
           endpointId,
           accessoryId,
