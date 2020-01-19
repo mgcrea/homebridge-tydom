@@ -16,7 +16,7 @@ import {
 import debug from 'src/utils/debug';
 
 export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
-  const {UUID: id, context} = accessory;
+  const {displayName: name, UUID: id, context} = accessory;
   const {client} = controller;
 
   const {deviceId, endpointId} = context as TydomAccessoryContext;
