@@ -1,13 +1,26 @@
-# Homebridge Tydom Plugin
+<p align="center">
+  <a href="https://github.com/mgcrea/homebridge-tydom">
+    <img src="https://mgcrea.github.io/homebridge-tydom/homebridge-tydom_small.png" height="320" alt="Homebridge Tydom Logo" />
+  </a>
+</p>
 
-[![npm version](https://img.shields.io/npm/v/homebridge-tydom.svg)](https://github.com/mgcrea/homebridge-tydom/releases)
-[![license](https://img.shields.io/github/license/mgcrea/homebridge-tydom.svg?style=flat)](https://tldrlegal.com/license/mit-license)
-[![build status](https://travis-ci.com/mgcrea/homebridge-tydom.svg?branch=master)](https://travis-ci.com/mgcrea/homebridge-tydom)
-[![dependencies status](https://david-dm.org/mgcrea/homebridge-tydom/status.svg)](https://david-dm.org/mgcrea/homebridge-tydom)
-[![devDependencies status](https://david-dm.org/mgcrea/homebridge-tydom/dev-status.svg)](https://david-dm.org/mgcrea/homebridge-tydom?type=dev)
-[![coverage](https://codecov.io/gh/mgcrea/homebridge-tydom/branch/master/graph/badge.svg)](https://codecov.io/gh/mgcrea/homebridge-tydom)
-
-[![Banner](https://mgcrea.github.io/homebridge-tydom/homebridge-tydom_small.png)](https://mgcrea.github.io/homebridge-tydom/)
+<p align="center">
+  <a href="https://www.npmjs.com/package/homebridge-tydom">
+    <img src="https://img.shields.io/npm/v/homebridge-tydom.svg" alt="Homebridge Tydom NPM Package" />
+  </a>
+  <a href="https://www.npmjs.com/package/homebridge-tydom">
+    <img src="https://img.shields.io/npm/dm/homebridge-tydom.svg" alt="Homebridge Tydom NPM Download Count" />
+  </a>
+  <a href="https://travis-ci.com/mgcrea/homebridge-tydom">
+    <img src="https://travis-ci.com/mgcrea/homebridge-tydom.svg?branch=master" alt="Homebridge Tydom Travis Builds" />
+  </a>
+  <a href="https://david-dm.org/mgcrea/homebridge-tydom">
+    <img src="https://david-dm.org/mgcrea/homebridge-tydom/status.svg" alt="Homebridge Tydom Dependencies" />
+  </a>
+  <a href="https://codecov.io/gh/mgcrea/homebridge-tydom">
+    <img src="https://codecov.io/gh/mgcrea/homebridge-tydom/branch/master/graph/badge.svg" alt="Homebridge Tydom Code Coverage" />
+  </a>
+</p>
 
 [Homebridge](https://homebridge.io/) plugin to easily manage [Tydom hardware](https://www.deltadore.fr/domotique/pilotage-maison-connectee) by [Delta Dore](https://www.deltadore.fr/) from [Apple HomeKit](https://www.apple.com/ios/home/).
 
