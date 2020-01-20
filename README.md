@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/mgcrea/homebridge-tydom">
-    <img src="https://mgcrea.github.io/homebridge-tydom/homebridge-tydom_small.png" height="320" alt="Homebridge Tydom Logo" />
+    <img src="https://raw.githubusercontent.com/mgcrea/homebridge-tydom/master/docs/homebridge-tydom_small.png" height="320" alt="Homebridge Tydom Logo" />
   </a>
 </p>
 
