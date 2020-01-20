@@ -22,6 +22,8 @@
   </a>
 </p>
 
+---
+
 [Homebridge](https://homebridge.io/) plugin to easily manage [Tydom hardware](https://www.deltadore.fr/domotique/pilotage-maison-connectee) by [Delta Dore](https://www.deltadore.fr/) from [Apple HomeKit](https://www.apple.com/ios/home/).
 
 - Rely on [node-tydom-client](https://github.com/mgcrea/node-tydom-client) to communicate with an existing [Tydom bridge](https://www.deltadore.fr/domotique/pilotage-maison-connectee/box-domotique/tydom-2-0-ref-6414118) (required).
