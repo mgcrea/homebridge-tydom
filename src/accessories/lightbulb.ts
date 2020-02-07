@@ -1,12 +1,8 @@
 import {Service} from 'hap-nodejs';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
-import {
-  addAccessorySwitchableService,
-  setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  updateAccessorySwitchableService
-} from 'src/utils/accessory';
+import {setupAccessoryIdentifyHandler, setupAccessoryInformationService} from 'src/utils/accessory';
+import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
 export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomController): void => {
   setupAccessoryInformationService(accessory, controller);

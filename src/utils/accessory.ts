@@ -1,24 +1,12 @@
-import {
-  Categories,
-  Service,
-  Characteristic,
-  AccessoryEventTypes,
-  VoidCallback,
-  CharacteristicEventTypes,
-  CharacteristicValue,
-  CharacteristicSetCallback,
-  NodeCallback
-} from 'hap-nodejs';
+import {AccessoryEventTypes, Categories, Characteristic, Service, VoidCallback} from 'hap-nodejs';
+import {setupFan, updateFan} from 'src/accessories/fan';
 import {setupGarageDoorOpener} from 'src/accessories/garageDoorOpener';
 import {setupLightbulb, updateLightbulb} from 'src/accessories/lightbulb';
 import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
 import TydomController, {TydomAccessoryContext} from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
+import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
-import {assert} from './assert';
-import {TydomEndpointData} from 'src/typings/tydom';
-import {getTydomDeviceData} from './tydom';
-import {setupFan, updateFan} from 'src/accessories/fan';
 
 export const addAccessoryService = (
   accessory: PlatformAccessory,
@@ -51,7 +39,6 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
       return setupGarageDoorOpener;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
-      break;
   }
 };
 
@@ -72,7 +59,6 @@ export const getTydomAccessoryUpdate = (accessory: PlatformAccessory): TydomAcce
       };
     default:
       throw new Error(`Unsupported accessory category=${category}`);
-      break;
   }
 };
 
@@ -95,70 +81,6 @@ export const setupAccessoryIdentifyHandler = (accessory: PlatformAccessory, _con
     debug({id, type: 'AccessoryEventTypes.IDENTIFY', paired});
     debug(`New identify request for device named="${name}" with id="${id}"`);
     callback();
-  });
-};
-
-export const addAccessorySwitchableService = (
-  accessory: PlatformAccessory,
-  controller: TydomController,
-  serviceClass: typeof Service
-): Service => {
-  const {displayName: name, UUID: id, context} = accessory;
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
-  const {client} = controller;
-
-  const service = addAccessoryService(accessory, serviceClass, `${accessory.displayName}`, true);
-
-  service
-    .getCharacteristic(Characteristic.On)!
-    .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debug(`Setting device named="${name}" with id="${id}" value="${value}" ...`);
-      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: 'level',
-          value: value ? 100 : 0
-        }
-      ]);
-      debug(`Sucessfully set device named="${name}" with id="${id}" value="${value}" ...`);
-      callback();
-    });
-
-  service
-    .getCharacteristic(Characteristic.On)!
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debug(`Getting device named="${name}" with id="${id}" value ...`);
-      try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
-        const level = data.find(prop => prop.name === 'level');
-        assert(level, 'Missing `level` data item');
-        const nextValue = level!.value === 100;
-        debug(`Sucessfully got device named="${name}" with id="${id}" value="${nextValue}"`);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err);
-      }
-    });
-
-  return service;
-};
-
-export const updateAccessorySwitchableService = (
-  accessory: PlatformAccessory,
-  updates: Record<string, unknown>[],
-  serviceClass: typeof Service
-): void => {
-  updates.forEach(update => {
-    const {name} = update;
-    switch (name) {
-      case 'level': {
-        const service = accessory.getService(serviceClass);
-        assert(service, `Unexpected missing service "${serviceClass} in accessory`);
-        service.getCharacteristic(Characteristic.On)!.updateValue(update!.value === 100);
-        return;
-      }
-      default:
-        return;
-    }
   });
 };
 

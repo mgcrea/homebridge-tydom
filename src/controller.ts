@@ -2,7 +2,7 @@ import {EventEmitter} from 'events';
 import {Categories} from 'hap-nodejs';
 import {get} from 'lodash';
 import {TydomConfigResponse, TydomDeviceUpdateBody} from 'src/typings/tydom';
-import {assert} from 'src/utils/assert';
+import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomHttpMessage} from 'tydom-client/lib/utils/tydom';
