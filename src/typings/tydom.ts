@@ -51,6 +51,15 @@ export type TydomDeviceThermostatData = [
   TydomDataElement<'boostOn', boolean>
 ];
 
+export type TydomDeviceShutterData = [
+  TydomDataElement<'battDefect', boolean>,
+  TydomDataElement<'intrusion', boolean>,
+  TydomDataElement<'obstacleDefect', boolean>,
+  TydomDataElement<'onFavPos', boolean>,
+  TydomDataElement<'position', number>,
+  TydomDataElement<'thermicDefect', boolean>
+];
+
 export type TydomDeviceUpdateBody = {
   id: number;
   endpoints: {id: number; error: number; data: Record<string, unknown>[]}[];

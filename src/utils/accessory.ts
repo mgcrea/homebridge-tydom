@@ -3,6 +3,7 @@ import {setupFan, updateFan} from 'src/accessories/fan';
 import {setupGarageDoorOpener} from 'src/accessories/garageDoorOpener';
 import {setupLightbulb, updateLightbulb} from 'src/accessories/lightbulb';
 import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
+import {setupWindowCovering, updateWindowCovering} from 'src/accessories/windowCovering';
 import TydomController, {TydomAccessoryContext} from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import assert from 'src/utils/assert';
@@ -37,6 +38,8 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
       return setupFan;
     case Categories.GARAGE_DOOR_OPENER:
       return setupGarageDoorOpener;
+    case Categories.WINDOW_COVERING:
+      return setupWindowCovering;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
   }
@@ -57,6 +60,8 @@ export const getTydomAccessoryUpdate = (accessory: PlatformAccessory): TydomAcce
       return () => {
         // no-op
       };
+    case Categories.WINDOW_COVERING:
+      return updateWindowCovering;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
   }

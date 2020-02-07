@@ -32,7 +32,8 @@ export type ControllerUpdatePayload = {
 const SUPPORTED_CATEGORIES_MAP: Record<string, Categories> = {
   light: Categories.LIGHTBULB,
   hvac: Categories.THERMOSTAT,
-  gate: Categories.GARAGE_DOOR_OPENER
+  gate: Categories.GARAGE_DOOR_OPENER,
+  shutter: Categories.WINDOW_COVERING
 };
 const SUPPORTED_USAGES = Object.keys(SUPPORTED_CATEGORIES_MAP);
 
