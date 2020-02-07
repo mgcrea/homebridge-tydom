@@ -86,6 +86,10 @@ Did support the hardware that I had at home:
 - Thermostat ([RF4890](https://www.deltadore.co.uk/home-automation/heating-control/receiver-micromodule/rf-4890-ref-6050615))
 - Switch ([TYXIA 4620](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-4620-ref-6351104))
 
+Some other hardware that might work thanks to the community feedback:
+
+- Shutters ([TYXIA 5630](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5630-ref-6351401), [TYXIA 5730](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5730-ref-6351402))
+
 Other similar hardware should work seamlessly with the plugin as usage is detected.
 
 Currently working on the Alarm support however it does not seem that Homekit currently allows to enter a PIN code to arm.
