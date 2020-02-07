@@ -36,7 +36,6 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
       debug(`-> GET CurrentPosition for "${id}"`);
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceShutterData;
-        // const hvacMode = data.find(prop => prop.name === 'hvacMode');
         const position = data.find(prop => prop.name === 'position')!.value;
         callback(null, position);
       } catch (err) {
@@ -46,22 +45,16 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
   );
 
   (service.getCharacteristic(TargetPosition) as Characteristic)
-    // .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-    //   debug(`-> GET TargetHeatingCoolingState for "${id}"`);
-    //   try {
-    //     const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceThermostatData;
-    //     const hvacMode = data.find(prop => prop.name === 'hvacMode')!.value; // NORMAL | STOP | ANTI_FROST
-    //     const authorization = data.find(prop => prop.name === 'authorization')!.value; // STOP | HEATING
-    //     callback(
-    //       null,
-    //       authorization === 'HEATING' && hvacMode === 'NORMAL'
-    //         ? TargetHeatingCoolingState.HEAT
-    //         : TargetHeatingCoolingState.OFF
-    //     );
-    //   } catch (err) {
-    //     callback(err);
-    //   }
-    // })
+    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      debug(`-> GET TargetPosition for "${id}"`);
+      try {
+        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceShutterData;
+        const position = data.find(prop => prop.name === 'position')!.value;
+        callback(null, position);
+      } catch (err) {
+        callback(err);
+      }
+    })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debug(`-> SET TargetPosition value="${value}" for id="${id}"`);
       const tydomValue = Math.round(value as number);
