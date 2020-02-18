@@ -77,8 +77,8 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     if (zoneState === 'UNUSED') {
       continue;
     }
-    const zoneService = new Service.Switch(`Zone ${zoneIndex}`, `zone_${zoneIndex}`);
-    addAccessoryService(accessory, zoneService, `Zone ${zoneIndex}`);
+    const newService = new Service.Switch(`Zone ${zoneIndex}`, `zone_${zoneIndex}`);
+    const zoneService = addAccessoryService(accessory, newService, `Zone ${zoneIndex}`);
     zoneServices.set(zoneIndex, zoneService);
     zoneService.linkedServices = [service];
     zoneService
@@ -106,7 +106,7 @@ export const updateSecuritySystem = (accessory: PlatformAccessory, updates: Reco
     switch (name) {
       case 'alarmMode': {
         const service = accessory.getService(Service.SecuritySystem);
-        assert(service, `Unexpected missing service "${Service.SecuritySystem} in accessory`);
+        assert(service, `Unexpected missing service "Service.SecuritySystem" in accessory`);
         const alarmMode = update!.value as TydomDeviceSecuritySystemAlarmMode;
         service.getCharacteristic(SecuritySystemCurrentState)!.updateValue(getCurrrentStateForValue(alarmMode));
         return;
@@ -121,7 +121,7 @@ export const updateSecuritySystem = (accessory: PlatformAccessory, updates: Reco
       case 'zone8State': {
         const zoneIndex = parseInt(name.match(/zone(\d+)State/)![1], 10);
         const service = zoneServices.get(zoneIndex);
-        assert(service, `Unexpected missing service "${Service.SecuritySystem} in accessory`);
+        assert(service, `Unexpected missing service "Zone ${zoneIndex}" in accessory`);
         const zoneState = update!.value as TydomDeviceSecuritySystemZoneState;
         service.getCharacteristic(Characteristic.On)!.updateValue(zoneState === 'ON');
         return;
