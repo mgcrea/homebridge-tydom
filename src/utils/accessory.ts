@@ -4,10 +4,12 @@ import {setupGarageDoorOpener} from 'src/accessories/garageDoorOpener';
 import {setupLightbulb, updateLightbulb} from 'src/accessories/lightbulb';
 import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
 import {setupWindowCovering, updateWindowCovering} from 'src/accessories/windowCovering';
+import {setupSecuritySystem, updateSecuritySystem} from 'src/accessories/securitySystem';
 import TydomController, {TydomAccessoryContext} from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
+import {TydomEndpointData, AnyTydomDataValue} from 'src/typings/tydom';
 
 export const addAccessoryService = (
   accessory: PlatformAccessory,
@@ -25,7 +27,7 @@ export const addAccessoryService = (
   return accessory.addService(service, name);
 };
 
-type TydomAccessorySetup = (accessory: PlatformAccessory, controller: TydomController) => void;
+type TydomAccessorySetup = (accessory: PlatformAccessory, controller: TydomController) => void | Promise<void>;
 
 export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAccessorySetup => {
   const {category} = accessory;
@@ -40,12 +42,14 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
       return setupGarageDoorOpener;
     case Categories.WINDOW_COVERING:
       return setupWindowCovering;
+    case Categories.SECURITY_SYSTEM:
+      return setupSecuritySystem;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
   }
 };
 
-type TydomAccessoryUpdate = (accessory: PlatformAccessory, update: Record<string, unknown>[]) => void;
+type TydomAccessoryUpdate = (accessory: PlatformAccessory, update: Record<string, unknown>[]) => void | Promise<void>;
 
 export const getTydomAccessoryUpdate = (accessory: PlatformAccessory): TydomAccessoryUpdate => {
   const {category} = accessory;
@@ -62,6 +66,8 @@ export const getTydomAccessoryUpdate = (accessory: PlatformAccessory): TydomAcce
       };
     case Categories.WINDOW_COVERING:
       return updateWindowCovering;
+    case Categories.SECURITY_SYSTEM:
+      return updateSecuritySystem;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
   }
@@ -87,6 +93,15 @@ export const setupAccessoryIdentifyHandler = (accessory: PlatformAccessory, _con
     debug(`New identify request for device named="${name}" with id="${id}"`);
     callback();
   });
+};
+
+export const getPropValue = <T extends AnyTydomDataValue = AnyTydomDataValue>(
+  data: TydomEndpointData,
+  name: string
+): T => {
+  const prop = data.find(prop => prop.name === name);
+  assert(prop, `Missing \`${name}\` data item`);
+  return prop.value as T;
 };
 
 export const assignTydomContext = (

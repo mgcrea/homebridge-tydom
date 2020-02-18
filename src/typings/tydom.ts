@@ -22,7 +22,9 @@ export type TydomMetaResponse = Array<{
   endpoints: TydomMetaEndpoint[];
 }>;
 
-export type TydomDataElement<K = string, V = string | number | boolean> = {
+export type AnyTydomDataValue = string | number | boolean;
+
+export type TydomDataElement<K = string, V = AnyTydomDataValue> = {
   name: K;
   validity: 'expired';
   value: V;
@@ -58,6 +60,46 @@ export type TydomDeviceShutterData = [
   TydomDataElement<'onFavPos', boolean>,
   TydomDataElement<'position', number>,
   TydomDataElement<'thermicDefect', boolean>
+];
+
+export type TydomDeviceSecuritySystemAlarmMode = 'OFF' | 'ON' | 'TEST' | 'ZONE' | 'MAINTENANCE';
+export type TydomDeviceSecuritySystemZoneState = 'UNUSED' | 'ON' | 'OFF';
+
+export type TydomDeviceSecuritySystemData = [
+  TydomDataElement<'alarmState', 'OFF' | 'DELAYED' | 'ON' | 'QUIET'>,
+  TydomDataElement<'alarmMode', TydomDeviceSecuritySystemAlarmMode>,
+  TydomDataElement<'alarmTechnical', boolean>,
+  TydomDataElement<'alarmSOS', boolean>,
+  TydomDataElement<'unitAutoProtect', boolean>,
+  TydomDataElement<'unitBatteryDefect', boolean>,
+  TydomDataElement<'unackedEvent', boolean>,
+  TydomDataElement<'systAutoProtect', boolean>,
+  TydomDataElement<'systBatteryDefect', boolean>,
+  TydomDataElement<'systSupervisionDefect', boolean>,
+  TydomDataElement<'systOpenIssue', boolean>,
+  TydomDataElement<'systSectorDefect', boolean>,
+  TydomDataElement<'systTechnicalDefect', boolean>,
+  TydomDataElement<'videoLinkDefect', boolean>,
+  TydomDataElement<'remoteSurveyDefect', boolean>,
+  TydomDataElement<'simDefect', boolean>,
+  TydomDataElement<'networkDefect', boolean>,
+  TydomDataElement<'inactiveProduct', boolean>,
+  TydomDataElement<'liveCheckRunning', boolean>,
+  TydomDataElement<'zone1State', TydomDeviceSecuritySystemZoneState>,
+  TydomDataElement<'zone2State', TydomDeviceSecuritySystemZoneState>,
+  TydomDataElement<'zone3State', TydomDeviceSecuritySystemZoneState>,
+  TydomDataElement<'zone4State', TydomDeviceSecuritySystemZoneState>,
+  TydomDataElement<'zone5State', TydomDeviceSecuritySystemZoneState>,
+  TydomDataElement<'zone6State', TydomDeviceSecuritySystemZoneState>,
+  TydomDataElement<'zone7State', TydomDeviceSecuritySystemZoneState>,
+  TydomDataElement<'zone8State', TydomDeviceSecuritySystemZoneState>,
+  TydomDataElement<'outTemperature', number>,
+  TydomDataElement<'gsmLevel', number>,
+  TydomDataElement<'kernelUpToDate', boolean>,
+  TydomDataElement<'irv1State', 'AVAILABLE' | 'UNAVAILABLE' | 'LOCKED'>,
+  TydomDataElement<'irv2State', 'AVAILABLE' | 'UNAVAILABLE' | 'LOCKED'>,
+  TydomDataElement<'irv3State', 'AVAILABLE' | 'UNAVAILABLE' | 'LOCKED'>,
+  TydomDataElement<'irv4State', 'AVAILABLE' | 'UNAVAILABLE' | 'LOCKED'>
 ];
 
 export type TydomDeviceUpdateBody = {

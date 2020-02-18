@@ -56,17 +56,17 @@ export default class TydomPlatform implements Platform {
     });
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
   }
-  handleControllerDevice({name, category, context}: ControllerDevicePayload) {
+  async handleControllerDevice({name, category, context}: ControllerDevicePayload) {
     const id = this.api.hap.uuid.generate(context.accessoryId);
     this.log.info(`Found new tydom device named="${name}" with id="${id}"`);
     this.log.debug(`Tydom device="${id}" context="${JSON.stringify(context)}"`);
     // Prevent automatic cleanup
     this.cleanupAccessoriesIds.delete(id);
     if (this.accessories.has(id)) {
-      this.updateAccessory(this.accessories.get(id)!, context);
+      await this.updateAccessory(this.accessories.get(id)!, context);
       return;
     }
-    const accessory = this.createAccessory(name, id, category, context);
+    const accessory = await this.createAccessory(name, id, category, context);
     this.accessories.set(id, accessory);
     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
   }
@@ -82,20 +82,20 @@ export default class TydomPlatform implements Platform {
       tydomAccessoryUpdate(accessory, updates);
     }
   }
-  createAccessory(name: string, id: string, category: Categories, context: TydomAccessoryContext) {
+  async createAccessory(name: string, id: string, category: Categories, context: TydomAccessoryContext) {
     this.log.info(`Creating accessory named="${name}" with id="${id}"`);
     const {platformAccessory: PlatformAccessory} = this.api;
     const accessory = new PlatformAccessory(name, id, category);
     Object.assign(accessory.context, context);
-    this.updateAccessory(accessory, context);
+    await this.updateAccessory(accessory, context);
     return accessory;
   }
-  updateAccessory(accessory: PlatformAccessory, context: TydomAccessoryContext) {
+  async updateAccessory(accessory: PlatformAccessory, context: TydomAccessoryContext) {
     const {displayName: name, UUID: id} = accessory;
     this.log.info(`Updating accessory named="${name}" with id="${id}"`);
     Object.assign(accessory.context, context);
     const tydomAccessorySetup = getTydomAccessorySetup(accessory);
-    tydomAccessorySetup(accessory, this.controller!);
+    await tydomAccessorySetup(accessory, this.controller!);
     this.api.updatePlatformAccessories([accessory]);
   }
   // Called by homebridge with existing cached accessories
