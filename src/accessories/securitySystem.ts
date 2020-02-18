@@ -1,7 +1,7 @@
 import {
   Characteristic,
   CharacteristicEventTypes,
-  // CharacteristicSetCallback,
+  CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback,
   Service
@@ -15,15 +15,15 @@ import {
 } from 'src/typings/tydom';
 import {
   addAccessoryService,
+  getPropValue,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  getPropValue
+  setupAccessoryInformationService
 } from 'src/utils/accessory';
-import debug from 'src/utils/debug';
 import assert from 'src/utils/assert';
+import debug from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
 
-const {/* SecuritySystemTargetState, */ SecuritySystemCurrentState} = Characteristic;
+const {SecuritySystemTargetState, SecuritySystemCurrentState} = Characteristic;
 
 const zoneServices = new Map<number, Service>();
 
@@ -54,16 +54,33 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       }
     });
 
+  service
+    .getCharacteristic(SecuritySystemTargetState)!
+    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      debug(`-> GET SecuritySystemTargetState for "${id}"`);
+      try {
+        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
+        const alarmMode = getPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
+        callback(null, getCurrrentStateForValue(alarmMode));
+      } catch (err) {
+        callback(err);
+      }
+    })
+    .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+      debug(`-> SET SecuritySystemTargetState value="${value}" for id="${id}"`);
+      callback(null);
+    });
+
   const initialData = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
   for (let zoneIndex = 1; zoneIndex < 9; zoneIndex++) {
     const zoneState = getPropValue<TydomDeviceSecuritySystemZoneState>(initialData, `zone${zoneIndex}State`);
     if (zoneState === 'UNUSED') {
       continue;
     }
-    const zoneService = addAccessoryService(accessory, Service.Switch, `Zone ${zoneIndex}`, false);
+    const zoneService = new Service.Switch(`Zone ${zoneIndex}`, `zone_${zoneIndex}`);
+    addAccessoryService(accessory, zoneService, `Zone ${zoneIndex}`);
     zoneServices.set(zoneIndex, zoneService);
     zoneService.linkedServices = [service];
-    zoneService.subtype = `zone_${zoneIndex}`;
     zoneService
       .getCharacteristic(Characteristic.On)!
       .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
@@ -75,34 +92,12 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         } catch (err) {
           callback(err);
         }
+      })
+      .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+        debug(`-> SET Zone${zoneIndex}On value="${value}" for id="${id}"`);
+        callback(null);
       });
-    // .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-    //   debug(`-> SET Zone${zoneIndex}On value="${value}" for id="${id}"`);
-    //   callback(null);
-    // });
   }
-
-  // service
-  //   .getCharacteristic(SecuritySystemTargetState)!
-  //   .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-  //     debug(`-> GET SecuritySystemTargetState for "${id}"`);
-  //     try {
-  //       const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
-  //       const alarmMode = data.find(prop => prop.name === 'alarmMode')!.value;
-  //       callback(
-  //         null,
-  //         ['ON', 'ZONE'].includes(alarmMode as string)
-  //           ? SecuritySystemTargetState.AWAY_ARM
-  //           : SecuritySystemTargetState.DISARM
-  //       );
-  //     } catch (err) {
-  //       callback(err);
-  //     }
-  //   })
-  //   .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-  //     debug(`-> SET SecuritySystemTargetState value="${value}" for id="${id}"`);
-  //     callback();
-  //   });
 };
 
 export const updateSecuritySystem = (accessory: PlatformAccessory, updates: Record<string, unknown>[]) => {
