@@ -30,6 +30,9 @@ const zoneServices = new Map<number, Service>();
 const getCurrrentStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): number =>
   ['ON', 'ZONE'].includes(alarmMode) ? SecuritySystemCurrentState.AWAY_ARM : SecuritySystemCurrentState.DISARMED;
 
+const getTargetStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): number =>
+  ['ON', 'ZONE'].includes(alarmMode) ? SecuritySystemTargetState.AWAY_ARM : SecuritySystemTargetState.DISARM;
+
 export const setupSecuritySystem = async (accessory: PlatformAccessory, controller: TydomController): Promise<void> => {
   const {UUID: id, context} = accessory;
   const {client} = controller;
@@ -61,7 +64,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
         const alarmMode = getPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
-        callback(null, getCurrrentStateForValue(alarmMode));
+        callback(null, getTargetStateForValue(alarmMode));
       } catch (err) {
         callback(err);
       }
