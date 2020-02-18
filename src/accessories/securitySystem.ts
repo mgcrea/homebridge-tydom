@@ -17,7 +17,8 @@ import {
   addAccessoryService,
   getPropValue,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
+  setupAccessoryInformationService,
+  addAccessoryServiceWithSubtype
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
@@ -80,8 +81,14 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     if (zoneState === 'UNUSED') {
       continue;
     }
-    const newService = new Service.Switch(`Zone ${zoneIndex}`, `zone_${zoneIndex}`);
-    const zoneService = addAccessoryService(accessory, newService, `Zone ${zoneIndex}`);
+    const zoneService = addAccessoryServiceWithSubtype(
+      accessory,
+      Service.Switch,
+      `Zone ${zoneIndex}`,
+      `zone_${zoneIndex}`,
+      true
+    );
+    debug(`Adding new Service.Switch for zoneIndex="${zoneIndex}" for id="${id}"`);
     zoneServices.set(zoneIndex, zoneService);
     zoneService.linkedServices = [service];
     zoneService

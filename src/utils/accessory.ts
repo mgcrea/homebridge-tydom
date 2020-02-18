@@ -27,6 +27,23 @@ export const addAccessoryService = (
   return accessory.addService(service, name);
 };
 
+export const addAccessoryServiceWithSubtype = (
+  accessory: PlatformAccessory,
+  service: typeof Service,
+  name: string,
+  subtype: string,
+  removeExisting: boolean = false
+) => {
+  const existingService = accessory.getServiceByUUIDAndSubType(service, subtype);
+  if (existingService) {
+    if (!removeExisting) {
+      return existingService;
+    }
+    accessory.removeService(existingService);
+  }
+  return accessory.addService(service, name, subtype);
+};
+
 type TydomAccessorySetup = (accessory: PlatformAccessory, controller: TydomController) => void | Promise<void>;
 
 export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAccessorySetup => {
