@@ -1,7 +1,7 @@
 import {
   Characteristic,
   CharacteristicEventTypes,
-  CharacteristicSetCallback,
+  // CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback,
   Service
