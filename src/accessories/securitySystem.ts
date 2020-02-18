@@ -23,7 +23,7 @@ import debug from 'src/utils/debug';
 import assert from 'src/utils/assert';
 import {getTydomDeviceData} from 'src/utils/tydom';
 
-const {SecuritySystemTargetState, SecuritySystemCurrentState} = Characteristic;
+const {/* SecuritySystemTargetState, */ SecuritySystemCurrentState} = Characteristic;
 
 const zoneServices = new Map<number, Service>();
 
