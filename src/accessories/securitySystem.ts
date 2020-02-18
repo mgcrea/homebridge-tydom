@@ -119,6 +119,7 @@ export const updateSecuritySystem = (accessory: PlatformAccessory, updates: Reco
         assert(service, `Unexpected missing service "Service.SecuritySystem" in accessory`);
         const alarmMode = update!.value as TydomDeviceSecuritySystemAlarmMode;
         service.getCharacteristic(SecuritySystemCurrentState)!.updateValue(getCurrrentStateForValue(alarmMode));
+        service.getCharacteristic(SecuritySystemTargetState)!.updateValue(getTargetStateForValue(alarmMode));
         return;
       }
       case 'zone1State':
