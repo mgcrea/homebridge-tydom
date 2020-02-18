@@ -60,9 +60,10 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     if (zoneState === 'UNUSED') {
       continue;
     }
-    const zoneService = addAccessoryService(accessory, Service.Switch, `Zone ${zoneIndex}`, true);
+    const zoneService = addAccessoryService(accessory, Service.Switch, `Zone ${zoneIndex}`, false);
     zoneServices.set(zoneIndex, zoneService);
-    zoneService.subtype = 'zone';
+    zoneService.linkedServices = [service];
+    zoneService.subtype = `zone_${zoneIndex}`;
     zoneService
       .getCharacteristic(Characteristic.On)!
       .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
@@ -74,11 +75,11 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         } catch (err) {
           callback(err);
         }
-      })
-      .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debug(`-> SET Zone${zoneIndex}On value="${value}" for id="${id}"`);
-        callback(null);
       });
+    // .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+    //   debug(`-> SET Zone${zoneIndex}On value="${value}" for id="${id}"`);
+    //   callback(null);
+    // });
   }
 
   // service
