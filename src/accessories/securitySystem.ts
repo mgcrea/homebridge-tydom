@@ -130,10 +130,13 @@ export const updateSecuritySystem = (accessory: PlatformAccessory, updates: Reco
       case 'zone6State':
       case 'zone7State':
       case 'zone8State': {
+        const zoneState = update!.value as TydomDeviceSecuritySystemZoneState;
+        if (zoneState === 'UNUSED') {
+          return;
+        }
         const zoneIndex = parseInt(name.match(/zone(\d+)State/)![1], 10);
         const service = zoneServices.get(zoneIndex);
         assert(service, `Unexpected missing service "Zone ${zoneIndex}" in accessory`);
-        const zoneState = update!.value as TydomDeviceSecuritySystemZoneState;
         service.getCharacteristic(Characteristic.On)!.updateValue(zoneState === 'ON');
         return;
       }
