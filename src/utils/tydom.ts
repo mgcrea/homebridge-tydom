@@ -1,5 +1,5 @@
 import TydomClient from 'tydom-client';
-import {TydomEndpointData} from 'src/typings/tydom';
+import {TydomEndpointData, TydomEndpointDataResponse} from 'src/typings/tydom';
 
 type DataOperation = {
   promise: Promise<TydomEndpointData> | null;
@@ -24,7 +24,12 @@ export const getTydomDeviceData = async (
       return promise as Promise<TydomEndpointData>;
     }
   }
-  const promise = client.get(uri) as Promise<TydomEndpointData>;
+  const promise = client.get(uri).then(res => {
+    if ((res as TydomEndpointDataResponse).data) {
+      return (res as TydomEndpointDataResponse).data;
+    }
+    return res;
+  }) as Promise<TydomEndpointData>;
   cacheMap.set(uri, {time: now, promise});
   return promise;
 };

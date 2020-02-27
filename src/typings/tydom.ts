@@ -30,6 +30,7 @@ export type TydomDataElement<K = string, V = AnyTydomDataValue> = {
   value: V;
 };
 
+export type TydomEndpointDataResponse = {error: number; data: TydomDataElement[]};
 export type TydomEndpointData = TydomDataElement[];
 
 export type TydomDeviceThermostatData = [
