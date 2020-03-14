@@ -43,6 +43,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
   assert(serviceOnCharacteristic);
   const serviceBrightnessCharacteristic = service.getCharacteristic(Characteristic.Brightness);
   assert(serviceBrightnessCharacteristic);
+  const latestBrightness = {current: 100};
 
   const debouncedSetLevel = debounce(async (value: number) => {
     return await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
@@ -58,7 +59,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('On', {name, id, value});
       if (typeof value === 'boolean') {
-        const nextValue = value ? (serviceBrightnessCharacteristic.value as number) || 100 : 0;
+        const nextValue = value ? latestBrightness.current : 0;
         await debouncedSetLevel(nextValue);
         debugSetResult('On', {name, id, value: nextValue});
       }
@@ -85,6 +86,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('Brightness', {name, id, value});
       const nextValue = asNumber(value);
+      latestBrightness.current = nextValue;
       await debouncedSetLevel(nextValue);
       debugSetResult('Brightness', {name, id, value: nextValue});
       callback();

@@ -15,7 +15,7 @@ export const dir = (...args: unknown[]) => {
 
 export const debugSet = (characteristic: string, {name, id, value}: {name: string; id: string; value: unknown}) => {
   debug(
-    `${chalk.bold.red('<SET>')}:${chalk.blue(characteristic)} value=${chalk.yellow(
+    `${chalk.bold.red('SET>')}:${chalk.blue(characteristic)} value=${chalk.yellow(
       value
     )} for device named=${chalkString(name)} with id=${chalkString(id)} ...`
   );
@@ -26,7 +26,7 @@ export const debugSetResult = (
   {name, id, value}: {name: string; id: string; value: unknown}
 ) => {
   debug(
-    `${chalk.bold.red('<SET/>')}:${chalk.blue(characteristic)} value=${chalk.yellow(
+    `${chalk.bold.red('<SET')}:${chalk.blue(characteristic)} value=${chalk.yellow(
       value
     )} for device named=${chalkString(name)} with id=${chalkString(id)}`
   );
@@ -34,7 +34,7 @@ export const debugSetResult = (
 
 export const debugGet = (characteristic: string, {name, id}: {name: string; id: string}) => {
   debug(
-    `${chalk.bold.green('<GET>')}:${chalk.blue(characteristic)} device named=${chalkString(name)} with id=${chalkString(
+    `${chalk.bold.green('GET>')}:${chalk.blue(characteristic)} device named=${chalkString(name)} with id=${chalkString(
       id
     )} ...`
   );
@@ -45,8 +45,8 @@ export const debugGetResult = (
   {name, id, value}: {name: string; id: string; value: unknown}
 ) => {
   debug(
-    `${chalk.bold.green('<GET/>')}:${chalk.blue(characteristic)} value=${chalk.yellow(
-      value
-    )} device named=${chalkString(name)} with id=${chalkString(id)} ...`
+    `${chalk.bold.green('<GET')}:${chalk.blue(characteristic)} value=${chalk.yellow(value)} device named=${chalkString(
+      name
+    )} with id=${chalkString(id)} ...`
   );
 };
