@@ -35,7 +35,7 @@ const getTargetStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): 
   ['ON', 'ZONE'].includes(alarmMode) ? SecuritySystemTargetState.AWAY_ARM : SecuritySystemTargetState.DISARM;
 
 export const setupSecuritySystem = async (accessory: PlatformAccessory, controller: TydomController): Promise<void> => {
-  const {UUID: id, context} = accessory;
+  const {displayName: name, UUID: id, context} = accessory;
   const {client} = controller;
 
   const {deviceId, endpointId} = context;
