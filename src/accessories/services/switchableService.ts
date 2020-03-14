@@ -7,12 +7,12 @@ import {
   Service
 } from 'hap-nodejs';
 import TydomController from 'src/controller';
-import {PlatformAccessory, TydomAccessoryContext} from 'src/typings/homebridge';
+import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';
-import debug from 'src/utils/debug';
-import assert from 'src/utils/assert';
-import {getTydomDeviceData} from 'src/utils/tydom';
 import {addAccessoryService} from 'src/utils/accessory';
+import assert from 'src/utils/assert';
+import debug from 'src/utils/debug';
+import {getTydomDeviceData} from 'src/utils/tydom';
 
 export const addAccessorySwitchableService = (
   accessory: PlatformAccessory,
@@ -20,7 +20,7 @@ export const addAccessorySwitchableService = (
   serviceClass: typeof Service
 ): Service => {
   const {displayName: name, UUID: id, context} = accessory;
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
+  const {deviceId, endpointId} = context;
   const {client} = controller;
 
   const service = addAccessoryService(accessory, serviceClass, `${accessory.displayName}`, true);

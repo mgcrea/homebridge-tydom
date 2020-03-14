@@ -8,7 +8,7 @@ import {
   NodeCallback,
   Service
 } from 'hap-nodejs';
-import TydomController, {TydomAccessoryContext} from 'src/controller';
+import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomDeviceThermostatData} from 'src/typings/tydom';
 import {
@@ -23,7 +23,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
   const {UUID: id, context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
+  const {deviceId, endpointId} = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 

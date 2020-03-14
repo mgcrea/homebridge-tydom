@@ -6,7 +6,7 @@ import {
   NodeCallback,
   Service
 } from 'hap-nodejs';
-import TydomController, {TydomAccessoryContext} from 'src/controller';
+import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {
   addAccessoryService,
@@ -19,7 +19,7 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
   const {displayName: name, UUID: id, context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
+  const {deviceId, endpointId} = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 

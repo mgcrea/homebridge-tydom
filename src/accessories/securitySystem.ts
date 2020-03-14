@@ -6,7 +6,7 @@ import {
   NodeCallback,
   Service
 } from 'hap-nodejs';
-import TydomController, {TydomAccessoryContext} from 'src/controller';
+import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {
   TydomDeviceSecuritySystemAlarmMode,
@@ -15,10 +15,10 @@ import {
 } from 'src/typings/tydom';
 import {
   addAccessoryService,
+  addAccessoryServiceWithSubtype,
   getPropValue,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  addAccessoryServiceWithSubtype
+  setupAccessoryInformationService
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
@@ -38,7 +38,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   const {UUID: id, context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
+  const {deviceId, endpointId} = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
