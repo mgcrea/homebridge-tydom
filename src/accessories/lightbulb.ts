@@ -45,7 +45,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
   assert(serviceBrightnessCharacteristic);
 
   const debouncedSetLevel = debounce(async (value: number) => {
-    await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+    return await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
       {
         name: 'level',
         value
