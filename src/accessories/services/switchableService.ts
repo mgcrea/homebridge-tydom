@@ -11,7 +11,7 @@ import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';
 import {addAccessoryService} from 'src/utils/accessory';
 import assert from 'src/utils/assert';
-import debug from 'src/utils/debug';
+import debug, {debugGet, debugSet} from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
 
 export const addAccessorySwitchableService = (
@@ -31,7 +31,7 @@ export const addAccessorySwitchableService = (
   serviceOnCharacteristic.on(
     CharacteristicEventTypes.SET,
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debug(`Setting device named="${name}" with id="${id}" value="${value}" ...`);
+      debugSet('On', {name, id, value});
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
         {
           name: 'level',
@@ -44,7 +44,7 @@ export const addAccessorySwitchableService = (
   );
 
   serviceOnCharacteristic.on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-    debug(`Getting device named="${name}" with id="${id}" value ...`);
+    debugGet('On', {name, id});
     try {
       const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
       const level = data.find(prop => prop.name === 'level');

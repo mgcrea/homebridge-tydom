@@ -15,7 +15,7 @@ import {
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
-import debug from 'src/utils/debug';
+import {debugGet, debugSet} from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
 
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
@@ -33,7 +33,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
   (service.getCharacteristic(CurrentPosition) as Characteristic).on(
     CharacteristicEventTypes.GET,
     async (callback: NodeCallback<CharacteristicValue>) => {
-      debug(`-> GET CurrentPosition for "${id}"`);
+      debugGet('CurrentPosition', {name, id});
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceShutterData;
         const position = data.find(prop => prop.name === 'position')!.value;
@@ -46,7 +46,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
 
   (service.getCharacteristic(TargetPosition) as Characteristic)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debug(`-> GET TargetPosition for "${id}"`);
+      debugGet('TargetPosition', {name, id});
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceShutterData;
         const position = data.find(prop => prop.name === 'position')!.value;
@@ -56,7 +56,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debug(`-> SET TargetPosition value="${value}" for id="${id}"`);
+      debugSet('TargetPosition', {name, id, value});
       const tydomValue = Math.round(value as number);
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
         {

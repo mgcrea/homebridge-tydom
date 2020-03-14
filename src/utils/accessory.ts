@@ -11,6 +11,8 @@ import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
 import {TydomEndpointData, AnyTydomDataValue} from 'src/typings/tydom';
 
+export const asNumber = (maybeNumber: unknown) => parseInt(`${maybeNumber}`, 10);
+
 export const addAccessoryService = (
   accessory: PlatformAccessory,
   service: Service | typeof Service,

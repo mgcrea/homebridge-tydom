@@ -21,7 +21,7 @@ import {
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
-import debug from 'src/utils/debug';
+import debug, {debugGet, debugSet} from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
 
 const {SecuritySystemTargetState, SecuritySystemCurrentState} = Characteristic;
@@ -48,7 +48,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   service
     .getCharacteristic(SecuritySystemCurrentState)!
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debug(`-> GET SecuritySystemCurrentState for "${id}"`);
+      debugGet('SecuritySystemCurrentState', {name, id});
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
         const alarmMode = getPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
@@ -61,7 +61,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   service
     .getCharacteristic(SecuritySystemTargetState)!
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debug(`-> GET SecuritySystemTargetState for "${id}"`);
+      debugGet('SecuritySystemTargetState', {name, id});
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
         const alarmMode = getPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
@@ -71,7 +71,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debug(`-> SET SecuritySystemTargetState value="${value}" for id="${id}"`);
+      debugSet('SecuritySystemTargetState', {name, id, value});
       callback(null);
     });
 
@@ -94,7 +94,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     zoneService
       .getCharacteristic(Characteristic.On)!
       .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-        debug(`-> GET Zone${zoneIndex}On for "${id}"`);
+        debugGet(`Zone${zoneIndex}On`, {name, id});
         try {
           const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
           const zoneState = getPropValue<TydomDeviceSecuritySystemZoneState>(data, `zone${zoneIndex}State`);
@@ -104,7 +104,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         }
       })
       .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debug(`-> SET Zone${zoneIndex}On value="${value}" for id="${id}"`);
+        debugSet(`Zone${zoneIndex}On`, {name, id, value});
         callback(null);
       });
   }

@@ -8,10 +8,15 @@ import {
 } from 'hap-nodejs';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
-import {setupAccessoryIdentifyHandler, setupAccessoryInformationService} from 'src/utils/accessory';
+import {
+  setupAccessoryIdentifyHandler,
+  setupAccessoryInformationService,
+  addAccessoryService,
+  asNumber
+} from 'src/utils/accessory';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 import {find} from 'lodash';
-import debug from 'src/utils/debug';
+import debug, {debugSet, debugGet} from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
 import {TydomEndpointData} from 'src/typings/tydom';
 import assert from 'src/utils/assert';
@@ -20,24 +25,58 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   // Add the actual accessory Service
-  const service = addAccessorySwitchableService(accessory, controller, Service.Lightbulb);
 
   const {displayName: name, UUID: id, context} = accessory;
   const {deviceId, endpointId, metadata} = context;
   const {client} = controller;
-
   const levelMeta = find(metadata, {name: 'level'});
+
   // Not dimmable
   if (levelMeta?.step === 100) {
+    addAccessorySwitchableService(accessory, controller, Service.Lightbulb);
     return;
   }
 
-  const serviceBrightnessCharacteristic = service.getCharacteristic(Characteristic.Brightness)!;
+  // Dimmable
+  const service = addAccessoryService(accessory, Service.Lightbulb, `${accessory.displayName}`, true);
+  const serviceOnCharacteristic = service.getCharacteristic(Characteristic.On);
+  assert(serviceOnCharacteristic);
+  const serviceBrightnessCharacteristic = service.getCharacteristic(Characteristic.Brightness);
+  assert(serviceBrightnessCharacteristic);
+
+  serviceOnCharacteristic.on(
+    CharacteristicEventTypes.SET,
+    async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+      debugSet('On', {name, id, value});
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: 'level',
+          value: value ? asNumber(serviceBrightnessCharacteristic.getValue()) || 100 : 0
+        }
+      ]);
+      debug(`Sucessfully set device named="${name}" with id="${id}" value="${value}" ...`);
+      callback();
+    }
+  );
+
+  serviceOnCharacteristic.on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    debugGet('On', {name, id});
+    try {
+      const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
+      const level = data.find(prop => prop.name === 'level');
+      assert(level && level.value !== undefined, 'Missing `level.value` on data item');
+      const nextValue = level.value > 0;
+      debug(`Sucessfully got device named="${name}" with id="${id}" value="${nextValue}"`);
+      callback(null, nextValue);
+    } catch (err) {
+      callback(err);
+    }
+  });
 
   serviceBrightnessCharacteristic.on(
     CharacteristicEventTypes.SET,
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debug(`Setting device named="${name}" with id="${id}" value="${value}" ...`);
+      debugSet('Brightness', {name, id, value});
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
         {
           name: 'level',
@@ -52,7 +91,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
   serviceBrightnessCharacteristic.on(
     CharacteristicEventTypes.GET,
     async (callback: NodeCallback<CharacteristicValue>) => {
-      debug(`Getting device named="${name}" with id="${id}" value ...`);
+      debugGet('Brightness', {name, id});
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
         const level = data.find(prop => prop.name === 'level');
@@ -70,24 +109,26 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
 export const updateLightbulb = (accessory: PlatformAccessory, updates: Record<string, unknown>[]) => {
   const {context} = accessory;
   const {metadata} = context;
-
-  updateAccessorySwitchableService(accessory, updates, Service.Lightbulb);
-
   const levelMeta = find(metadata, {name: 'level'});
   // Not dimmable
   if (levelMeta?.step === 100) {
+    updateAccessorySwitchableService(accessory, updates, Service.Lightbulb);
     return;
   }
-
+  // Dimmable
   updates.forEach(update => {
     const {name, value} = update;
     switch (name) {
       case 'level': {
         const service = accessory.getService(Service.Lightbulb);
         assert(service, `Unexpected missing service "${Service.Lightbulb} in accessory`);
+        const valueAsNumber = asNumber(value);
+        const serviceOnCharacteristic = service.getCharacteristic(Characteristic.On);
+        assert(serviceOnCharacteristic);
+        serviceOnCharacteristic.updateValue(valueAsNumber > 0);
         const serviceBrightnessCharacteristic = service.getCharacteristic(Characteristic.Brightness);
         assert(serviceBrightnessCharacteristic);
-        serviceBrightnessCharacteristic.updateValue(parseInt(`${value}`, 10));
+        serviceBrightnessCharacteristic.updateValue(valueAsNumber);
         return;
       }
       default:
