@@ -1,25 +1,25 @@
 import {
-  Service,
   Characteristic,
   CharacteristicEventTypes,
-  CharacteristicValue,
   CharacteristicSetCallback,
-  NodeCallback
+  CharacteristicValue,
+  NodeCallback,
+  Service
 } from 'hap-nodejs';
+import {find} from 'lodash';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
-import {
-  setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  addAccessoryService,
-  asNumber
-} from 'src/utils/accessory';
-import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
-import {find} from 'lodash';
-import debug, {debugSet, debugGet} from 'src/utils/debug';
-import {getTydomDeviceData} from 'src/utils/tydom';
 import {TydomEndpointData} from 'src/typings/tydom';
+import {
+  addAccessoryService,
+  asNumber,
+  setupAccessoryIdentifyHandler,
+  setupAccessoryInformationService
+} from 'src/utils/accessory';
 import assert from 'src/utils/assert';
+import {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
+import {getTydomDeviceData} from 'src/utils/tydom';
+import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
 export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomController): void => {
   setupAccessoryInformationService(accessory, controller);
@@ -48,13 +48,6 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
     CharacteristicEventTypes.SET,
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('On', {name, id, value});
-      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: 'level',
-          value: value ? asNumber(serviceBrightnessCharacteristic.getValue()) || 100 : 0
-        }
-      ]);
-      debug(`Sucessfully set device named="${name}" with id="${id}" value="${value}" ...`);
       callback();
     }
   );
@@ -66,7 +59,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
       const level = data.find(prop => prop.name === 'level');
       assert(level && level.value !== undefined, 'Missing `level.value` on data item');
       const nextValue = level.value > 0;
-      debug(`Sucessfully got device named="${name}" with id="${id}" value="${nextValue}"`);
+      debugGetResult('On', {name, id, value: nextValue});
       callback(null, nextValue);
     } catch (err) {
       callback(err);
@@ -77,13 +70,14 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
     CharacteristicEventTypes.SET,
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('Brightness', {name, id, value});
+      const nextValue = asNumber(value);
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
         {
           name: 'level',
-          value: parseInt(`${value}`, 10)
+          value: nextValue
         }
       ]);
-      debug(`Sucessfully set device named="${name}" with id="${id}" value="${value}" ...`);
+      debugSetResult('On', {name, id, value: nextValue});
       callback();
     }
   );
@@ -96,8 +90,8 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
         const level = data.find(prop => prop.name === 'level');
         assert(level && level.value !== undefined, 'Missing `level.value` on data item');
-        const nextValue = parseInt(`${level.value}`, 10);
-        debug(`Sucessfully got device named="${name}" with id="${id}" value="${nextValue}"`);
+        const nextValue = asNumber(level.value);
+        debugGetResult('Brightness', {name, id, value: nextValue});
         callback(null, nextValue);
       } catch (err) {
         callback(err);
