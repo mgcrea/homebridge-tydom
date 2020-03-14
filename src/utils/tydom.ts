@@ -1,5 +1,7 @@
 import TydomClient from 'tydom-client';
-import {TydomEndpointData, TydomEndpointDataResponse} from 'src/typings/tydom';
+import {TydomEndpointData, TydomEndpointDataResponse, TydomMetaResponse, TydomConfigEndpoint} from 'src/typings/tydom';
+import {find} from 'lodash';
+import assert from 'src/utils/assert';
 
 type DataOperation = {
   promise: Promise<TydomEndpointData> | null;
@@ -32,4 +34,15 @@ export const getTydomDeviceData = async (
   }) as Promise<TydomEndpointData>;
   cacheMap.set(uri, {time: now, promise});
   return promise;
+};
+
+export const getEndpointDetailsfromMeta = (
+  {id_endpoint: endpointId, id_device: deviceId}: TydomConfigEndpoint,
+  meta: TydomMetaResponse
+) => {
+  const device = find(meta, {id: deviceId});
+  assert(device, `Device with id="${deviceId}" not found in Tydom meta`);
+  const details = find(device.endpoints, {id: endpointId});
+  assert(details, `Endpoint with id="${endpointId}" not found in device with id="${deviceId}" meta`);
+  return details;
 };

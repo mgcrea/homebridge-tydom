@@ -1,22 +1,14 @@
 import {EventEmitter} from 'events';
 import {Categories} from 'hap-nodejs';
 import {get} from 'lodash';
-import {TydomConfigResponse, TydomDeviceUpdateBody} from 'src/typings/tydom';
+import {TydomConfigResponse, TydomDeviceUpdateBody, TydomMetaResponse} from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomHttpMessage} from 'tydom-client/lib/utils/tydom';
 import {TydomPlatformConfig} from './platform';
-
-export type TydomAccessoryContext = {
-  name: string;
-  deviceId: number;
-  endpointId: number;
-  accessoryId: string;
-  manufacturer: string;
-  serialNumber: string;
-  model: string;
-};
+import {TydomAccessoryContext} from './typings/homebridge';
+import {getEndpointDetailsfromMeta} from './utils/tydom';
 
 export type ControllerDevicePayload = {
   name: string;
@@ -37,17 +29,6 @@ const SUPPORTED_CATEGORIES_MAP: Record<string, Categories> = {
   alarm: Categories.SECURITY_SYSTEM
 };
 const SUPPORTED_USAGES = Object.keys(SUPPORTED_CATEGORIES_MAP);
-
-// const getEndpointDetailsfromMeta = (
-//   {id_endpoint: endpointId, id_device: deviceId}: TydomConfigEndpoint,
-//   meta: TydomMetaResponse
-// ) => {
-//   const device = find(meta, {id: deviceId});
-//   assert(device, `Device with id="${deviceId}" not found in Tydom meta`);
-//   const details = find(device.endpoints, {id: endpointId});
-//   assert(details, `Endpoint with id="${endpointId}" not found in device with id="${deviceId}" meta`);
-//   return details;
-// };
 
 export default class TydomController extends EventEmitter {
   client: TydomClient;
@@ -90,12 +71,11 @@ export default class TydomController extends EventEmitter {
       return;
     }
     const config = (await this.client.get('/configs/file')) as TydomConfigResponse;
-    // const meta = (await this.client.get('/devices/meta')) as TydomMetaResponse;
+    const meta = (await this.client.get('/devices/meta')) as TydomMetaResponse;
     const {endpoints} = config;
     endpoints.forEach(endpoint => {
       const {id_endpoint: endpointId, id_device: deviceId, name} = endpoint;
-      // const {error, metadata} = getEndpointDetailsfromMeta(endpoint, meta);
-      // const signature = map(metadata, 'name');
+      const {metadata} = getEndpointDetailsfromMeta(endpoint, meta);
       const categoryFromSettings = get(settings, `${deviceId}.category`) as Categories | undefined;
       if (!categoryFromSettings && !SUPPORTED_USAGES.includes(endpoint.first_usage)) {
         debug(`Unsupported usage="${endpoint.first_usage}" for endpoint with id="${endpointId}"`);
@@ -109,6 +89,7 @@ export default class TydomController extends EventEmitter {
         const category = (categoryFromSettings || SUPPORTED_CATEGORIES_MAP[endpoint.first_usage]) as Categories;
         const context: TydomAccessoryContext = {
           name: nameFromSetting || name,
+          metadata,
           deviceId,
           endpointId,
           accessoryId,

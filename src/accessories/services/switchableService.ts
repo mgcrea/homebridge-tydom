@@ -6,8 +6,8 @@ import {
   NodeCallback,
   Service
 } from 'hap-nodejs';
-import TydomController, {TydomAccessoryContext} from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
+import TydomController from 'src/controller';
+import {PlatformAccessory, TydomAccessoryContext} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';
 import debug from 'src/utils/debug';
 import assert from 'src/utils/assert';

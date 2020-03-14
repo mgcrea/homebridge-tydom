@@ -11,10 +11,21 @@ export type TydomConfigResponse = {
   endpoints: TydomConfigEndpoint[];
 };
 
+export type TydomMetaElement = {
+  enum_values?: string[];
+  max?: number;
+  min?: number;
+  name: string;
+  permission: 'r' | 'w' | 'rw';
+  step?: number;
+  type: 'boolean' | 'string' | 'numeric';
+  unit?: 'boolean' | '%';
+};
+
 export type TydomMetaEndpoint = {
   id: number;
   error: number;
-  metadata: Record<string, unknown>[];
+  metadata: TydomMetaElement[];
 };
 
 export type TydomMetaResponse = Array<{

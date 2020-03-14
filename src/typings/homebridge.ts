@@ -1,5 +1,6 @@
 import Hap, {Accessory, Categories, Service} from 'hap-nodejs';
 import {EventEmitter} from 'events';
+import {TydomMetaElement} from './tydom';
 
 export interface HomebridgeApi extends EventEmitter {
   // _accessories: Record<string, unknown>;
@@ -27,10 +28,21 @@ export interface Platform {
   // accessories: () => Promise<unknown[]>;
 }
 
+export type TydomAccessoryContext = {
+  name: string;
+  metadata: TydomMetaElement[];
+  deviceId: number;
+  endpointId: number;
+  accessoryId: string;
+  manufacturer: string;
+  serialNumber: string;
+  model: string;
+};
+
 declare class PlatformAccessory extends EventEmitter {
   UUID: string;
   displayName: string;
-  context: Record<string, unknown>;
+  context: TydomAccessoryContext;
   category: Categories;
   _associatedHAPAccessory: Accessory;
   constructor(displayName: string, UUID: string, category?: Categories);

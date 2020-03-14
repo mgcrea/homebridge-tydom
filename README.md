@@ -82,6 +82,7 @@
 Did support the hardware that I had at home:
 
 - Lightbulb ([TYXIA 5610](https://www.deltadore.co.uk/home-automation/lighting-control/receiver-micromodule/tyxia-5610-ref-6351400), [TYXIA 6610](https://www.deltadore.co.uk/home-automation/lighting-control/receiver-switch/tyxia-6610-ref-6351376))
+- Dimmable Lightbulb ([TYXIA 5650](https://www.deltadore.co.uk/home-automation/lighting-control/receiver-micromodule/tyxia-5650-ref-6351414-ref-6351414)
 - Fan ([TYXIA 6610](https://www.deltadore.co.uk/home-automation/lighting-control/receiver-switch/tyxia-6610-ref-6351376))
 - Thermostat ([RF4890](https://www.deltadore.co.uk/home-automation/heating-control/receiver-micromodule/rf-4890-ref-6050615))
 - Switch ([TYXIA 4620](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-4620-ref-6351104))
