@@ -6,7 +6,7 @@ import {
   NodeCallback,
   Service
 } from 'hap-nodejs';
-import {find} from 'lodash';
+import {find, debounce} from 'lodash';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';
@@ -44,17 +44,23 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
   const serviceBrightnessCharacteristic = service.getCharacteristic(Characteristic.Brightness);
   assert(serviceBrightnessCharacteristic);
 
+  const debouncedSetLevel = debounce(async (value: number) => {
+    await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+      {
+        name: 'level',
+        value
+      }
+    ]);
+  }, 15);
+
   serviceOnCharacteristic.on(
     CharacteristicEventTypes.SET,
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('On', {name, id, value});
-      if (value === false) {
-        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-          {
-            name: 'level',
-            value: value ? 100 : 0
-          }
-        ]);
+      if (typeof value === 'boolean') {
+        const nextValue = value ? (serviceBrightnessCharacteristic.value as number) || 100 : 0;
+        await debouncedSetLevel(nextValue);
+        debugSetResult('On', {name, id, value: nextValue});
       }
       callback();
     }
@@ -79,12 +85,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('Brightness', {name, id, value});
       const nextValue = asNumber(value);
-      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: 'level',
-          value: nextValue
-        }
-      ]);
+      await debouncedSetLevel(nextValue);
       debugSetResult('Brightness', {name, id, value: nextValue});
       callback();
     }
