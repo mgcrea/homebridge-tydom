@@ -48,7 +48,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
     CharacteristicEventTypes.SET,
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('On', {name, id, value});
-      if (typeof value === 'boolean') {
+      if (value === false) {
         await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
           {
             name: 'level',
@@ -85,7 +85,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
           value: nextValue
         }
       ]);
-      debugSetResult('On', {name, id, value: nextValue});
+      debugSetResult('Brightness', {name, id, value: nextValue});
       callback();
     }
   );
