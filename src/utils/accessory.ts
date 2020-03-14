@@ -6,7 +6,7 @@ import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
 import {setupWindowCovering, updateWindowCovering} from 'src/accessories/windowCovering';
 import {setupSecuritySystem, updateSecuritySystem} from 'src/accessories/securitySystem';
 import TydomController from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
+import {PlatformAccessory, TydomAccessoryContext} from 'src/typings/homebridge';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
 import {TydomEndpointData, AnyTydomDataValue} from 'src/typings/tydom';

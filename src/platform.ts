@@ -1,7 +1,7 @@
 import {Categories} from 'hap-nodejs';
 import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
-import TydomController, {ControllerDevicePayload, ControllerUpdatePayload, TydomAccessoryContext} from './controller';
-import {HomebridgeApi, Platform, PlatformAccessory} from './typings/homebridge';
+import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from './controller';
+import {HomebridgeApi, Platform, PlatformAccessory, TydomAccessoryContext} from './typings/homebridge';
 import {getTydomAccessorySetup, getTydomAccessoryUpdate} from './utils/accessory';
 
 export type TydomPlatformConfig = {
