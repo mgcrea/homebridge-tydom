@@ -6,6 +6,7 @@ import {
   NodeCallback,
   Service
 } from 'hap-nodejs';
+import {HOMEBRIDGE_TYDOM_PIN} from 'src/config/env';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {
@@ -64,6 +65,12 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
 
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.SecuritySystem, `${accessory.displayName}`, true);
+  const pin = HOMEBRIDGE_TYDOM_PIN ? Buffer.from(HOMEBRIDGE_TYDOM_PIN, 'base64').toString('ascii') : settings.pin;
+  if (!pin) {
+    controller.log.warn(
+      `Missing pin for device securitySystem, add either {"settings": {"${deviceId}": {"pin": "123456"}}} or HOMEBRIDGE_TYDOM_PIN env var (base64 encoded)`
+    );
+  }
 
   service
     .getCharacteristic(SecuritySystemCurrentState)!
@@ -92,10 +99,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('SecuritySystemTargetState', {name, id, value});
-      if (!settings.pin) {
-        controller.log.warn(
-          `Missing pin for device securitySystem, add {"settings": {"${deviceId}": {"pin": "123456"}}}`
-        );
+      if (!pin) {
         callback(null);
         return;
       }
@@ -103,7 +107,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         const nextValue = value === SecuritySystemTargetState.DISARM ? 'OFF' : 'ON';
         await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=alarmCmd`, {
           value: nextValue,
-          pwd: settings.pin
+          pwd: pin
         });
         debugSetResult('SecuritySystemTargetState', {name, id, value: nextValue});
       }
@@ -113,7 +117,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         if (Array.isArray(targetZones) && targetZones.length > 0) {
           await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
             value: nextValue,
-            pwd: settings.pin,
+            pwd: pin,
             zones: targetZones
           });
         }
@@ -152,16 +156,13 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       })
       .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
         debugSet(`Zone_${zoneIndex}_On`, {name, id, value});
-        if (!settings.pin) {
-          controller.log.warn(
-            `Missing pin for device securitySystem, add {"settings": {"${deviceId}": {"pin": "123456"}}}`
-          );
+        if (!pin) {
           callback(null);
           return;
         }
         await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
           value: value ? 'ON' : 'OFF',
-          pwd: settings.pin,
+          pwd: pin,
           zones: [zoneIndex]
         });
         callback(null);

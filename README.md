@@ -45,8 +45,7 @@
   "private": true,
   "description": "This file keeps track of which plugins should be installed.",
   "dependencies": {
-    "homebridge-dummy": "^0.4.0",
-    "homebridge-tydom": "^0.6.6"
+    "homebridge-tydom": "^0.8.1"
   }
 }
 ```
