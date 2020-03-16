@@ -22,6 +22,7 @@ import {
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
+import {decode} from 'src/utils/buffer';
 import debug, {debugGet, debugSet, debugSetResult} from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
 
@@ -65,7 +66,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
 
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.SecuritySystem, `${accessory.displayName}`, true);
-  const pin = HOMEBRIDGE_TYDOM_PIN ? Buffer.from(HOMEBRIDGE_TYDOM_PIN, 'base64').toString('ascii') : settings.pin;
+  const pin = HOMEBRIDGE_TYDOM_PIN ? decode(HOMEBRIDGE_TYDOM_PIN) : settings.pin;
   if (!pin) {
     controller.log.warn(
       `Missing pin for device securitySystem, add either {"settings": {"${deviceId}": {"pin": "123456"}}} or HOMEBRIDGE_TYDOM_PIN env var (base64 encoded)`
