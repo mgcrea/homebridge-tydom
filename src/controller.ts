@@ -76,7 +76,8 @@ export default class TydomController extends EventEmitter {
     endpoints.forEach(endpoint => {
       const {id_endpoint: endpointId, id_device: deviceId, name} = endpoint;
       const {metadata} = getEndpointDetailsfromMeta(endpoint, meta);
-      const categoryFromSettings = get(settings, `${deviceId}.category`) as Categories | undefined;
+      const deviceSettings = settings[deviceId] || {};
+      const categoryFromSettings = deviceSettings.category as Categories | undefined;
       if (includes && includes.length && !includes.includes(`${deviceId}`)) {
         return;
       }
@@ -93,6 +94,7 @@ export default class TydomController extends EventEmitter {
         const context: TydomAccessoryContext = {
           name: nameFromSetting || name,
           metadata,
+          settings: deviceSettings,
           deviceId,
           endpointId,
           accessoryId,

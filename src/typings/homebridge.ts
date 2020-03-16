@@ -31,6 +31,7 @@ export interface Platform {
 export type TydomAccessoryContext = {
   name: string;
   metadata: TydomMetaElement[];
+  settings: Record<string, unknown>;
   deviceId: number;
   endpointId: number;
   accessoryId: string;

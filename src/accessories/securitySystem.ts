@@ -21,24 +21,44 @@ import {
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
-import debug, {debugGet, debugSet} from 'src/utils/debug';
+import debug, {debugGet, debugSet, debugSetResult} from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
+
+type Zones = {
+  stay?: number[];
+  night?: number[];
+};
 
 const {SecuritySystemTargetState, SecuritySystemCurrentState} = Characteristic;
 
 const zoneServices = new Map<number, Service>();
 
-const getCurrrentStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): number =>
-  ['ON', 'ZONE'].includes(alarmMode) ? SecuritySystemCurrentState.AWAY_ARM : SecuritySystemCurrentState.DISARMED;
+const getCurrrentStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): number => {
+  if (alarmMode === 'ON') {
+    return SecuritySystemCurrentState.AWAY_ARM;
+  }
+  if (alarmMode === 'ZONE') {
+    return SecuritySystemCurrentState.NIGHT_ARM;
+  }
+  return SecuritySystemCurrentState.DISARMED;
+};
 
-const getTargetStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): number =>
-  ['ON', 'ZONE'].includes(alarmMode) ? SecuritySystemTargetState.AWAY_ARM : SecuritySystemTargetState.DISARM;
+const getTargetStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): number => {
+  if (alarmMode === 'ON') {
+    return SecuritySystemTargetState.AWAY_ARM;
+  }
+  if (alarmMode === 'ZONE') {
+    return SecuritySystemTargetState.NIGHT_ARM;
+  }
+  return SecuritySystemTargetState.DISARM;
+};
 
 export const setupSecuritySystem = async (accessory: PlatformAccessory, controller: TydomController): Promise<void> => {
   const {displayName: name, UUID: id, context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId} = context;
+  const {deviceId, endpointId, settings} = context;
+  const zones = (settings.zones || {}) as Zones;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -72,6 +92,33 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('SecuritySystemTargetState', {name, id, value});
+      if (!settings.pin) {
+        controller.log.warn(
+          `Missing pin for device securitySystem, add {"settings": {"${deviceId}": {"pin": "123456"}}}`
+        );
+        callback(null);
+        return;
+      }
+      if ([SecuritySystemTargetState.AWAY_ARM, SecuritySystemTargetState.DISARM].includes(value as number)) {
+        const nextValue = value === SecuritySystemTargetState.DISARM ? 'OFF' : 'ON';
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=alarmCmd`, {
+          value: nextValue,
+          pwd: settings.pin
+        });
+        debugSetResult('SecuritySystemTargetState', {name, id, value: nextValue});
+      }
+      if ([SecuritySystemTargetState.STAY_ARM, SecuritySystemTargetState.NIGHT_ARM].includes(value as number)) {
+        const nextValue = value === SecuritySystemTargetState.DISARM ? 'OFF' : 'ON';
+        const targetZones = value === SecuritySystemTargetState.STAY_ARM ? zones.stay : zones.night;
+        if (Array.isArray(targetZones) && targetZones.length > 0) {
+          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
+            value: nextValue,
+            pwd: settings.pin,
+            zones: targetZones
+          });
+        }
+        debugSetResult('SecuritySystemTargetState', {name, id, value: nextValue});
+      }
       callback(null);
     });
 
@@ -94,7 +141,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     zoneService
       .getCharacteristic(Characteristic.On)!
       .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-        debugGet(`Zone${zoneIndex}On`, {name, id});
+        debugGet(`Zone_${zoneIndex}_On`, {name, id});
         try {
           const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
           const zoneState = getPropValue<TydomDeviceSecuritySystemZoneState>(data, `zone${zoneIndex}State`);
@@ -104,7 +151,19 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         }
       })
       .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(`Zone${zoneIndex}On`, {name, id, value});
+        debugSet(`Zone_${zoneIndex}_On`, {name, id, value});
+        if (!settings.pin) {
+          controller.log.warn(
+            `Missing pin for device securitySystem, add {"settings": {"${deviceId}": {"pin": "123456"}}}`
+          );
+          callback(null);
+          return;
+        }
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
+          value: value ? 'ON' : 'OFF',
+          pwd: settings.pin,
+          zones: [zoneIndex]
+        });
         callback(null);
       });
   }
@@ -145,3 +204,18 @@ export const updateSecuritySystem = (accessory: PlatformAccessory, updates: Reco
     }
   });
 };
+
+/*
+{
+  "name": "alarmState",
+  "type": "string",
+  "permission": "r",
+  "enum_values": ["OFF", "DELAYED", "ON", "QUIET"]
+},
+{
+  "name": "alarmMode",
+  "type": "string",
+  "permission": "r",
+  "enum_values": ["OFF", "ON", "TEST", "ZONE", "MAINTENANCE"]
+}
+*/
