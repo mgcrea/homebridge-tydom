@@ -66,7 +66,7 @@ export default class TydomController extends EventEmitter {
     return `tydom:${username.slice(6)}:accessories:${deviceId}`;
   }
   async scan() {
-    const {hostname, username, settings, includes} = this.config;
+    const {hostname, username, settings = {}, includes} = this.config;
     try {
       await this.client.connect();
     } catch (err) {
