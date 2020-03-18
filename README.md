@@ -74,8 +74,7 @@
 
 For your password, you can also use an environment variable `HOMEBRIDGE_TYDOM_PASSWORD` with the base64 encoded value of your password (might be safer than having it inside your `config.json`).
 
-> Example: `HOMEBRIDGE_TYDOM_PASSWORD=Zm9vYmFyYmF6` for a `foobarbaz` password
-> `echo -n "foobarbaz" | base64`
+> Example: `HOMEBRIDGE_TYDOM_PASSWORD=Zm9vYmFyYmF6` for a `foobarbaz` password (`echo -n "foobarbaz" | base64`)
 
 #### SecuritySystem
 
