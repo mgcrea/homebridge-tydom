@@ -60,6 +60,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   const {client} = controller;
 
   const {deviceId, endpointId, settings} = context;
+  const zones = (settings.zones || []) as string[];
   const aliases = (settings.aliases || {}) as ZoneAliases;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
@@ -136,7 +137,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     const zoneService = addAccessoryServiceWithSubtype(
       accessory,
       Service.Switch,
-      `Zone ${zoneIndex}`,
+      zones[zoneIndex] || `Zone ${zoneIndex}`,
       `zone_${zoneIndex}`,
       true
     );

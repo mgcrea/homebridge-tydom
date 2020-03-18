@@ -114,6 +114,20 @@ You can either add a `pin` field:
 
 Or you can also use an environment variable `HOMEBRIDGE_TYDOM_PIN` with the base64 encoded value of your pin (might be safer than having it inside your `config.json`).
 
+2. You can optionnaly rename zones (default is `Zone 1`, `Zone 2`, etc.),
+
+```json
+{
+  "platforms": [
+    {
+      "settings": {
+        "1521931577": {"zones": ["1st Floor", "Ground Floor", "Garden"]}
+      }
+    }
+  ]
+}
+```
+
 #### Category overrides (eg. Fan)
 
 You can override categories of devices (eg. some light switch used to manage a fan)
