@@ -89,7 +89,7 @@ As HomeKit security system has 3 active levels: `stay`, `night`, `away` you can 
   "platforms": [
     {
       "settings": {
-        "1521931577": {"zones": {"stay": [3], "night": [2, 3]}}
+        "1521931577": {"aliases": {"stay": [3], "night": [2, 3]}}
       }
     }
   ]
@@ -105,7 +105,7 @@ You can either add a `pin` field:
   "platforms": [
     {
       "settings": {
-        "1521931577": {"pin": "123456", "zones": {"stay": [3], "night": [2, 3]}}
+        "1521931577": {"pin": "123456", "aliases": {"stay": [3], "night": [2, 3]}}
       }
     }
   ]

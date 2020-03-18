@@ -26,7 +26,7 @@ import {decode} from 'src/utils/buffer';
 import debug, {debugGet, debugSet, debugSetResult} from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
 
-type Zones = {
+type ZoneAliases = {
   stay?: number[];
   night?: number[];
 };
@@ -60,7 +60,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   const {client} = controller;
 
   const {deviceId, endpointId, settings} = context;
-  const zones = (settings.zones || {}) as Zones;
+  const aliases = (settings.aliases || {}) as ZoneAliases;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -114,7 +114,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       }
       if ([SecuritySystemTargetState.STAY_ARM, SecuritySystemTargetState.NIGHT_ARM].includes(value as number)) {
         const nextValue = value === SecuritySystemTargetState.DISARM ? 'OFF' : 'ON';
-        const targetZones = value === SecuritySystemTargetState.STAY_ARM ? zones.stay : zones.night;
+        const targetZones = value === SecuritySystemTargetState.STAY_ARM ? aliases.stay : aliases.night;
         if (Array.isArray(targetZones) && targetZones.length > 0) {
           await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
             value: nextValue,
