@@ -74,6 +74,8 @@
 
 For your password, you can also use an environment variable `HOMEBRIDGE_TYDOM_PASSWORD` with the base64 encoded value of your password (might be safer than having it inside your `config.json`).
 
+> Example: `HOMEBRIDGE_TYDOM_PASSWORD=Zm9vYmFyYmF6` for a `foobarbaz` password (`echo -n "foobarbaz" | base64`)
+
 #### SecuritySystem
 
 You can also manage your TYXAL+ security system from HomeKit, but it requires your alarm pin code:
