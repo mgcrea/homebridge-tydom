@@ -171,6 +171,13 @@ You can also use your local tydom IP (eg `192.168.0.X`) for `hostname`, however:
 
 - The `settings` field enables you to override the name or homekit category of your Tydom device (check homebridge log for the device ids).
 
+You can also use the following environment variables (base64 encoded values)
+
+| **Env**                   | **Description** |
+| ------------------------- | --------------- |
+| HOMEBRIDGE_TYDOM_PASSWORD | Tydom password  |
+| HOMEBRIDGE_TYDOM_PIN      | Tyxal+ pin      |
+
 ### Debug
 
 This library uses [debug](https://www.npmjs.com/package/debug) to provide high verbosity logs, just pass the following environment:
