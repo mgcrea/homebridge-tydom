@@ -114,7 +114,7 @@ You can either add a `pin` field:
 
 Or you can also use an environment variable `HOMEBRIDGE_TYDOM_PIN` with the base64 encoded value of your pin (might be safer than having it inside your `config.json`).
 
-2. You can optionnaly rename zones (default is `Zone 1`, `Zone 2`, etc.),
+You can optionnaly rename zones (default is `Zone 1`, `Zone 2`, etc.),
 
 ```json
 {
