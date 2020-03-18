@@ -30,6 +30,7 @@ const SUPPORTED_CATEGORIES_MAP: Record<string, Categories> = {
   shutter: Categories.WINDOW_COVERING,
   alarm: Categories.SECURITY_SYSTEM
 };
+
 const SUPPORTED_USAGES = Object.keys(SUPPORTED_CATEGORIES_MAP);
 
 export default class TydomController extends EventEmitter {

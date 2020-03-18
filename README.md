@@ -45,7 +45,7 @@
   "private": true,
   "description": "This file keeps track of which plugins should be installed.",
   "dependencies": {
-    "homebridge-tydom": "^0.8.1"
+    "homebridge-tydom": "^0.8.4"
   }
 }
 ```
@@ -66,15 +66,71 @@
       "platform": "Tydom",
       "hostname": "mediation.tydom.com",
       "username": "001A25123456",
-      "password": "YourPassw0rd",
+      "password": "YourPassw0rd"
+    }
+  ]
+}
+```
+
+For your password, you can also use an environment variable `HOMEBRIDGE_TYDOM_PASSWORD` with the base64 encoded value of your password (might be safer than having it inside your `config.json`).
+
+#### SecuritySystem
+
+You can also manage your TYXAL+ security system from HomeKit, but it requires your alarm pin code:
+
+As HomeKit security system has 3 active levels: `stay`, `night`, `away` you can configure which zones are linked to these active levels (`away` is by default every zones).
+
+1. You need to add the following to the config `settings` field (check the logs for your actual device id).
+
+```json
+{
+  "platforms": [
+    {
       "settings": {
-        "1528565701": {"category": 3},
-        "1531745761": {"category": 3}
+        "1521931577": {"zones": {"stay": [3], "night": [2, 3]}}
       }
     }
   ]
 }
 ```
+
+2. For the pin,
+
+You can either add a `pin` field:
+
+```json
+{
+  "platforms": [
+    {
+      "settings": {
+        "1521931577": {"pin": "123456", "zones": {"stay": [3], "night": [2, 3]}}
+      }
+    }
+  ]
+}
+```
+
+Or you can also use an environment variable `HOMEBRIDGE_TYDOM_PIN` with the base64 encoded value of your pin (might be safer than having it inside your `config.json`).
+
+#### Category overrides (eg. Fan)
+
+You can override categories of devices (eg. some light switch used to manage a fan)
+
+1. You need to add the following to the config `settings` field (check the logs for your actual device id).
+
+```json
+{
+  "platforms": [
+    {
+      "settings": {
+        "1528565701": {"category": 3}
+      }
+    }
+  ]
+}
+```
+
+> `3` being the `Categories.FAN` number.
 
 ### Supported hardware
 
@@ -85,14 +141,13 @@ Did support the hardware that I had at home:
 - Fan ([TYXIA 6610](https://www.deltadore.co.uk/home-automation/lighting-control/receiver-switch/tyxia-6610-ref-6351376))
 - Thermostat ([RF4890](https://www.deltadore.co.uk/home-automation/heating-control/receiver-micromodule/rf-4890-ref-6050615))
 - Switch ([TYXIA 4620](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-4620-ref-6351104))
+- Security System ([TYXAL+](https://www.deltadore.co.uk/home-automation/alarm/siren/si-tyxal-plus-ref-6415220))
 
 Some other hardware that might work thanks to the community feedback:
 
 - WindowCoverings ([TYXIA 5630](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5630-ref-6351401), [TYXIA 5730](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5730-ref-6351402))
 
 Other similar hardware should work seamlessly with the plugin as usage is detected.
-
-Currently working on the Alarm support however it does not seem that Homekit currently allows to enter a PIN code to arm.
 
 Should be relatively easy to add other hardware.
 
