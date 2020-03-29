@@ -11,28 +11,13 @@ import {
 import assert from 'src/utils/assert';
 import debug, {debugGet, debugGetResult} from 'src/utils/debug';
 import {runTydomDeviceCommand} from 'src/utils/tydom';
+import {
+  SecuritySystemLabelCommandResult,
+  SecuritySystemHistoOpenIssuesCommandResult,
+  SecuritySystemProduct
+} from 'src/typings/tydom';
 
-type SecuritySystemProduct = {
-  typeShort: string;
-  typeLong: string;
-  id: number;
-  nameStd: string;
-  nameCustom?: string;
-  number?: number;
-};
-
-type LabelCommandResult = {
-  products: SecuritySystemProduct[];
-};
-
-type HistoOpenIssuesCommandResult = {
-  step: number;
-  nbElemTot: number;
-  index: number;
-  product?: SecuritySystemProduct;
-};
-
-const getOpenedIssues = (commandResults: HistoOpenIssuesCommandResult[]) =>
+const getOpenedIssues = (commandResults: SecuritySystemHistoOpenIssuesCommandResult[]) =>
   keyBy(
     commandResults.filter((result) => result.product).map((result) => result.product!),
     'id'
@@ -52,7 +37,7 @@ export const setupSecuritySystemSensors = async (
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
-  const labelResults = await client.command<LabelCommandResult>(
+  const labelResults = await client.command<SecuritySystemLabelCommandResult>(
     `/devices/${deviceId}/endpoints/${endpointId}/cdata?name=label`
   );
   const {products} = labelResults[0];
@@ -60,7 +45,7 @@ export const setupSecuritySystemSensors = async (
   histoSearchParams = {type: 'OPEN_ISSUES', indexStart: '0', nbElem: `${contactSensorProducts.length}`};
 
   const initialOpenedIssues = getOpenedIssues(
-    await runTydomDeviceCommand<HistoOpenIssuesCommandResult>(client, 'histo', {
+    await runTydomDeviceCommand<SecuritySystemHistoOpenIssuesCommandResult>(client, 'histo', {
       deviceId,
       endpointId,
       searchParams: histoSearchParams
@@ -107,7 +92,7 @@ export const setupSecuritySystemSensors = async (
         debugGet(subDeviceId, {name, id});
         try {
           const openedIssues = getOpenedIssues(
-            await runTydomDeviceCommand<HistoOpenIssuesCommandResult>(client, 'histo', {
+            await runTydomDeviceCommand<SecuritySystemHistoOpenIssuesCommandResult>(client, 'histo', {
               deviceId,
               endpointId,
               searchParams: histoSearchParams
@@ -150,7 +135,7 @@ export const updateSecuritySystemSensors = (
           });
         } else {
           const openedIssues = getOpenedIssues(
-            await runTydomDeviceCommand<HistoOpenIssuesCommandResult>(client, 'histo', {
+            await runTydomDeviceCommand<SecuritySystemHistoOpenIssuesCommandResult>(client, 'histo', {
               deviceId,
               endpointId,
               searchParams: histoSearchParams

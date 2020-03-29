@@ -118,3 +118,28 @@ export type TydomDeviceDataUpdateBody = {
   id: number;
   endpoints: {id: number; error: number; data: Record<string, unknown>[]}[];
 }[];
+
+export type SecuritySystemProduct = {
+  typeShort: string;
+  typeLong: string;
+  id: number;
+  nameStd: string;
+  nameCustom?: string;
+  number?: number;
+};
+
+export type SecuritySystemLabelCommandResult = {
+  zones: {
+    id: number;
+    nameStd?: string;
+    nameCustom?: string;
+  }[];
+  products: SecuritySystemProduct[];
+};
+
+export type SecuritySystemHistoOpenIssuesCommandResult = {
+  step: number;
+  nbElemTot: number;
+  index: number;
+  product?: SecuritySystemProduct;
+};

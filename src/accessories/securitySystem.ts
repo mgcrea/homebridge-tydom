@@ -12,7 +12,8 @@ import {PlatformAccessory} from 'src/typings/homebridge';
 import {
   TydomDeviceSecuritySystemAlarmMode,
   TydomDeviceSecuritySystemData,
-  TydomDeviceSecuritySystemZoneState
+  TydomDeviceSecuritySystemZoneState,
+  SecuritySystemLabelCommandResult
 } from 'src/typings/tydom';
 import {
   addAccessoryService,
@@ -60,10 +61,15 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   const {client} = controller;
 
   const {deviceId, endpointId, settings} = context;
-  const zones = (settings.zones || []) as string[];
+  // const zones = (settings.zones || []) as string[];
   const aliases = (settings.aliases || {}) as ZoneAliases;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
+
+  const labelResults = await client.command<SecuritySystemLabelCommandResult>(
+    `/devices/${deviceId}/endpoints/${endpointId}/cdata?name=label`
+  );
+  const {zones} = labelResults[0];
 
   const initialData = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
 
@@ -166,14 +172,12 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     if (zoneState === 'UNUSED') {
       continue;
     }
-    const zoneService = addAccessoryServiceWithSubtype(
-      accessory,
-      Service.Switch,
-      zones[zoneIndex] || `Zone ${zoneIndex}`,
-      `zone_${zoneIndex}`,
-      true
-    );
-    debug(`Adding new "Service.Switch" for zoneIndex="${zoneIndex}" for id="${id}"`);
+    assert(zones[zoneIndex - 1], `Unexpected missing zone label data for index ${zoneIndex}`);
+    const {id: productId, nameStd, nameCustom} = zones[zoneIndex - 1];
+    const subDeviceId = `zone_${productId}`;
+    const subDeviceName = nameCustom || `${nameStd ? (get(locale, nameStd, 'N/A') as string) : `Zone ${zoneIndex}`}`;
+    const zoneService = addAccessoryServiceWithSubtype(accessory, Service.Switch, subDeviceName, subDeviceId, true);
+    debug(`Adding new "Service.Switch" for name="${subDeviceName}" for id="${subDeviceId}"`);
     zoneService.linkedServices = [service];
     zoneService
       .getCharacteristic(Characteristic.On)!
