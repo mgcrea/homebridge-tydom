@@ -73,7 +73,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
     debugGet('On', {name, id});
     try {
       const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
-      const level = data.find(prop => prop.name === 'level');
+      const level = data.find((prop) => prop.name === 'level');
       assert(level && level.value !== undefined, 'Missing `level.value` on data item');
       const nextValue = level.value > 0;
       debugGetResult('On', {name, id, value: nextValue});
@@ -104,7 +104,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
       debugGet('Brightness', {name, id});
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
-        const level = data.find(prop => prop.name === 'level');
+        const level = data.find((prop) => prop.name === 'level');
         assert(level && level.value !== undefined, 'Missing `level.value` on data item');
         const nextValue = asNumber(level.value);
         debugGetResult('Brightness', {name, id, value: nextValue});
@@ -116,17 +116,21 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
   );
 };
 
-export const updateLightbulb = (accessory: PlatformAccessory, updates: Record<string, unknown>[]) => {
+export const updateLightbulb = (
+  accessory: PlatformAccessory,
+  controller: TydomController,
+  updates: Record<string, unknown>[]
+) => {
   const {context} = accessory;
   const {metadata} = context;
   const levelMeta = find(metadata, {name: 'level'});
   // Not dimmable
   if (levelMeta?.step === 100) {
-    updateAccessorySwitchableService(accessory, updates, Service.Lightbulb);
+    updateAccessorySwitchableService(accessory, controller, updates, Service.Lightbulb);
     return;
   }
   // Dimmable
-  updates.forEach(update => {
+  updates.forEach((update) => {
     const {name, value} = update;
     switch (name) {
       case 'level': {

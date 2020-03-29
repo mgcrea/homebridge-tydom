@@ -40,6 +40,8 @@ export type TydomAccessoryContext = {
   model: string;
 };
 
+export type TydomAccessoryUpdateContext = Pick<TydomAccessoryContext, 'deviceId' | 'endpointId' | 'accessoryId'>;
+
 declare class PlatformAccessory extends EventEmitter {
   UUID: string;
   displayName: string;

@@ -11,6 +11,10 @@ export const setupSwitch = (accessory: PlatformAccessory, controller: TydomContr
   addAccessorySwitchableService(accessory, controller, Service.Switch);
 };
 
-export const updateSwitch = (accessory: PlatformAccessory, updates: Record<string, unknown>[]) => {
-  updateAccessorySwitchableService(accessory, updates, Service.Switch);
+export const updateSwitch = (
+  accessory: PlatformAccessory,
+  controller: TydomController,
+  updates: Record<string, unknown>[]
+) => {
+  updateAccessorySwitchableService(accessory, controller, updates, Service.Switch);
 };

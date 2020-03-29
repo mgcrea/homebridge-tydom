@@ -23,8 +23,10 @@ import {
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
 import {decode} from 'src/utils/buffer';
-import debug, {debugGet, debugSet, debugSetResult} from 'src/utils/debug';
+import debug, {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
+import locale from 'src/config/locale';
+import {get} from 'lodash';
 
 type ZoneAliases = {
   stay?: number[];
@@ -32,8 +34,6 @@ type ZoneAliases = {
 };
 
 const {SecuritySystemTargetState, SecuritySystemCurrentState} = Characteristic;
-
-const zoneServices = new Map<number, Service>();
 
 const getCurrrentStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): number => {
   if (alarmMode === 'ON') {
@@ -65,6 +65,8 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
+  const initialData = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
+
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.SecuritySystem, `${accessory.displayName}`, true);
   const pin = HOMEBRIDGE_TYDOM_PIN ? decode(HOMEBRIDGE_TYDOM_PIN) : settings.pin;
@@ -79,22 +81,27 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('SecuritySystemCurrentState', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
+        const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
         const alarmMode = getPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
-        callback(null, getCurrrentStateForValue(alarmMode));
+        const nextValue = getCurrrentStateForValue(alarmMode);
+        callback(null, nextValue);
+        debugGetResult('SecuritySystemCurrentState', {name, id, value: nextValue});
       } catch (err) {
         callback(err);
       }
     });
+  service.getCharacteristic(SecuritySystemCurrentState)!.setValue(SecuritySystemCurrentState.DISARMED);
 
   service
     .getCharacteristic(SecuritySystemTargetState)!
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('SecuritySystemTargetState', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
+        const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
         const alarmMode = getPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
-        callback(null, getTargetStateForValue(alarmMode));
+        const nextValue = getTargetStateForValue(alarmMode);
+        callback(null, nextValue);
+        debugGetResult('SecuritySystemTargetState', {name, id, value: nextValue});
       } catch (err) {
         callback(err);
       }
@@ -128,7 +135,32 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       callback(null);
     });
 
-  const initialData = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
+  // Setup global contact sensor
+  const contactSensorService = addAccessoryServiceWithSubtype(
+    accessory,
+    Service.ContactSensor,
+    get(locale, 'ALARME_ISSUES_OUVERTES', 'N/A') as string,
+    `systOpenIssue`,
+    true
+  );
+  debug(`Adding new "Service.ContactSensor" for id="${id}"`);
+  contactSensorService.linkedServices = [service];
+  contactSensorService
+    .getCharacteristic(Characteristic.ContactSensorState)!
+    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      debugGet(`systOpenIssue_On`, {name, id});
+      try {
+        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
+        const systOpenIssue = getPropValue<boolean>(data, 'systOpenIssue');
+        callback(null, systOpenIssue);
+      } catch (err) {
+        callback(err);
+      }
+    });
+  contactSensorService.getCharacteristic(Characteristic.Active)!.setValue(true);
+  contactSensorService.getCharacteristic(Characteristic.StatusFault)!.setValue(false);
+
+  // Setup zones switches
   for (let zoneIndex = 1; zoneIndex < 9; zoneIndex++) {
     const zoneState = getPropValue<TydomDeviceSecuritySystemZoneState>(initialData, `zone${zoneIndex}State`);
     if (zoneState === 'UNUSED') {
@@ -141,15 +173,14 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       `zone_${zoneIndex}`,
       true
     );
-    debug(`Adding new Service.Switch for zoneIndex="${zoneIndex}" for id="${id}"`);
-    zoneServices.set(zoneIndex, zoneService);
+    debug(`Adding new "Service.Switch" for zoneIndex="${zoneIndex}" for id="${id}"`);
     zoneService.linkedServices = [service];
     zoneService
       .getCharacteristic(Characteristic.On)!
       .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-        debugGet(`Zone_${zoneIndex}_On`, {name, id});
+        debugGet(`zone_${zoneIndex}_On`, {name, id});
         try {
-          const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
+          const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
           const zoneState = getPropValue<TydomDeviceSecuritySystemZoneState>(data, `zone${zoneIndex}State`);
           callback(null, zoneState === 'ON');
         } catch (err) {
@@ -157,7 +188,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         }
       })
       .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(`Zone_${zoneIndex}_On`, {name, id, value});
+        debugSet(`zone_${zoneIndex}_On`, {name, id, value});
         if (!pin) {
           callback(null);
           return;
@@ -172,8 +203,12 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   }
 };
 
-export const updateSecuritySystem = (accessory: PlatformAccessory, updates: Record<string, unknown>[]) => {
-  updates.forEach(update => {
+export const updateSecuritySystem = (
+  accessory: PlatformAccessory,
+  _controller: TydomController,
+  updates: Record<string, unknown>[]
+) => {
+  updates.forEach((update) => {
     const {name} = update;
     switch (name) {
       case 'alarmMode': {
@@ -197,9 +232,18 @@ export const updateSecuritySystem = (accessory: PlatformAccessory, updates: Reco
           return;
         }
         const zoneIndex = parseInt(name.match(/zone(\d+)State/)![1], 10);
-        const service = zoneServices.get(zoneIndex);
-        assert(service, `Unexpected missing service "Zone ${zoneIndex}" in accessory`);
+        const subtype = `zone_${zoneIndex}`;
+        const service = accessory.getServiceByUUIDAndSubType(Service.Switch, subtype);
+        assert(service, `Unexpected missing service "Service.Switch" with subtype="${subtype}" in accessory`);
         service.getCharacteristic(Characteristic.On)!.updateValue(zoneState === 'ON');
+        return;
+      }
+      case 'systOpenIssue': {
+        const subtype = 'systOpenIssue';
+        const service = accessory.getServiceByUUIDAndSubType(Service.ContactSensor, subtype);
+        assert(service, `Unexpected missing service "Service.ContactSensor" with subtype="${subtype}" in accessory`);
+        const systOpenIssue = update!.value as boolean;
+        service.getCharacteristic(Characteristic.ContactSensorState)!.updateValue(systOpenIssue);
         return;
       }
       default:
@@ -207,18 +251,3 @@ export const updateSecuritySystem = (accessory: PlatformAccessory, updates: Reco
     }
   });
 };
-
-/*
-{
-  "name": "alarmState",
-  "type": "string",
-  "permission": "r",
-  "enum_values": ["OFF", "DELAYED", "ON", "QUIET"]
-},
-{
-  "name": "alarmMode",
-  "type": "string",
-  "permission": "r",
-  "enum_values": ["OFF", "ON", "TEST", "ZONE", "MAINTENANCE"]
-}
-*/

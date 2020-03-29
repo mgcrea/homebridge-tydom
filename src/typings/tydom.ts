@@ -114,7 +114,7 @@ export type TydomDeviceSecuritySystemData = [
   TydomDataElement<'irv4State', 'AVAILABLE' | 'UNAVAILABLE' | 'LOCKED'>
 ];
 
-export type TydomDeviceUpdateBody = {
+export type TydomDeviceDataUpdateBody = {
   id: number;
   endpoints: {id: number; error: number; data: Record<string, unknown>[]}[];
 }[];

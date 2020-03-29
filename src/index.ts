@@ -1,3 +1,4 @@
+import 'source-map-support/register';
 import {PLATFORM_NAME, PLUGIN_NAME} from 'src/config/env';
 import TydomPlatform from './platform';
 

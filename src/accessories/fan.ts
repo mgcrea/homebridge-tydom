@@ -11,6 +11,10 @@ export const setupFan = (accessory: PlatformAccessory, controller: TydomControll
   addAccessorySwitchableService(accessory, controller, Service.Fan);
 };
 
-export const updateFan = (accessory: PlatformAccessory, updates: Record<string, unknown>[]) => {
-  updateAccessorySwitchableService(accessory, updates, Service.Fan);
+export const updateFan = (
+  accessory: PlatformAccessory,
+  controller: TydomController,
+  updates: Record<string, unknown>[]
+) => {
+  updateAccessorySwitchableService(accessory, controller, updates, Service.Fan);
 };

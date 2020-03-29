@@ -2,14 +2,17 @@ import {AccessoryEventTypes, Categories, Characteristic, Service, VoidCallback} 
 import {setupFan, updateFan} from 'src/accessories/fan';
 import {setupGarageDoorOpener} from 'src/accessories/garageDoorOpener';
 import {setupLightbulb, updateLightbulb} from 'src/accessories/lightbulb';
-import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
-import {setupWindowCovering, updateWindowCovering} from 'src/accessories/windowCovering';
 import {setupSecuritySystem, updateSecuritySystem} from 'src/accessories/securitySystem';
+import {setupSecuritySystemSensors, updateSecuritySystemSensors} from 'src/accessories/securitySystemSensors';
+import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
+import {updateWindowCovering} from 'src/accessories/windowCovering';
 import TydomController from 'src/controller';
 import {PlatformAccessory, TydomAccessoryContext} from 'src/typings/homebridge';
+import {AnyTydomDataValue, TydomEndpointData} from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
-import {TydomEndpointData, AnyTydomDataValue} from 'src/typings/tydom';
+
+export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
 export const asNumber = (maybeNumber: unknown) => parseInt(`${maybeNumber}`, 10);
 
@@ -60,17 +63,24 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
     case Categories.GARAGE_DOOR_OPENER:
       return setupGarageDoorOpener;
     case Categories.WINDOW_COVERING:
-      return setupWindowCovering;
     case Categories.SECURITY_SYSTEM:
       return setupSecuritySystem;
+    case Categories.SECURITY_SYSTEM:
+      return setupSecuritySystem;
+    case SECURITY_SYSTEM_SENSORS:
+      return setupSecuritySystemSensors;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
   }
 };
 
-type TydomAccessoryUpdate = (accessory: PlatformAccessory, update: Record<string, unknown>[]) => void | Promise<void>;
+type TydomAccessoryUpdate = (
+  accessory: PlatformAccessory,
+  controller: TydomController,
+  updates: Record<string, unknown>[]
+) => void | Promise<void>;
 
-export const getTydomAccessoryUpdate = (accessory: PlatformAccessory): TydomAccessoryUpdate => {
+export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): TydomAccessoryUpdate => {
   const {category} = accessory;
   switch (category) {
     case Categories.LIGHTBULB:
@@ -87,6 +97,8 @@ export const getTydomAccessoryUpdate = (accessory: PlatformAccessory): TydomAcce
       return updateWindowCovering;
     case Categories.SECURITY_SYSTEM:
       return updateSecuritySystem;
+    case SECURITY_SYSTEM_SENSORS:
+      return updateSecuritySystemSensors;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
   }
@@ -118,7 +130,7 @@ export const getPropValue = <T extends AnyTydomDataValue = AnyTydomDataValue>(
   data: TydomEndpointData,
   name: string
 ): T => {
-  const prop = data.find(prop => prop.name === name);
+  const prop = data.find((prop) => prop.name === name);
   assert(prop, `Missing \`${name}\` data item`);
   return prop.value as T;
 };

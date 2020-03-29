@@ -2,7 +2,7 @@ import {Categories} from 'hap-nodejs';
 import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
 import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from './controller';
 import {HomebridgeApi, Platform, PlatformAccessory, TydomAccessoryContext} from './typings/homebridge';
-import {getTydomAccessorySetup, getTydomAccessoryUpdate} from './utils/accessory';
+import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './utils/accessory';
 
 export type TydomPlatformConfig = {
   platform: string;
@@ -14,8 +14,8 @@ export type TydomPlatformConfig = {
 };
 
 export default class TydomPlatform implements Platform {
-  cleanupAccessoriesIds: Set<string>;
-  accessories: Map<string, PlatformAccessory>;
+  cleanupAccessoriesIds: Set<string> = new Set();
+  accessories: Map<string, PlatformAccessory> = new Map();
   controller?: TydomController;
   api: HomebridgeApi;
   config: TydomPlatformConfig;
@@ -27,9 +27,6 @@ export default class TydomPlatform implements Platform {
     this.config = config;
     this.log = log;
     this.api = api;
-    // Internal
-    this.accessories = new Map();
-    this.cleanupAccessoriesIds = new Set();
 
     if (!config) {
       log.warn('Ignoring Tydom platform setup because it is not configured');
@@ -44,12 +41,12 @@ export default class TydomPlatform implements Platform {
       this.log.info();
     });
     this.controller.on('device', this.handleControllerDevice.bind(this));
-    this.controller.on('update', this.handleControllerUpdate.bind(this));
+    this.controller.on('update', this.handleControllerDataUpdate.bind(this));
   }
   async didFinishLaunching() {
     this.cleanupAccessoriesIds = new Set(this.accessories.keys());
     await this.controller!.scan();
-    this.cleanupAccessoriesIds.forEach(accessoryId => {
+    this.cleanupAccessoriesIds.forEach((accessoryId) => {
       const accessory = this.accessories.get(accessoryId)!;
       this.log.warn(`Deleting missing accessory with id="${accessoryId}"`);
       // accessory.updateReachability(false);
@@ -71,16 +68,18 @@ export default class TydomPlatform implements Platform {
     this.accessories.set(id, accessory);
     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
   }
-  handleControllerUpdate({updates, context}: ControllerUpdatePayload) {
+  handleControllerDataUpdate({updates, context}: ControllerUpdatePayload) {
     const id = this.api.hap.uuid.generate(context.accessoryId);
-    this.log.debug(`Tydom device="${id}" update="${JSON.stringify(updates)} with context="${JSON.stringify(context)}"`);
+    this.log.debug(
+      `Tydom device="${id}" data update="${JSON.stringify(updates)} with context="${JSON.stringify(context)}"`
+    );
     if (!this.accessories.has(id)) {
       return;
     }
     const accessory = this.accessories.get(id)!;
-    const tydomAccessoryUpdate = getTydomAccessoryUpdate(accessory);
+    const tydomAccessoryUpdate = getTydomAccessoryDataUpdate(accessory);
     if (tydomAccessoryUpdate) {
-      tydomAccessoryUpdate(accessory, updates);
+      tydomAccessoryUpdate(accessory, this.controller!, updates);
     }
   }
   async createAccessory(name: string, id: string, category: Categories, context: TydomAccessoryContext) {

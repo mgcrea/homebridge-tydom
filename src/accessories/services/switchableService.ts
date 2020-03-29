@@ -47,7 +47,7 @@ export const addAccessorySwitchableService = (
     debugGet('On', {name, id});
     try {
       const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
-      const level = data.find(prop => prop.name === 'level');
+      const level = data.find((prop) => prop.name === 'level');
       assert(level && level.value !== undefined, 'Missing `level.value` on data item');
       const nextValue = level.value === 100;
       debug(`Sucessfully got device named="${name}" with id="${id}" value="${nextValue}"`);
@@ -62,10 +62,11 @@ export const addAccessorySwitchableService = (
 
 export const updateAccessorySwitchableService = (
   accessory: PlatformAccessory,
+  _controller: TydomController,
   updates: Record<string, unknown>[],
   serviceClass: typeof Service
 ): void => {
-  updates.forEach(update => {
+  updates.forEach((update) => {
     const {name, value} = update;
     switch (name) {
       case 'level': {

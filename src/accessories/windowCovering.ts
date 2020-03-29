@@ -36,7 +36,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
       debugGet('CurrentPosition', {name, id});
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceShutterData;
-        const position = data.find(prop => prop.name === 'position')!.value;
+        const position = data.find((prop) => prop.name === 'position')!.value;
         callback(null, position);
       } catch (err) {
         callback(err);
@@ -49,7 +49,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
       debugGet('TargetPosition', {name, id});
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceShutterData;
-        const position = data.find(prop => prop.name === 'position')!.value;
+        const position = data.find((prop) => prop.name === 'position')!.value;
         callback(null, position);
       } catch (err) {
         callback(err);
@@ -68,9 +68,13 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
     });
 };
 
-export const updateWindowCovering = (accessory: PlatformAccessory, updates: Record<string, unknown>[]) => {
+export const updateWindowCovering = (
+  accessory: PlatformAccessory,
+  _controller: TydomController,
+  updates: Record<string, unknown>[]
+) => {
   const {CurrentPosition} = Characteristic;
-  updates.forEach(update => {
+  updates.forEach((update) => {
     const {name} = update;
     switch (name) {
       case 'position': {
