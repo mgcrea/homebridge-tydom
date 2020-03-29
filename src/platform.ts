@@ -11,6 +11,7 @@ export type TydomPlatformConfig = {
   password: string;
   settings: Record<string, {name?: string; category?: Categories}>;
   includes?: string[];
+  excludes?: string[];
 };
 
 export default class TydomPlatform implements Platform {

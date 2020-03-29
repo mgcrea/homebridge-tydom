@@ -69,7 +69,7 @@ export default class TydomController extends EventEmitter {
     return `tydom:${username.slice(6)}:accessories:${deviceId}`;
   }
   async scan() {
-    const {hostname, username, settings = {}, includes} = this.config;
+    const {hostname, username, settings = {}, includes = [], excludes = []} = this.config;
     try {
       await this.client.connect();
     } catch (err) {
@@ -87,7 +87,10 @@ export default class TydomController extends EventEmitter {
       const {metadata} = getEndpointDetailsfromMeta(endpoint, meta);
       const deviceSettings = settings[deviceId] || {};
       const categoryFromSettings = deviceSettings.category as Categories | undefined;
-      if (includes && includes.length && !includes.includes(`${deviceId}`)) {
+      if (includes.length && !includes.includes(`${deviceId}`)) {
+        return;
+      }
+      if (excludes.length && excludes.includes(`${deviceId}`)) {
         return;
       }
       if (!categoryFromSettings && !SUPPORTED_USAGES.includes(endpoint.first_usage)) {
