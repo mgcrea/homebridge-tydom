@@ -5184,16 +5184,17 @@ tweetnacl@^1.0.1:
   resolved "https://registry.npmjs.org/tweetnacl/-/tweetnacl-1.0.3.tgz#ac0af71680458d8a6378d0d0d050ab1407d35596"
   integrity sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==
 
-tydom-client@^0.9.0:
-  version "0.9.0"
-  resolved "https://registry.npmjs.org/tydom-client/-/tydom-client-0.9.0.tgz#8a16e34c57c387d6ff966e61e8cefd96ce1b943c"
-  integrity sha512-pUTf865exCPAAPuuMTgIFNw48cOzgz26wJ6plAs5r99IT/sSkUlwuUdf309qYOh8Pr6n8d849ziLx86VhZeIQQ==
+tydom-client@^0.9.1:
+  version "0.9.1"
+  resolved "https://registry.npmjs.org/tydom-client/-/tydom-client-0.9.1.tgz#7d374f26e608f82a7e608379d5cc4cf3ec08d275"
+  integrity sha512-QkXVa492i/K53VcAIuWgj630dzqSGDfPFxV+yt5W3Z9zglOGwdj0LIZ44B4OM0Lrz8W8sBK8pay6S14CPI68aA==
   dependencies:
     "@babel/runtime" "^7.9.2"
     debug "^4.1.1"
     http-parser-js "^0.5.2"
     lodash "^4.17.15"
     node-fetch "^2.6.0"
+    source-map-support "^0.5.16"
     ws "^7.2.3"
     yargs "^15.3.1"
 

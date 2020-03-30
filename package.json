@@ -28,7 +28,7 @@
     "pretty": "prettier --check '{src,test}/**/*.ts'",
     "pretty:fix": "prettier --write '{src,test}/**/*.ts'",
     "typecheck": "tsc --noEmit",
-    "build": "yarn build:source && yarn build:typings",
+    "build": "yarn build:source && yarn build:typings && rsync -avh --remove-source-files lib/src/* lib/ && rm -rf lib/src",
     "build:source": "babel --source-maps --extensions .js,.ts --out-dir lib/ --delete-dir-on-start --ignore **/__tests__ src/",
     "build:typings": "tsc --declaration",
     "build:watch": "yarn build:source --watch --verbose",
@@ -42,7 +42,7 @@
     "hap-nodejs": "^0.5.7",
     "lodash": "^4.17.15",
     "source-map-support": "^0.5.16",
-    "tydom-client": "^0.9.0"
+    "tydom-client": "^0.9.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
