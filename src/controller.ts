@@ -4,7 +4,7 @@ import {get} from 'lodash';
 import {TydomConfigResponse, TydomDeviceDataUpdateBody, TydomMetaResponse} from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import {decode} from 'src/utils/buffer';
-import debug, {dir} from 'src/utils/debug';
+import debug from 'src/utils/debug';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomHttpMessage, TydomResponse} from 'tydom-client/lib/utils/tydom';
 import {HOMEBRIDGE_TYDOM_PASSWORD} from './config/env';
