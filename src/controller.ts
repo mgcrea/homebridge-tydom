@@ -72,7 +72,7 @@ export default class TydomController extends EventEmitter {
     const config = (await this.client.get('/configs/file')) as TydomConfigResponse;
     const meta = (await this.client.get('/devices/meta')) as TydomMetaResponse;
     const {endpoints} = config;
-    endpoints.forEach(async (endpoint) => {
+    endpoints.forEach((endpoint) => {
       const {id_endpoint: endpointId, id_device: deviceId, name: deviceName, first_usage: firstUsage} = endpoint;
       const {metadata} = getEndpointDetailsFromMeta(endpoint, meta);
       const deviceSettings = settings[deviceId] || {};
