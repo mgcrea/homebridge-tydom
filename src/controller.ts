@@ -1,18 +1,18 @@
 import {EventEmitter} from 'events';
 import {Categories} from 'hap-nodejs';
 import {get} from 'lodash';
-import {TydomConfigResponse, TydomMetaResponse, TydomDeviceDataUpdateBody} from 'src/typings/tydom';
+import {TydomConfigResponse, TydomDeviceDataUpdateBody, TydomMetaResponse} from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import {decode} from 'src/utils/buffer';
 import debug from 'src/utils/debug';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomHttpMessage, TydomResponse} from 'tydom-client/lib/utils/tydom';
 import {HOMEBRIDGE_TYDOM_PASSWORD} from './config/env';
+import locale from './config/locale';
 import {TydomPlatformConfig} from './platform';
 import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/homebridge';
-import {getEndpointDetailsfromMeta, asyncSetTimeout} from './utils/tydom';
 import {SECURITY_SYSTEM_SENSORS} from './utils/accessory';
-import locale from './config/locale';
+import {asyncSetTimeout, getEndpointDetailsFromMeta, resolveEndpointCategory} from './utils/tydom';
 
 export type ControllerDevicePayload = {
   name: string;
@@ -25,16 +25,6 @@ export type ControllerUpdatePayload = {
   updates: Record<string, unknown>[];
   context: TydomAccessoryContext;
 };
-
-const SUPPORTED_CATEGORIES_MAP: Record<string, Categories> = {
-  light: Categories.LIGHTBULB,
-  hvac: Categories.THERMOSTAT,
-  gate: Categories.GARAGE_DOOR_OPENER,
-  shutter: Categories.WINDOW_COVERING,
-  alarm: Categories.SECURITY_SYSTEM
-};
-
-const SUPPORTED_USAGES = Object.keys(SUPPORTED_CATEGORIES_MAP);
 
 export default class TydomController extends EventEmitter {
   client: TydomClient;
@@ -82,9 +72,9 @@ export default class TydomController extends EventEmitter {
     const config = (await this.client.get('/configs/file')) as TydomConfigResponse;
     const meta = (await this.client.get('/devices/meta')) as TydomMetaResponse;
     const {endpoints} = config;
-    endpoints.forEach((endpoint) => {
-      const {id_endpoint: endpointId, id_device: deviceId, name: deviceName} = endpoint;
-      const {metadata} = getEndpointDetailsfromMeta(endpoint, meta);
+    endpoints.forEach(async (endpoint) => {
+      const {id_endpoint: endpointId, id_device: deviceId, name: deviceName, first_usage: firstUsage} = endpoint;
+      const {metadata} = getEndpointDetailsFromMeta(endpoint, meta);
       const deviceSettings = settings[deviceId] || {};
       const categoryFromSettings = deviceSettings.category as Categories | undefined;
       if (includes.length && !includes.includes(`${deviceId}`)) {
@@ -93,16 +83,16 @@ export default class TydomController extends EventEmitter {
       if (excludes.length && excludes.includes(`${deviceId}`)) {
         return;
       }
-      if (!categoryFromSettings && !SUPPORTED_USAGES.includes(endpoint.first_usage)) {
-        this.log.warn(`Unsupported usage="${endpoint.first_usage}" for endpoint with id="${endpointId}"`);
+      const category = categoryFromSettings || (await resolveEndpointCategory({firstUsage, metadata}));
+      if (!category) {
+        this.log.warn(`Unsupported firstUsage="${firstUsage}" for endpoint with id="${endpointId}"`);
         debug({endpoint});
         return;
       }
-      const nameFromSetting = get(settings, `${deviceId}.name`) as string | undefined;
       if (!this.devices.has(deviceId)) {
         const accessoryId = this.getAccessoryId(deviceId);
+        const nameFromSetting = get(settings, `${deviceId}.name`) as string | undefined;
         const name = nameFromSetting || deviceName;
-        const category = (categoryFromSettings || SUPPORTED_CATEGORIES_MAP[endpoint.first_usage]) as Categories;
         this.devices.set(deviceId, category);
         const context: TydomAccessoryContext = {
           name,

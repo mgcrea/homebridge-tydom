@@ -11,7 +11,7 @@ import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';
 import {addAccessoryService} from 'src/utils/accessory';
 import assert from 'src/utils/assert';
-import debug, {debugGet, debugSet} from 'src/utils/debug';
+import {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
 import {getTydomDeviceData} from 'src/utils/tydom';
 
 export const addAccessorySwitchableService = (
@@ -32,13 +32,14 @@ export const addAccessorySwitchableService = (
     CharacteristicEventTypes.SET,
     async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('On', {name, id, value});
+      const nextValue = value ? 100 : 0;
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
         {
           name: 'level',
-          value: value ? 100 : 0
+          value: nextValue
         }
       ]);
-      debug(`Sucessfully set device named="${name}" with id="${id}" value="${value}" ...`);
+      debugSetResult('CurrentTemperature', {name, id, value: nextValue});
       callback();
     }
   );
@@ -50,7 +51,7 @@ export const addAccessorySwitchableService = (
       const level = data.find((prop) => prop.name === 'level');
       assert(level && level.value !== undefined, 'Missing `level.value` on data item');
       const nextValue = level.value === 100;
-      debug(`Sucessfully got device named="${name}" with id="${id}" value="${nextValue}"`);
+      debugGetResult('CurrentTemperature', {name, id, value: nextValue});
       callback(null, nextValue);
     } catch (err) {
       callback(err);

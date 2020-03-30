@@ -4,6 +4,7 @@ import {setupGarageDoorOpener} from 'src/accessories/garageDoorOpener';
 import {setupLightbulb, updateLightbulb} from 'src/accessories/lightbulb';
 import {setupSecuritySystem, updateSecuritySystem} from 'src/accessories/securitySystem';
 import {setupSecuritySystemSensors, updateSecuritySystemSensors} from 'src/accessories/securitySystemSensors';
+import {setupTemperatureSensor, updateTemperatureSensor} from 'src/accessories/temperatureSensor';
 import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
 import {updateWindowCovering} from 'src/accessories/windowCovering';
 import TydomController from 'src/controller';
@@ -67,6 +68,8 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
       return setupSecuritySystem;
     case Categories.SECURITY_SYSTEM:
       return setupSecuritySystem;
+    case Categories.SENSOR:
+      return setupTemperatureSensor;
     case SECURITY_SYSTEM_SENSORS:
       return setupSecuritySystemSensors;
     default:
@@ -97,6 +100,8 @@ export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): Tydom
       return updateWindowCovering;
     case Categories.SECURITY_SYSTEM:
       return updateSecuritySystem;
+    case Categories.SENSOR:
+      return updateTemperatureSensor;
     case SECURITY_SYSTEM_SENSORS:
       return updateSecuritySystemSensors;
     default:

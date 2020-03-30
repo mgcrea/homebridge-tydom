@@ -42,7 +42,7 @@
     "hap-nodejs": "^0.5.7",
     "lodash": "^4.17.15",
     "source-map-support": "^0.5.16",
-    "tydom-client": "^0.8.2"
+    "tydom-client": "^0.9.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
@@ -69,7 +69,7 @@
     "eslint-config-prettier": "^6.10.1",
     "eslint-plugin-prettier": "^3.1.2",
     "homebridge": "^0.4.53",
-    "jest": "^25.2.3",
+    "jest": "^25.2.4",
     "nock": "^12.0.3",
     "prettier": "^2.0.2",
     "typescript": "^3.8.3"
