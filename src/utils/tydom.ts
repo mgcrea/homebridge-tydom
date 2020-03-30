@@ -10,7 +10,7 @@ import {
 import assert from 'src/utils/assert';
 import TydomClient from 'tydom-client';
 import debug from './debug';
-import {sha256} from './hash';
+import {sha256Sync} from './hash';
 
 type DataOperation = {
   promise: Promise<unknown> | null;
@@ -108,13 +108,10 @@ const ENDPOINTS_SIGNATURES_CATEGORIES: Record<string, Categories> = {
   'shutter:c3fe8e2afa864e1a7a5c6676b4287a7b2f2a886a466baec3df8a1ec4f898ad6c': Categories.WINDOW_COVERING // @maaxleop
 };
 
-export const resolveEndpointCategory = async ({
-  firstUsage,
-  metadata
-}: ResolveEndpointCategoryOptions): Promise<Categories | null> => {
+export const resolveEndpointCategory = ({firstUsage, metadata}: ResolveEndpointCategoryOptions): Categories | null => {
   // Compute device signature
   const metaSignature = getEndpointSignatureFromMetadata(metadata);
-  const hash = `${firstUsage}:${await sha256(metaSignature)}`;
+  const hash = `${firstUsage}:${sha256Sync(metaSignature)}`;
   // dir({metaSignature, hash});
   if (ENDPOINTS_SIGNATURES_CATEGORIES[hash]) {
     return ENDPOINTS_SIGNATURES_CATEGORIES[hash];

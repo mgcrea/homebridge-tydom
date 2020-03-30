@@ -11,3 +11,9 @@ export const sha256 = (data: crypto.BinaryLike): Promise<string> => {
     }
   });
 };
+
+export const sha256Sync = (data: crypto.BinaryLike): string => {
+  const shasum = crypto.createHash('sha256');
+  shasum.update(data);
+  return shasum.digest('hex');
+};
