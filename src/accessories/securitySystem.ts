@@ -235,7 +235,7 @@ export const updateSecuritySystem = (
         if (zoneState === 'UNUSED') {
           return;
         }
-        const zoneIndex = parseInt(name.match(/zone(\d+)State/)![1], 10);
+        const zoneIndex = parseInt(name.match(/zone(\d+)State/)![1], 10) - 1; // @NOTE Adjust for productId starting at 0
         const subtype = `zone_${zoneIndex}`;
         const service = accessory.getServiceByUUIDAndSubType(Service.Switch, subtype);
         assert(service, `Unexpected missing service "Service.Switch" with subtype="${subtype}" in accessory`);
