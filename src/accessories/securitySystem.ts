@@ -65,12 +65,11 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
+  const initialData = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
   const labelResults = await client.command<SecuritySystemLabelCommandResult>(
     `/devices/${deviceId}/endpoints/${endpointId}/cdata?name=label`
   );
   const {zones} = labelResults[0];
-
-  const initialData = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
 
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.SecuritySystem, `${accessory.displayName}`, true);

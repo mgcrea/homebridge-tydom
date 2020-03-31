@@ -75,7 +75,7 @@ export const getTydomDataPropValue = <
   data: T,
   name: string
 ): V => {
-  const item = data.find((prop) => prop.name === 'temperature');
+  const item = data.find((prop) => prop.name === name);
   assert(item, `Missing property with name="${name}" in endpoint data`);
   return item.value as V;
 };
