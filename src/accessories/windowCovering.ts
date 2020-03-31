@@ -15,8 +15,8 @@ import {
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
-import {debugGet, debugSet} from 'src/utils/debug';
-import {getTydomDeviceData} from 'src/utils/tydom';
+import {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
+import {getTydomDeviceData, getTydomDataPropValue} from 'src/utils/tydom';
 
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {displayName: name, UUID: id, context} = accessory;
@@ -35,9 +35,10 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
     async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('CurrentPosition', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceShutterData;
-        const position = data.find((prop) => prop.name === 'position')!.value;
-        callback(null, position);
+        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
+        const nextValue = getTydomDataPropValue<number>(data, 'position');
+        debugGetResult('CurrentPosition', {name, id, value: nextValue});
+        callback(null, nextValue);
       } catch (err) {
         callback(err);
       }
@@ -48,22 +49,24 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('TargetPosition', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceShutterData;
-        const position = data.find((prop) => prop.name === 'position')!.value;
-        callback(null, position);
+        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
+        const nextValue = getTydomDataPropValue<number>(data, 'position');
+        debugGetResult('TargetPosition', {name, id, value: nextValue});
+        callback(null, nextValue);
       } catch (err) {
         callback(err);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('TargetPosition', {name, id, value});
-      const tydomValue = Math.round(value as number);
+      const nextValue = Math.round(value as number);
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
         {
           name: 'position',
-          value: tydomValue
+          value: nextValue
         }
       ]);
+      debugSetResult('TargetPosition', {name, id, value: nextValue});
       callback();
     });
 };
@@ -79,7 +82,7 @@ export const updateWindowCovering = (
     switch (name) {
       case 'position': {
         const service = accessory.getService(Service.WindowCovering);
-        assert(service, `Unexpected missing service "${Service.WindowCovering} in accessory`);
+        assert(service, `Unexpected missing service "Service.WindowCovering" in accessory`);
         service.getCharacteristic(CurrentPosition)!.updateValue(update!.value as number);
         return;
       }

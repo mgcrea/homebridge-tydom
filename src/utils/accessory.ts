@@ -9,7 +9,6 @@ import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
 import {updateWindowCovering} from 'src/accessories/windowCovering';
 import TydomController from 'src/controller';
 import {PlatformAccessory, TydomAccessoryContext} from 'src/typings/homebridge';
-import {AnyTydomDataValue, TydomEndpointData} from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
 
@@ -129,15 +128,6 @@ export const setupAccessoryIdentifyHandler = (accessory: PlatformAccessory, _con
     debug(`New identify request for device named="${name}" with id="${id}"`);
     callback();
   });
-};
-
-export const getPropValue = <T extends AnyTydomDataValue = AnyTydomDataValue>(
-  data: TydomEndpointData,
-  name: string
-): T => {
-  const prop = data.find((prop) => prop.name === name);
-  assert(prop, `Missing \`${name}\` data item`);
-  return prop.value as T;
 };
 
 export const assignTydomContext = (

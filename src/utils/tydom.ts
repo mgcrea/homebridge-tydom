@@ -5,7 +5,8 @@ import {
   TydomEndpointData,
   TydomEndpointDataResponse,
   TydomMetaElement,
-  TydomMetaResponse
+  TydomMetaResponse,
+  AnyTydomDataValue
 } from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import TydomClient from 'tydom-client';
@@ -67,6 +68,18 @@ export const runTydomDeviceCommand = async <T extends Record<string, unknown> = 
   return promise;
 };
 
+export const getTydomDataPropValue = <
+  V extends AnyTydomDataValue = AnyTydomDataValue,
+  T extends TydomEndpointData = TydomEndpointData
+>(
+  data: T,
+  name: string
+): V => {
+  const item = data.find((prop) => prop.name === 'temperature');
+  assert(item, `Missing property with name="${name}" in endpoint data`);
+  return item.value as V;
+};
+
 export const getEndpointDetailsFromMeta = (
   {id_endpoint: endpointId, id_device: deviceId}: TydomConfigEndpoint,
   meta: TydomMetaResponse
@@ -124,7 +137,7 @@ export const resolveEndpointCategory = ({firstUsage, metadata}: ResolveEndpointC
   return null;
 };
 
-export const asyncSetTimeout = (ms: number) =>
+export const asyncWait = (ms: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });

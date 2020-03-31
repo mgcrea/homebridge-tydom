@@ -16,8 +16,8 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
-import {debugGet, debugSet} from 'src/utils/debug';
-import {getTydomDeviceData} from 'src/utils/tydom';
+import {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
+import {getTydomDeviceData, getTydomDataPropValue} from 'src/utils/tydom';
 
 export const setupThermostat = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {displayName: name, UUID: id, context} = accessory;
@@ -33,22 +33,20 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
 
   service
     .getCharacteristic(CurrentHeatingCoolingState)!
-    // @ts-ignore
     .setProps({validValues: [0, 1]} as Partial<CharacteristicProps>) // [OFF, HEAT, COOL]
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('CurrentHeatingCoolingState', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceThermostatData;
-        // const hvacMode = data.find(prop => prop.name === 'hvacMode');
-        const authorization = data.find((prop) => prop.name === 'authorization')!.value;
-        const setpoint = data.find((prop) => prop.name === 'setpoint')!.value;
-        const temperature = data.find((prop) => prop.name === 'temperature')!.value;
-        callback(
-          null,
+        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
+        const authorization = getTydomDataPropValue<'STOP' | 'HEATING'>(data, 'authorization');
+        const setpoint = getTydomDataPropValue<number>(data, 'setpoint');
+        const temperature = getTydomDataPropValue<number>(data, 'temperature');
+        const nextValue =
           authorization === 'HEATING' && setpoint > temperature
             ? CurrentHeatingCoolingState.HEAT
-            : CurrentHeatingCoolingState.OFF
-        );
+            : CurrentHeatingCoolingState.OFF;
+        debugGetResult('CurrentHeatingCoolingState', {name, id, value: nextValue});
+        callback(null, nextValue);
       } catch (err) {
         callback(err);
       }
@@ -56,35 +54,35 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
 
   service
     .getCharacteristic(TargetHeatingCoolingState)!
-    // @ts-ignore
     .setProps({validValues: [0, 1]} as Partial<CharacteristicProps>) // [OFF, HEAT, COOL, AUTO]
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('TargetHeatingCoolingState', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceThermostatData;
-        const hvacMode = data.find((prop) => prop.name === 'hvacMode')!.value; // NORMAL | STOP | ANTI_FROST
-        const authorization = data.find((prop) => prop.name === 'authorization')!.value; // STOP | HEATING
-        callback(
-          null,
+        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
+        const hvacMode = getTydomDataPropValue<'NORMAL' | 'STOP' | 'ANTI_FROST'>(data, 'hvacMode');
+        const authorization = getTydomDataPropValue<'STOP' | 'HEATING'>(data, 'authorization');
+        const nextValue =
           authorization === 'HEATING' && hvacMode === 'NORMAL'
             ? TargetHeatingCoolingState.HEAT
-            : TargetHeatingCoolingState.OFF
-        );
+            : TargetHeatingCoolingState.OFF;
+        debugGetResult('TargetHeatingCoolingState', {name, id, value: nextValue});
+        callback(null, nextValue);
       } catch (err) {
         callback(err);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('TargetHeatingCoolingState', {name, id, value});
-      const tydomValue = [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(value as number)
+      const nextValue = [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(value as number)
         ? 'NORMAL'
         : 'STOP';
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
         {
           name: 'hvacMode',
-          value: tydomValue
+          value: nextValue
         }
       ]);
+      debugSetResult('TargetHeatingCoolingState', {name, id, value: nextValue});
       callback();
     });
 
@@ -93,10 +91,10 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('TargetTemperature', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceThermostatData;
-        const setpoint = data.find((prop) => prop.name === 'setpoint');
-        assert(setpoint, 'Missing `setpoint` data item');
-        callback(null, setpoint!.value);
+        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
+        const setpoint = getTydomDataPropValue<number>(data, 'setpoint');
+        debugGetResult('TargetTemperature', {name, id, value: setpoint});
+        callback(null, setpoint);
       } catch (err) {
         callback(err);
       }
@@ -109,6 +107,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
           value: value
         }
       ]);
+      debugSetResult('TargetTemperature', {name, id, value});
       callback();
     });
 
@@ -117,10 +116,10 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('CurrentTemperature', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceThermostatData;
-        const temperature = data.find((prop) => prop.name === 'temperature');
-        assert(temperature, 'Missing `temperature` data item');
-        callback(null, temperature!.value);
+        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
+        const temperature = getTydomDataPropValue<number>(data, 'temperature');
+        debugGetResult('CurrentTemperature', {name, id, value: temperature});
+        callback(null, temperature);
       } catch (err) {
         callback(err);
       }

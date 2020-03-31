@@ -9,7 +9,7 @@ import {
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
 import {debugGet, debugGetResult} from 'src/utils/debug';
-import {getTydomDeviceData} from 'src/utils/tydom';
+import {getTydomDeviceData, getTydomDataPropValue} from 'src/utils/tydom';
 
 export const setupTemperatureSensor = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {displayName: name, UUID: id, context} = accessory;
@@ -27,12 +27,10 @@ export const setupTemperatureSensor = (accessory: PlatformAccessory, controller:
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('CurrentTemperature', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
-        const outTemperature = data.find((prop) => prop.name === 'outTemperature');
-        assert(outTemperature && outTemperature.value !== undefined, 'Missing `outTemperature.value` on data item');
-        const nextValue = outTemperature.value;
-        debugGetResult('CurrentTemperature', {name, id, value: nextValue});
-        callback(null, nextValue);
+        const data = await getTydomDeviceData<TydomEndpointData>(client, {deviceId, endpointId});
+        const outTemperature = getTydomDataPropValue<number>(data, 'outTemperature');
+        debugGetResult('CurrentTemperature', {name, id, value: outTemperature});
+        callback(null, outTemperature);
       } catch (err) {
         callback(err);
       }

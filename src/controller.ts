@@ -12,7 +12,7 @@ import locale from './config/locale';
 import {TydomPlatformConfig} from './platform';
 import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/homebridge';
 import {SECURITY_SYSTEM_SENSORS} from './utils/accessory';
-import {asyncSetTimeout, getEndpointDetailsFromMeta, resolveEndpointCategory} from './utils/tydom';
+import {getEndpointDetailsFromMeta, resolveEndpointCategory} from './utils/tydom';
 
 export type ControllerDevicePayload = {
   name: string;
@@ -66,9 +66,6 @@ export default class TydomController extends EventEmitter {
       this.log.error(`Failed to connect to Tydom hostname=${hostname} with username="${username}"`);
       return;
     }
-    await this.client.put('/configs/gateway/api_mode');
-    await this.client.post('/refresh/all');
-    await asyncSetTimeout(1000);
     const config = (await this.client.get('/configs/file')) as TydomConfigResponse;
     const meta = (await this.client.get('/devices/meta')) as TydomMetaResponse;
     const {endpoints} = config;
@@ -128,6 +125,9 @@ export default class TydomController extends EventEmitter {
         }
       }
     });
+  }
+  async refresh() {
+    return await this.client.post('/refresh/all');
   }
   handleMessage(message: TydomHttpMessage) {
     const {uri, method, body} = message;

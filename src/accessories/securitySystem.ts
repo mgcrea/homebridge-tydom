@@ -6,28 +6,27 @@ import {
   NodeCallback,
   Service
 } from 'hap-nodejs';
+import {get} from 'lodash';
 import {HOMEBRIDGE_TYDOM_PIN} from 'src/config/env';
+import locale from 'src/config/locale';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {
+  SecuritySystemLabelCommandResult,
   TydomDeviceSecuritySystemAlarmMode,
   TydomDeviceSecuritySystemData,
-  TydomDeviceSecuritySystemZoneState,
-  SecuritySystemLabelCommandResult
+  TydomDeviceSecuritySystemZoneState
 } from 'src/typings/tydom';
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
-  getPropValue,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
 import {decode} from 'src/utils/buffer';
 import debug, {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
-import {getTydomDeviceData} from 'src/utils/tydom';
-import locale from 'src/config/locale';
-import {get} from 'lodash';
+import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
 type ZoneAliases = {
   stay?: number[];
@@ -88,7 +87,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       debugGet('SecuritySystemCurrentState', {name, id});
       try {
         const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
-        const alarmMode = getPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
+        const alarmMode = getTydomDataPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
         const nextValue = getCurrrentStateForValue(alarmMode);
         callback(null, nextValue);
         debugGetResult('SecuritySystemCurrentState', {name, id, value: nextValue});
@@ -104,7 +103,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       debugGet('SecuritySystemTargetState', {name, id});
       try {
         const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
-        const alarmMode = getPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
+        const alarmMode = getTydomDataPropValue<TydomDeviceSecuritySystemAlarmMode>(data, 'alarmMode');
         const nextValue = getTargetStateForValue(alarmMode);
         callback(null, nextValue);
         debugGetResult('SecuritySystemTargetState', {name, id, value: nextValue});
@@ -157,7 +156,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       debugGet(`systOpenIssue_On`, {name, id});
       try {
         const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
-        const systOpenIssue = getPropValue<boolean>(data, 'systOpenIssue');
+        const systOpenIssue = getTydomDataPropValue<boolean>(data, 'systOpenIssue');
         callback(null, systOpenIssue);
       } catch (err) {
         callback(err);
@@ -168,7 +167,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
 
   // Setup zones switches
   for (let zoneIndex = 1; zoneIndex < 9; zoneIndex++) {
-    const zoneState = getPropValue<TydomDeviceSecuritySystemZoneState>(initialData, `zone${zoneIndex}State`);
+    const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(initialData, `zone${zoneIndex}State`);
     if (zoneState === 'UNUSED') {
       continue;
     }
@@ -185,7 +184,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         debugGet(`zone_${zoneIndex}_On`, {name, id});
         try {
           const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
-          const zoneState = getPropValue<TydomDeviceSecuritySystemZoneState>(data, `zone${zoneIndex}State`);
+          const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(data, `zone${zoneIndex}State`);
           callback(null, zoneState === 'ON');
         } catch (err) {
           callback(err);

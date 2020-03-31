@@ -3,6 +3,7 @@ import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
 import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from './controller';
 import {HomebridgeApi, Platform, PlatformAccessory, TydomAccessoryContext} from './typings/homebridge';
 import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './utils/accessory';
+import {asyncWait} from './utils/tydom';
 
 export type TydomPlatformConfig = {
   platform: string;
@@ -12,6 +13,7 @@ export type TydomPlatformConfig = {
   settings: Record<string, {name?: string; category?: Categories}>;
   includes?: string[];
   excludes?: string[];
+  refresh?: boolean;
 };
 
 export default class TydomPlatform implements Platform {
@@ -45,6 +47,7 @@ export default class TydomPlatform implements Platform {
     this.controller.on('update', this.handleControllerDataUpdate.bind(this));
   }
   async didFinishLaunching() {
+    const {refresh} = this.config;
     this.cleanupAccessoriesIds = new Set(this.accessories.keys());
     await this.controller!.scan();
     this.cleanupAccessoriesIds.forEach((accessoryId) => {
@@ -54,6 +57,11 @@ export default class TydomPlatform implements Platform {
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
     });
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
+    if (refresh !== false) {
+      await asyncWait(5000);
+      this.log.info(`Refreshing Tydom controller`);
+      await this.controller!.refresh();
+    }
   }
   async handleControllerDevice({name, category, context}: ControllerDevicePayload) {
     const id = this.api.hap.uuid.generate(context.accessoryId);

@@ -1,7 +1,7 @@
 import {
   Characteristic,
-  CharacteristicChange,
   CharacteristicEventTypes,
+  CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback,
   Service
@@ -13,7 +13,7 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
-import {debugSet} from 'src/utils/debug';
+import {debugSet, debugSetResult} from 'src/utils/debug';
 
 export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {displayName: name, UUID: id, context} = accessory;
@@ -31,39 +31,29 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       callback(null, false);
     })
-    .on(CharacteristicEventTypes.CHANGE, async (value: CharacteristicChange) => {
+    .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('On', {name, id, value});
-      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: 'levelCmd',
-          value: 'TOGGLE'
-        }
-      ]);
+      if (value) {
+        const nextValue = 'TOGGLE';
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+          {
+            name: 'level',
+            value: nextValue
+          }
+        ]);
+        debugSetResult('On', {name, id, value: nextValue});
+      }
+      callback();
     });
+  // .on(CharacteristicEventTypes.CHANGE, async (value: CharacteristicChange) => {
+  //   debugSet('On', {name, id, value});
+  //   const nextValue = 'TOGGLE';
+  //   await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+  //     {
+  //       name: 'levelCmd',
+  //       value: nextValue
+  //     }
+  //   ]);
+  //   debugSetResult('On', {name, id, value: nextValue});
+  // });
 };
-
-/*
-accessory
-  .addService(Service.GarageDoorOpener, tydomName) // Display name
-  // .setCharacteristic(Characteristic.TargetDoorState, Characteristic.TargetDoorState.CLOSED) // force initial state to CLOSED
-  .getCharacteristic(Characteristic.TargetDoorState)!
-  .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-    d({id, type: 'CharacteristicEventTypes.SET', value});
-    if (value == Characteristic.TargetDoorState.CLOSED) {
-      await client.put(`/devices/${tydomId}/endpoints/${tydomId}/data`, [
-        {
-          name: 'levelCmd',
-          value: 'TOGGLE'
-        }
-      ]);
-    } else if (value == Characteristic.TargetDoorState.OPEN) {
-      await client.put(`/devices/${tydomId}/endpoints/${tydomId}/data`, [
-        {
-          name: 'levelCmd',
-          value: 'TOGGLE'
-        }
-      ]);
-    }
-    callback();
-  });
-*/

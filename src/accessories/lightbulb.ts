@@ -18,7 +18,7 @@ import {
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
 import {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
-import {getTydomDeviceData} from 'src/utils/tydom';
+import {getTydomDeviceData, getTydomDataPropValue} from 'src/utils/tydom';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
 export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomController): void => {
@@ -73,9 +73,8 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
     debugGet('On', {name, id});
     try {
       const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
-      const level = data.find((prop) => prop.name === 'level');
-      assert(level && level.value !== undefined, 'Missing `level.value` on data item');
-      const nextValue = level.value > 0;
+      const level = getTydomDataPropValue<number>(data, 'level');
+      const nextValue = level > 0;
       debugGetResult('On', {name, id, value: nextValue});
       callback(null, nextValue);
     } catch (err) {
@@ -103,12 +102,10 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
     async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet('Brightness', {name, id});
       try {
-        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
-        const level = data.find((prop) => prop.name === 'level');
-        assert(level && level.value !== undefined, 'Missing `level.value` on data item');
-        const nextValue = asNumber(level.value);
-        debugGetResult('Brightness', {name, id, value: nextValue});
-        callback(null, nextValue);
+        const data = await getTydomDeviceData<TydomEndpointData>(client, {deviceId, endpointId});
+        const level = getTydomDataPropValue<number>(data, 'level');
+        debugGetResult('Brightness', {name, id, value: level});
+        callback(null, level);
       } catch (err) {
         callback(err);
       }
