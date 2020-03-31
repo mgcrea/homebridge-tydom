@@ -6,7 +6,7 @@ import {setupSecuritySystem, updateSecuritySystem} from 'src/accessories/securit
 import {setupSecuritySystemSensors, updateSecuritySystemSensors} from 'src/accessories/securitySystemSensors';
 import {setupTemperatureSensor, updateTemperatureSensor} from 'src/accessories/temperatureSensor';
 import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
-import {updateWindowCovering} from 'src/accessories/windowCovering';
+import {updateWindowCovering, setupWindowCovering} from 'src/accessories/windowCovering';
 import TydomController from 'src/controller';
 import {PlatformAccessory, TydomAccessoryContext} from 'src/typings/homebridge';
 import assert from 'src/utils/assert';
@@ -63,8 +63,7 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
     case Categories.GARAGE_DOOR_OPENER:
       return setupGarageDoorOpener;
     case Categories.WINDOW_COVERING:
-    case Categories.SECURITY_SYSTEM:
-      return setupSecuritySystem;
+      return setupWindowCovering;
     case Categories.SECURITY_SYSTEM:
       return setupSecuritySystem;
     case Categories.SENSOR:
