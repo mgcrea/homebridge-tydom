@@ -25,24 +25,24 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
 
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.Switch, `${accessory.displayName}`, true);
+  let latestValue = false;
 
   service
     .getCharacteristic(Characteristic.On)!
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      callback(null, false);
+      callback(null, latestValue);
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet('On', {name, id, value});
-      if (value) {
-        const nextValue = 'TOGGLE';
-        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-          {
-            name: 'level',
-            value: nextValue
-          }
-        ]);
-        debugSetResult('On', {name, id, value: nextValue});
-      }
+      const nextValue = 'TOGGLE';
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: 'levelCmd',
+          value: nextValue
+        }
+      ]);
+      debugSetResult('On', {name, id, value: nextValue});
+      latestValue = value as boolean;
       callback();
     });
   // .on(CharacteristicEventTypes.CHANGE, async (value: CharacteristicChange) => {
