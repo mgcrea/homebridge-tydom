@@ -1,5 +1,7 @@
 import crypto from 'crypto';
 
+export const decode = (string?: string): string => (string ? Buffer.from(string, 'base64').toString('ascii') : '');
+
 export const sha256 = (data: crypto.BinaryLike): Promise<string> => {
   return new Promise((resolve, reject) => {
     try {

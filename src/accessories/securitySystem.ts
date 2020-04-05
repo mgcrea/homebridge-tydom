@@ -24,8 +24,8 @@ import {
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
-import {decode} from 'src/utils/buffer';
 import debug, {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
+import {decode} from 'src/utils/hash';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
 type ZoneAliases = {
