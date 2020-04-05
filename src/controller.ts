@@ -13,6 +13,8 @@ import {TydomPlatformConfig} from './platform';
 import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/homebridge';
 import {SECURITY_SYSTEM_SENSORS} from './utils/accessory';
 import {getEndpointDetailsFromMeta, resolveEndpointCategory} from './utils/tydom';
+import chalk from 'chalk';
+import {chalkString, chalkJson} from './utils/chalk';
 
 export type ControllerDevicePayload = {
   name: string;
@@ -146,12 +148,21 @@ export default class TydomController extends EventEmitter {
     (body as TydomDeviceDataUpdateBody).forEach((device) => {
       const {id: deviceId, endpoints} = device;
       if (!this.devices.has(deviceId)) {
+        debug(
+          `${chalk.bold.yellow('←PUT')}:${chalk.blue('ignored')} for device id=${chalkString(
+            deviceId
+          )}, endpoints:\n${chalkJson(endpoints)}`
+        );
         return;
       }
       const category = this.devices.get(deviceId) as Categories;
       const {id: endpointId, data: updates} = endpoints[0];
       const accessoryId = this.getAccessoryId(deviceId);
-      debug(`Device with id="${deviceId}" has updated data`, updates);
+      debug(
+        `${chalk.bold.green('←PUT')}:${chalk.blue('update')} for device id=${chalkString(
+          deviceId
+        )}, updates:\n${chalkJson(updates)}`
+      );
       const context: TydomAccessoryUpdateContext = {
         deviceId,
         endpointId,
@@ -179,3 +190,18 @@ export default class TydomController extends EventEmitter {
     });
   }
 }
+
+/*
+
+export const debugGetResult = (
+  characteristic: string,
+  {name, id, value}: {name: string; id: string; value: unknown}
+) => {
+  debug(
+    `${chalk.bold.green('←GET')}:${chalk.blue(characteristic)} value=${chalk.yellow(
+      value
+    )} for device named=${chalkString(name)} with id=${chalkString(id)} ...`
+  );
+};
+
+*/

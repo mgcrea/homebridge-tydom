@@ -35,9 +35,9 @@ export const debugSetResult = (
 
 export const debugGet = (characteristic: string, {name, id}: {name: string; id: string}) => {
   debug(
-    `${chalk.bold.green('→GET')}:${chalk.blue(characteristic)} device named=${chalkString(name)} with id=${chalkString(
-      id
-    )} ...`
+    `${chalk.bold.green('→GET')}:${chalk.blue(characteristic)} for device named=${chalkString(
+      name
+    )} with id=${chalkString(id)} ...`
   );
 };
 
@@ -46,8 +46,8 @@ export const debugGetResult = (
   {name, id, value}: {name: string; id: string; value: unknown}
 ) => {
   debug(
-    `${chalk.bold.green('←GET')}:${chalk.blue(characteristic)} value=${chalk.yellow(value)} device named=${chalkString(
-      name
-    )} with id=${chalkString(id)} ...`
+    `${chalk.bold.green('←GET')}:${chalk.blue(characteristic)} value=${chalk.yellow(
+      value
+    )} for device named=${chalkString(name)} with id=${chalkString(id)} ...`
   );
 };
