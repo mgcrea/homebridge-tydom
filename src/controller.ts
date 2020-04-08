@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import {EventEmitter} from 'events';
 import {Categories} from 'hap-nodejs';
 import {get} from 'lodash';
@@ -12,9 +13,8 @@ import locale from './config/locale';
 import {TydomPlatformConfig} from './platform';
 import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/homebridge';
 import {SECURITY_SYSTEM_SENSORS} from './utils/accessory';
+import {chalkJson, chalkNumber, chalkString} from './utils/chalk';
 import {getEndpointDetailsFromMeta, resolveEndpointCategory} from './utils/tydom';
-import chalk from 'chalk';
-import {chalkString, chalkJson} from './utils/chalk';
 
 export type ControllerDevicePayload = {
   name: string;
@@ -76,6 +76,11 @@ export default class TydomController extends EventEmitter {
       const {metadata} = getEndpointDetailsFromMeta(endpoint, meta);
       const deviceSettings = settings[deviceId] || {};
       const categoryFromSettings = deviceSettings.category as Categories | undefined;
+      debug(
+        `Found new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
+          deviceId
+        )} and endpointId=${chalkNumber(endpointId)}`
+      );
       if (includes.length && !includes.includes(`${deviceId}`)) {
         return;
       }
@@ -190,18 +195,3 @@ export default class TydomController extends EventEmitter {
     });
   }
 }
-
-/*
-
-export const debugGetResult = (
-  characteristic: string,
-  {name, id, value}: {name: string; id: string; value: unknown}
-) => {
-  debug(
-    `${chalk.bold.green('←GET')}:${chalk.blue(characteristic)} value=${chalk.yellow(
-      value
-    )} for device named=${chalkString(name)} with id=${chalkString(id)} ...`
-  );
-};
-
-*/

@@ -11,6 +11,7 @@ import TydomController from 'src/controller';
 import {PlatformAccessory, TydomAccessoryContext} from 'src/typings/homebridge';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
+import {setupContactSensor, updateContactSensor} from 'src/accessories/contactSensor';
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
@@ -68,6 +69,9 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
       return setupSecuritySystem;
     case Categories.SENSOR:
       return setupTemperatureSensor;
+    case Categories.WINDOW:
+    case Categories.DOOR:
+      return setupContactSensor;
     case SECURITY_SYSTEM_SENSORS:
       return setupSecuritySystemSensors;
     default:
@@ -100,6 +104,9 @@ export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): Tydom
       return updateSecuritySystem;
     case Categories.SENSOR:
       return updateTemperatureSensor;
+    case Categories.WINDOW:
+    case Categories.DOOR:
+      return updateContactSensor;
     case SECURITY_SYSTEM_SENSORS:
       return updateSecuritySystemSensors;
     default:
