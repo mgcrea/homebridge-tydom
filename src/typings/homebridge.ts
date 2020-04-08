@@ -1,6 +1,6 @@
-import Hap, {Accessory, Categories, Service} from 'hap-nodejs';
 import {EventEmitter} from 'events';
-import {TydomMetaElement} from './tydom';
+import Hap, {Accessory, Categories, Service} from 'hap-nodejs';
+import {TydomConfigGroup, TydomMetaElement} from './tydom';
 
 export interface HomebridgeApi extends EventEmitter {
   // _accessories: Record<string, unknown>;
@@ -37,6 +37,7 @@ export type TydomAccessoryContext = {
   accessoryId: string;
   manufacturer: string;
   serialNumber: string;
+  group?: TydomConfigGroup;
   model: string;
 };
 

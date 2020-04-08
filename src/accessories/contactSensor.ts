@@ -9,7 +9,7 @@ import {
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
 import {debugGet, debugGetResult} from 'src/utils/debug';
-import {getTydomDeviceData, getTydomDataPropValue} from 'src/utils/tydom';
+import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
 export const setupContactSensor = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {displayName: name, UUID: id, context} = accessory;

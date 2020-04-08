@@ -6,7 +6,8 @@ import {
   TydomEndpointDataResponse,
   TydomMetaElement,
   TydomMetaResponse,
-  AnyTydomDataValue
+  AnyTydomDataValue,
+  TydomGroupsResponse
 } from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import TydomClient from 'tydom-client';
@@ -89,6 +90,16 @@ export const getEndpointDetailsFromMeta = (
   const details = find(device.endpoints, {id: endpointId});
   assert(details, `Endpoint with id="${endpointId}" not found in device with id="${deviceId}" meta`);
   return details;
+};
+
+export const getEndpointGroupIdFromGroups = (
+  {id_endpoint: endpointId, id_device: deviceId}: TydomConfigEndpoint,
+  groups: TydomGroupsResponse
+): number | null => {
+  const group = groups.groups.find(({devices}) =>
+    devices.some(({id, endpoints}) => id === deviceId && endpoints.some(({id}) => id === endpointId))
+  );
+  return group ? group.id : null;
 };
 
 export const getEndpointSignatureFromMetadata = (metadata: TydomMetaElement[]): string =>

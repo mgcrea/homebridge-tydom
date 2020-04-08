@@ -2,7 +2,12 @@ import chalk from 'chalk';
 import {EventEmitter} from 'events';
 import {Categories} from 'hap-nodejs';
 import {get} from 'lodash';
-import {TydomConfigResponse, TydomDeviceDataUpdateBody, TydomMetaResponse} from 'src/typings/tydom';
+import {
+  TydomConfigResponse,
+  TydomDeviceDataUpdateBody,
+  TydomGroupsResponse,
+  TydomMetaResponse
+} from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
 import {decode} from 'src/utils/hash';
@@ -13,8 +18,9 @@ import locale from './config/locale';
 import {TydomPlatformConfig} from './platform';
 import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/homebridge';
 import {SECURITY_SYSTEM_SENSORS} from './utils/accessory';
+import {stringIncludes} from './utils/array';
 import {chalkJson, chalkNumber, chalkString} from './utils/chalk';
-import {getEndpointDetailsFromMeta, resolveEndpointCategory} from './utils/tydom';
+import {getEndpointDetailsFromMeta, getEndpointGroupIdFromGroups, resolveEndpointCategory} from './utils/tydom';
 
 export type ControllerDevicePayload = {
   name: string;
@@ -32,6 +38,7 @@ export default class TydomController extends EventEmitter {
   client: TydomClient;
   config: TydomPlatformConfig;
   devices: Map<number, Categories> = new Map();
+  state: Map<string, unknown> = new Map();
   log: typeof console;
   constructor(log: typeof console, config: TydomPlatformConfig) {
     super();
@@ -42,17 +49,19 @@ export default class TydomController extends EventEmitter {
     assert(username, 'Missing "username" config field for platform');
     const password = HOMEBRIDGE_TYDOM_PASSWORD ? decode(HOMEBRIDGE_TYDOM_PASSWORD) : configPassword;
     assert(password, 'Missing "password" config field for platform');
-    debug(`Creating tydom client with username="${username}" and hostname="${hostname}"`);
+    this.log.info(`Creating tydom client with username=${chalkString(username)} and hostname=${chalkString(hostname)}`);
     this.client = createTydomClient({username, password, hostname, followUpDebounce: 500});
     this.client.on('message', (message) => {
       this.handleMessage(message);
     });
     this.client.on('connect', () => {
-      this.log.info(`Successfully connected to Tydom hostname=${hostname} with username="${username}"`);
+      this.log.info(
+        `Successfully connected to Tydom hostname=${chalkString(hostname)} with username=${chalkString(username)}`
+      );
       this.emit('connect');
     });
     this.client.on('disconnect', () => {
-      this.log.warn(`Disconnected from Tydom hostname=${hostname}"`);
+      this.log.warn(`Disconnected from Tydom hostname=${chalkString(hostname)}"`);
       this.emit('disconnect');
     });
   }
@@ -60,20 +69,47 @@ export default class TydomController extends EventEmitter {
     const {username} = this.config;
     return `tydom:${username.slice(6)}:accessories:${deviceId}`;
   }
-  async scan() {
-    const {hostname, username, settings = {}, includes = [], excludes = []} = this.config;
+  async connect() {
+    const {hostname, username} = this.config;
+    debug(`Connecting to hostname=${chalkString(hostname)}...`);
     try {
       await this.client.connect();
+      // Initial intro handshake
+      await this.client.get('/ping');
+      await this.client.put('/configs/gateway/api_mode');
     } catch (err) {
       this.log.error(`Failed to connect to Tydom hostname=${hostname} with username="${username}"`);
-      return;
+      throw err;
     }
-    const config = (await this.client.get('/configs/file')) as TydomConfigResponse;
-    const meta = (await this.client.get('/devices/meta')) as TydomMetaResponse;
-    const {endpoints} = config;
+  }
+  async sync() {
+    const {hostname} = this.config;
+    debug(`Syncing state from hostname=${chalkString(hostname)}...`);
+    const config = await this.client.get<TydomConfigResponse>('/configs/file');
+    const groups = await this.client.get<TydomGroupsResponse>('/groups/file');
+    const meta = await this.client.get<TydomMetaResponse>('/devices/meta');
+    // Final outro handshake
+    await this.refresh();
+    Object.assign(this.state, {config, groups, meta});
+    return {config, groups, meta};
+  }
+  async scan() {
+    const {hostname} = this.config;
+    debug(`Scaning devicesd from hostname=${chalkString(hostname)}...`);
+    const {
+      settings = {},
+      includedDevices = [],
+      excludedDevices = [],
+      includedCategories = [],
+      excludedCategories = []
+    } = this.config;
+    const {config, groups, meta} = await this.sync();
+    const {endpoints, groups: configGroups} = config;
     endpoints.forEach((endpoint) => {
       const {id_endpoint: endpointId, id_device: deviceId, name: deviceName, first_usage: firstUsage} = endpoint;
       const {metadata} = getEndpointDetailsFromMeta(endpoint, meta);
+      const groupId = getEndpointGroupIdFromGroups(endpoint, groups);
+      const group = groupId ? configGroups.find(({id}) => id === groupId) : undefined;
       const deviceSettings = settings[deviceId] || {};
       const categoryFromSettings = deviceSettings.category as Categories | undefined;
       debug(
@@ -81,10 +117,10 @@ export default class TydomController extends EventEmitter {
           deviceId
         )} and endpointId=${chalkNumber(endpointId)}`
       );
-      if (includes.length && !includes.includes(`${deviceId}`)) {
+      if (includedDevices.length && !stringIncludes(includedDevices, deviceId)) {
         return;
       }
-      if (excludes.length && excludes.includes(`${deviceId}`)) {
+      if (excludedDevices.length && stringIncludes(excludedDevices, deviceId)) {
         return;
       }
       const category = categoryFromSettings || resolveEndpointCategory({firstUsage, metadata});
@@ -93,7 +129,18 @@ export default class TydomController extends EventEmitter {
         debug({endpoint});
         return;
       }
+      if (includedCategories.length && !stringIncludes(includedCategories, category)) {
+        return;
+      }
+      if (excludedCategories.length && stringIncludes(excludedCategories, category)) {
+        return;
+      }
       if (!this.devices.has(deviceId)) {
+        debug(
+          `Adding new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
+            deviceId
+          )} and endpointId=${chalkNumber(endpointId)}`
+        );
         const accessoryId = this.getAccessoryId(deviceId);
         const nameFromSetting = get(settings, `${deviceId}.name`) as string | undefined;
         const name = nameFromSetting || deviceName;
@@ -102,6 +149,7 @@ export default class TydomController extends EventEmitter {
           name,
           metadata,
           settings: deviceSettings,
+          group,
           deviceId,
           endpointId,
           accessoryId,
@@ -134,6 +182,7 @@ export default class TydomController extends EventEmitter {
     });
   }
   async refresh() {
+    debug(`Refreshing Tydom controller ...`);
     return await this.client.post('/refresh/all');
   }
   handleMessage(message: TydomHttpMessage) {

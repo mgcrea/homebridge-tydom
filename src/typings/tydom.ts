@@ -7,8 +7,21 @@ export type TydomConfigEndpoint = {
   last_usage: string;
 };
 
+export type TydomConfigGroup = {
+  picto: string;
+  name: string;
+  group_all: boolean;
+  usage: string;
+  id: number;
+};
+
 export type TydomConfigResponse = {
   endpoints: TydomConfigEndpoint[];
+  groups: TydomConfigGroup[];
+};
+
+export type TydomGroupsResponse = {
+  groups: Array<{id: number; devices: Array<{id: number; endpoints: Array<{id: number}>}>}>;
 };
 
 export type TydomMetaElement = {

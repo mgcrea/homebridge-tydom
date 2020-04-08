@@ -21,7 +21,7 @@
     "start:prod": "yarn spec:watch",
     "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
     "test": "yarn pretty && yarn lint && yarn spec",
-    "spec": "NODE_TLS_REJECT_UNAUTHORIZED=0 CI=true jest --runInBand --colors",
+    "spec": "NODE_TLS_REJECT_UNAUTHORIZED=0 CI=true jest --runInBand --colors --passWithNoTests",
     "spec:watch": "yarn spec --watch",
     "spec:coverage": "yarn spec --coverage",
     "lint": "eslint --ext .ts src/",
@@ -42,7 +42,7 @@
     "hap-nodejs": "^0.5.9",
     "lodash": "^4.17.15",
     "source-map-support": "^0.5.16",
-    "tydom-client": "^0.10.0"
+    "tydom-client": "^0.11.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
@@ -58,7 +58,7 @@
     "@types/debug": "^4.1.5",
     "@types/jest": "^25.2.1",
     "@types/lodash": "^4.14.149",
-    "@types/node": "^13.11.0",
+    "@types/node": "^13.11.1",
     "@types/node-fetch": "^2.5.5",
     "@types/node-persist": "^3.0.0",
     "@types/ws": "^7.2.3",
@@ -69,7 +69,7 @@
     "eslint-config-prettier": "^6.10.1",
     "eslint-plugin-prettier": "^3.1.2",
     "homebridge": "^0.4.53",
-    "jest": "^25.2.7",
+    "jest": "^25.3.0",
     "nock": "^12.0.3",
     "prettier": "^2.0.4",
     "typescript": "^3.8.3"
