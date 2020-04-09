@@ -76,6 +76,8 @@ For your password, you can also use an environment variable `HOMEBRIDGE_TYDOM_PA
 
 > Example: `HOMEBRIDGE_TYDOM_PASSWORD=Zm9vYmFyYmF6` for a `foobarbaz` password (`echo -n "foobarbaz" | base64`)
 
+3. Configure the locale used for the labels (supported languages: `French` (default) & `English`) using the `HOMEBRIDGE_TYDOM_LOCALE` environment variable with value `fr` or `en`.
+
 #### SecuritySystem
 
 You can also manage your TYXAL+ security system from HomeKit, but it requires your alarm pin code:

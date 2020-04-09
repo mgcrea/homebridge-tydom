@@ -87,6 +87,7 @@ export type TydomDeviceShutterData = [
   TydomDataElement<'thermicDefect', boolean>
 ];
 
+export type TydomDeviceSecuritySystemAlarmState = 'OFF' | 'DELAYED' | 'ON' | 'QUIET';
 export type TydomDeviceSecuritySystemAlarmMode = 'OFF' | 'ON' | 'TEST' | 'ZONE' | 'MAINTENANCE';
 export type TydomDeviceSecuritySystemZoneState = 'UNUSED' | 'ON' | 'OFF';
 

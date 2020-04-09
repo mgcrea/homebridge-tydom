@@ -52,26 +52,6 @@ export const setupSecuritySystemSensors = async (
     })
   );
 
-  // Setup global contact sensor
-  // const service = addAccessoryServiceWithSubtype(accessory, Service.ContactSensor, `Ouverture`, 'systOpenIssue', true);
-  // service
-  //   .getCharacteristic(Characteristic.ContactSensorState)!
-  //   .setValue(Object.keys(initialOpenedIssues).length > 0 ? 1 : 0)
-  //   .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-  //     debugGet(`ContactSensorState`, {name, id});
-  //     try {
-  //       const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomDeviceSecuritySystemData;
-  //       const systOpenIssue = getPropValue<boolean>(data, 'systOpenIssue');
-  //       const nextValue = systOpenIssue ? 1 : 0;
-  //       debugGetResult('ContactSensorState', {name, id, value: nextValue});
-  //       callback(null, systOpenIssue);
-  //     } catch (err) {
-  //       callback(err);
-  //     }
-  //   });
-  // service.getCharacteristic(Characteristic.Active)!.setValue(1);
-  // service.getCharacteristic(Characteristic.StatusFault)!.setValue(0);
-
   contactSensorProducts.forEach((contactSensorProduct) => {
     const {id: productId, nameStd, nameCustom, number} = contactSensorProduct;
     const subDeviceId = `systOpenIssue_${productId}`;
@@ -105,7 +85,7 @@ export const setupSecuritySystemSensors = async (
           callback(err);
         }
       });
-    contactSensorService.getCharacteristic(Characteristic.Active)!.setValue(1);
+    contactSensorService.getCharacteristic(Characteristic.StatusActive)!.setValue(1);
     contactSensorService.getCharacteristic(Characteristic.StatusFault)!.setValue(0);
   });
 };
