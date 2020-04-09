@@ -20,7 +20,12 @@ import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/home
 import {SECURITY_SYSTEM_SENSORS} from './utils/accessory';
 import {stringIncludes} from './utils/array';
 import {chalkJson, chalkNumber, chalkString} from './utils/chalk';
-import {getEndpointDetailsFromMeta, getEndpointGroupIdFromGroups, resolveEndpointCategory} from './utils/tydom';
+import {
+  getEndpointDetailsFromMeta,
+  getEndpointGroupIdFromGroups,
+  resolveEndpointCategory,
+  asyncWait
+} from './utils/tydom';
 
 export type ControllerDevicePayload = {
   name: string;
@@ -74,9 +79,11 @@ export default class TydomController extends EventEmitter {
     debug(`Connecting to hostname=${chalkString(hostname)}...`);
     try {
       await this.client.connect();
+      await asyncWait(250);
       // Initial intro handshake
       await this.client.get('/ping');
-      await this.client.put('/configs/gateway/api_mode');
+      // await asyncWait(250);
+      // await this.client.put('/configs/gateway/api_mode');
     } catch (err) {
       this.log.error(`Failed to connect to Tydom hostname=${hostname} with username="${username}"`);
       throw err;

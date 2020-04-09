@@ -42,9 +42,7 @@ export default class TydomPlatform implements Platform {
     this.controller = new TydomController(log, config);
     // Prevent configureAccessory getting called after node ready
     this.api.on('didFinishLaunching', () => setTimeout(() => this.didFinishLaunching(), 16));
-    this.controller.on('connect', () => {
-      this.log.info();
-    });
+    // this.controller.on('connect', () => {});
     this.controller.on('device', this.handleControllerDevice.bind(this));
     this.controller.on('update', this.handleControllerDataUpdate.bind(this));
   }
