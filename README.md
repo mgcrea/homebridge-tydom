@@ -150,7 +150,7 @@ You can override categories of devices (eg. some light switch used to manage a f
 
 ### Supported hardware
 
-Did support the hardware that I had at home:
+It is currently supporting the following devices (have them at home).
 
 - Lightbulb ([TYXIA 5610](https://www.deltadore.co.uk/home-automation/lighting-control/receiver-micromodule/tyxia-5610-ref-6351400), [TYXIA 6610](https://www.deltadore.co.uk/home-automation/lighting-control/receiver-switch/tyxia-6610-ref-6351376))
 - Dimmable Lightbulb ([TYXIA 5650](https://www.deltadore.co.uk/home-automation/lighting-control/receiver-micromodule/tyxia-5650-ref-6351414-ref-6351414)
@@ -158,14 +158,15 @@ Did support the hardware that I had at home:
 - Thermostat ([RF4890](https://www.deltadore.co.uk/home-automation/heating-control/receiver-micromodule/rf-4890-ref-6050615))
 - Switch ([TYXIA 4620](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-4620-ref-6351104))
 - Security System ([TYXAL+](https://www.deltadore.co.uk/home-automation/alarm/siren/si-tyxal-plus-ref-6415220))
+- Contact Sensor ([TYXAL+ MDO BL](https://www.deltadore.co.uk/home-automation/alarm/detector/mdo-bl-tyxal-plus-ref-6412305))
 
-Some other hardware that might work thanks to the community feedback:
+But should support many more similar devices out of the box.
+
+Some other hardware that should work thanks to the community feedback:
 
 - WindowCoverings ([TYXIA 5630](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5630-ref-6351401), [TYXIA 5730](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5730-ref-6351402))
 
-Other similar hardware should work seamlessly with the plugin as usage is detected.
-
-Should be relatively easy to add other hardware.
+It is relatively easy to add new hardware so don't hesitate to create a new issue.
 
 ### Notes
 
@@ -176,12 +177,16 @@ You can also use your local tydom IP (eg `192.168.0.X`) for `hostname`, however:
 
 ### Configurations
 
-| **Field** | **Description**             |
-| --------- | --------------------------- |
-| hostname  | Tydom hostname              |
-| username  | Tydom username              |
-| password  | Tydom password              |
-| settings  | Device settings (overrides) |
+| **Field**          | **Description**                            |
+| ------------------ | ------------------------------------------ |
+| hostname           | Tydom hostname                             |
+| username           | Tydom username                             |
+| password           | Tydom password                             |
+| settings           | Device settings (overrides)                |
+| includedDevices    | Include only devices with following ids    |
+| excludedDevices    | Exclude all devices with following ids     |
+| includedCategories | Include only categories with following ids |
+| excludedCategories | Exclude all categories with following ids  |
 
 - The `settings` field enables you to override the name or homekit category of your Tydom device (check homebridge log for the device ids).
 
