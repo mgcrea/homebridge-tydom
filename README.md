@@ -177,16 +177,16 @@ You can also use your local tydom IP (eg `192.168.0.X`) for `hostname`, however:
 
 ### Configurations
 
-| **Field**          | **Type**                | **Description**             |
-| ------------------ | ----------------------- | --------------------------- |
-| hostname           | string                  | Tydom hostname              |
-| username           | string                  | Tydom username              |
-| password           | string                  | Tydom password              |
-| settings           | Record<string, unknown> | Device settings (overrides) |
-| includedDevices    | Array<string            | number>                     | Include only devices with following ids |
-| excludedDevices    | Array<string            | number>                     | Exclude all devices with following ids |
-| includedCategories | Array<string            | number>                     | Include only categories with following ids |
-| excludedCategories | Array<string            | number>                     | Exclude all categories with following ids |
+| **Field**          | **Type**            | **Description**             |
+| ------------------ | ------------------- | --------------------------- |
+| hostname           | `string`            | Tydom hostname              |
+| username           | `string`            | Tydom username              |
+| password           | `string`            | Tydom password              |
+| settings           | `Record<string, ?>` | Device settings (overrides) |
+| includedDevices    | `Array<string>`     | number>                     | Include only devices with following ids |
+| excludedDevices    | `Array<string>`     | number>                     | Exclude all devices with following ids |
+| includedCategories | `Array<string>`     | number>                     | Include only categories with following ids |
+| excludedCategories | `Array<string>`     | number>                     | Exclude all categories with following ids |
 
 - The `settings` field enables you to override the name or homekit category of your Tydom device (check homebridge log for the device ids).
 
