@@ -287,8 +287,12 @@ export const updateSecuritySystem = (
     const alarmMode = updates.find(({name}) => name === 'alarmMode')!.value as TydomDeviceSecuritySystemAlarmMode;
     const service = accessory.getService(Service.SecuritySystem);
     assert(service, `Unexpected missing service "Service.SecuritySystem" in accessory`);
-    service.getCharacteristic(SecuritySystemCurrentState)!.updateValue(getCurrrentStateForValue(alarmState, alarmMode));
-    service.getCharacteristic(SecuritySystemTargetState)!.updateValue(getTargetStateForValue(alarmMode));
+    const currentState = getCurrrentStateForValue(alarmState, alarmMode);
+    service.getCharacteristic(SecuritySystemCurrentState)!.updateValue(currentState);
+    if (currentState !== SecuritySystemCurrentState.ALARM_TRIGGERED) {
+      // External update probably comes from the Tydom app, let's agree on the target state
+      service.getCharacteristic(SecuritySystemTargetState)!.updateValue(getTargetStateForValue(alarmMode));
+    }
   }
 
   updates.forEach((update) => {
