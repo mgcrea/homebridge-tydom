@@ -288,7 +288,7 @@ export const updateSecuritySystem = (
     const service = accessory.getService(Service.SecuritySystem);
     assert(service, `Unexpected missing service "Service.SecuritySystem" in accessory`);
     service.getCharacteristic(SecuritySystemCurrentState)!.updateValue(getCurrrentStateForValue(alarmState, alarmMode));
-    // service.getCharacteristic(SecuritySystemTargetState)!.updateValue(getTargetStateForValue(alarmMode));
+    service.getCharacteristic(SecuritySystemTargetState)!.updateValue(getTargetStateForValue(alarmMode));
   }
 
   updates.forEach((update) => {
