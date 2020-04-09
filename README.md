@@ -158,7 +158,7 @@ It is currently supporting the following devices (have them at home).
 - Thermostat ([RF4890](https://www.deltadore.co.uk/home-automation/heating-control/receiver-micromodule/rf-4890-ref-6050615))
 - Switch ([TYXIA 4620](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-4620-ref-6351104))
 - Security System ([TYXAL+](https://www.deltadore.co.uk/home-automation/alarm/siren/si-tyxal-plus-ref-6415220))
-- Contact Sensor ([TYXAL+ MDO BL](https://www.deltadore.co.uk/home-automation/alarm/detector/mdo-bl-tyxal-plus-ref-6412305))
+- Contact Sensor (Door / Window) ([TYXAL+ MDO BL](https://www.deltadore.co.uk/home-automation/alarm/detector/mdo-bl-tyxal-plus-ref-6412305))
 
 But should support many more similar devices out of the box.
 
