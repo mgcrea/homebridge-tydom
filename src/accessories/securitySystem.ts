@@ -309,6 +309,7 @@ export const updateSecuritySystem = (
         assert(service, `Unexpected missing service "Service.ContactSensor" with subtype="${subtype}" in accessory`);
         const alarmSOS = update!.value as boolean;
         service.getCharacteristic(Characteristic.ContactSensorState)!.updateValue(alarmSOS);
+        return;
       }
       case 'zone1State':
       case 'zone2State':
