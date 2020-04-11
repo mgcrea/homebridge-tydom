@@ -187,7 +187,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
   // Multiple thermic levels
   if (thermicLevelValues.length > 1) {
     thermicLevelValues.forEach((thermicLevelValue) => {
-      if (['MODERATOR', 'MEDIO', 'STOP'].includes(thermicLevelValue)) {
+      if (['MODERATO', 'MEDIO', 'STOP'].includes(thermicLevelValue)) {
         return;
       }
       // Setup anti-frost switch
