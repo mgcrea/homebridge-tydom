@@ -199,7 +199,7 @@ export default class TydomController extends EventEmitter {
       this.handleDeviceDataUpdate(body);
       return;
     }
-    debug('Unkown message from Tydom client', message);
+    debug(`Unkown message from Tydom client:\n${chalkJson(message)}`);
   }
   handleDeviceDataUpdate(body: TydomResponse) {
     if (!Array.isArray(body)) {
