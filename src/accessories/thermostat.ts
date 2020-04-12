@@ -280,6 +280,10 @@ export const updateThermostat = (
       }
       case 'thermicLevel': {
         const thermicLevel = update!.value as TydomDeviceThermostatThermicLevel;
+        if (thermicLevel === null) {
+          debug(`Encountered a ${chalkString('thermicLevel')} update with a null value!`);
+          return;
+        }
         const service = accessory.getServiceByUUIDAndSubType(
           Service.Switch,
           `thermicLevel_${thermicLevel.toLowerCase()}`
@@ -298,9 +302,14 @@ export const updateThermostat = (
       //   return;
       // }
       case 'setpoint': {
+        const setpoint = update!.value as number;
+        if (setpoint === null) {
+          debug(`Encountered a ${chalkString('setpoint')} update with a null value!`);
+          return;
+        }
         const service = accessory.getService(Service.Thermostat);
         assert(service, `Unexpected missing service "Service.Thermostat" in accessory`);
-        service.getCharacteristic(TargetTemperature)!.updateValue(update!.value as number);
+        service.getCharacteristic(TargetTemperature)!.updateValue(setpoint);
         return;
       }
       case 'temperature': {

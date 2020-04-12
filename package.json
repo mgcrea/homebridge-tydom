@@ -42,7 +42,7 @@
     "hap-nodejs": "^0.5.11",
     "lodash": "^4.17.15",
     "source-map-support": "^0.5.16",
-    "tydom-client": "^0.11.3"
+    "tydom-client": "^0.11.5"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",

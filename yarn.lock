@@ -1180,10 +1180,10 @@
   resolved "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.149.tgz#1342d63d948c6062838fbf961012f74d4e638440"
   integrity sha512-ijGqzZt/b7BfzcK9vTrS6MFljQRPn5BFWOx8oE0GYxribu6uV+aA9zZuXI1zc/etK9E8nrgdoF2+LgUw7+9tJQ==
 
-"@types/node-fetch@^2.5.5":
-  version "2.5.5"
-  resolved "https://registry.npmjs.org/@types/node-fetch/-/node-fetch-2.5.5.tgz#cd264e20a81f4600a6c52864d38e7fef72485e92"
-  integrity sha512-IWwjsyYjGw+em3xTvWVQi5MgYKbRs0du57klfTaZkv/B24AEQ/p/IopNeqIYNy3EsfHOpg8ieQSDomPcsYMHpA==
+"@types/node-fetch@^2.5.6":
+  version "2.5.6"
+  resolved "https://registry.npmjs.org/@types/node-fetch/-/node-fetch-2.5.6.tgz#df8377a66e64ddf75b65b072e37b3c5c5425a96f"
+  integrity sha512-2w0NTwMWF1d3NJMK0Uiq2UNN8htVCyOWOD0jIPjPgC5Ph/YP4dVhs9YxxcMcuLuwAslz0dVEcZQUaqkLs3IzOQ==
   dependencies:
     "@types/node" "*"
     form-data "^3.0.0"
@@ -5487,10 +5487,10 @@ tweetnacl@^1.0.1, tweetnacl@^1.0.3:
   resolved "https://registry.npmjs.org/tweetnacl/-/tweetnacl-1.0.3.tgz#ac0af71680458d8a6378d0d0d050ab1407d35596"
   integrity sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==
 
-tydom-client@^0.11.2:
-  version "0.11.2"
-  resolved "https://registry.npmjs.org/tydom-client/-/tydom-client-0.11.2.tgz#c8f221cde91248d82b2b8470a3f22f7599797c0a"
-  integrity sha512-WXZqSTvUBwR5bhj1LduhxOZAhmTMMu4y0I+630PzWDKV/D9wXjOt567tgAGNpPk0/15xAd5ndxddOYDEUHEMjg==
+tydom-client@^0.11.5:
+  version "0.11.5"
+  resolved "https://registry.npmjs.org/tydom-client/-/tydom-client-0.11.5.tgz#604b12047109fd1dc41380f96d2203ec6c42943f"
+  integrity sha512-QjN60hEYXLyp/2pCsFsU5C2T3Ptg6jxAvcuEUcCuBw3xBC0B49SVp9Ot6gFtP8MzofrTTDBcGF34UlS7Esjmaw==
   dependencies:
     "@babel/runtime" "^7.9.2"
     chalk "^4.0.0"
