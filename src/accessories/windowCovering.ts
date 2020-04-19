@@ -67,7 +67,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
         }
       ]);
       debugSetResult('TargetPosition', {name, id, value: nextValue});
-      callback();
+      callback(null, nextValue);
     });
 };
 
