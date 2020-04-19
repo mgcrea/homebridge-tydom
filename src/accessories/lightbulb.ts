@@ -65,7 +65,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
         debugSetResult('On', {name, id, value: nextValue});
       }
       lastStateWasOff.current = value === false;
-      callback();
+      callback(null, value);
     }
   );
 
@@ -93,7 +93,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
         await debouncedSetLevel(nextValue);
         debugSetResult('Brightness', {name, id, value: nextValue});
       }
-      callback();
+      callback(null, value);
     }
   );
 

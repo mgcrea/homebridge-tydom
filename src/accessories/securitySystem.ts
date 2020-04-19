@@ -164,7 +164,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         }
         debugSetResult('SecuritySystemTargetState', {name, id, value: nextValue});
       }
-      callback(null);
+      callback(null, value);
     });
 
   // Setup global contact sensor
@@ -271,7 +271,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
           pwd: pin,
           zones: [zoneIndex]
         });
-        callback(null);
+        callback(null, value);
       });
   }
 };

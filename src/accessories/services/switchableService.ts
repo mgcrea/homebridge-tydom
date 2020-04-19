@@ -49,7 +49,7 @@ export const addAccessorySwitchableService = (
         }
       ]);
       debugSetResult('CurrentTemperature', {name, id, value: nextValue});
-      callback();
+      callback(null, value);
     });
 
   return service;

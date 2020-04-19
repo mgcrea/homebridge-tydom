@@ -43,7 +43,7 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
       ]);
       debugSetResult('On', {name, id, value: nextValue});
       latestValue = value as boolean;
-      callback();
+      callback(null, false);
     });
   // .on(CharacteristicEventTypes.CHANGE, async (value: CharacteristicChange) => {
   //   debugSet('On', {name, id, value});

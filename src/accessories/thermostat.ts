@@ -93,7 +93,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         }
       ]);
       debugSetResult('TargetHeatingCoolingState', {name, id, value: nextValue});
-      callback();
+      callback(null, value);
     });
 
   service
@@ -118,7 +118,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         }
       ]);
       debugSetResult('TargetTemperature', {name, id, value});
-      callback();
+      callback(null, value);
     });
 
   service
@@ -180,7 +180,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
           }
         ]);
         debugSetResult(`absenceMode_On`, {name, id, value: nextValue});
-        callback(null);
+        callback(null, value);
       });
   }
 
@@ -230,7 +230,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
             }
           ]);
           debugSetResult(`${thermicLevelId}_On`, {name, id, value: nextValue});
-          callback(null);
+          callback(null, value);
         });
     });
   }
