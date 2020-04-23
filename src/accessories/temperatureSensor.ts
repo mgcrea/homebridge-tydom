@@ -4,15 +4,17 @@ import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';
 import {
   addAccessoryService,
+  getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
-import assert from 'src/utils/assert';
-import {debugGet, debugGetResult} from 'src/utils/debug';
-import {getTydomDeviceData, getTydomDataPropValue} from 'src/utils/tydom';
+import {debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
+import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
+
+const {CurrentTemperature} = Characteristic;
 
 export const setupTemperatureSensor = (accessory: PlatformAccessory, controller: TydomController): void => {
-  const {displayName: name, UUID: id, context} = accessory;
+  const {context} = accessory;
   const {client} = controller;
 
   const {deviceId, endpointId} = context;
@@ -23,13 +25,13 @@ export const setupTemperatureSensor = (accessory: PlatformAccessory, controller:
   const service = addAccessoryService(accessory, Service.TemperatureSensor, `${accessory.displayName}`, true);
 
   service
-    .getCharacteristic(Characteristic.CurrentTemperature)!
+    .getCharacteristic(CurrentTemperature)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet('CurrentTemperature', {name, id});
+      debugGet(CurrentTemperature, service);
       try {
         const data = await getTydomDeviceData<TydomEndpointData>(client, {deviceId, endpointId});
         const outTemperature = getTydomDataPropValue<number>(data, 'outTemperature');
-        debugGetResult('CurrentTemperature', {name, id, value: outTemperature});
+        debugGetResult(CurrentTemperature, service, outTemperature);
         callback(null, outTemperature);
       } catch (err) {
         callback(err);
@@ -44,12 +46,12 @@ export const updateTemperatureSensor = (
 ) => {
   const {CurrentTemperature} = Characteristic;
   updates.forEach((update) => {
-    const {name} = update;
+    const {name, value} = update;
     switch (name) {
       case 'outTemperature': {
-        const service = accessory.getService(Service.TemperatureSensor);
-        assert(service, `Unexpected missing service "Service.TemperatureSensor" in accessory`);
-        service.getCharacteristic(CurrentTemperature)!.updateValue(update!.value as number);
+        const service = getAccessoryService(accessory, Service.TemperatureSensor);
+        debugSetUpdate(CurrentTemperature, service, value);
+        service.updateCharacteristic(CurrentTemperature, value as number);
         return;
       }
       default:

@@ -17,6 +17,22 @@ export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`
 
 export const asNumber = (maybeNumber: unknown) => parseInt(`${maybeNumber}`, 10);
 
+export const getAccessoryService = (accessory: PlatformAccessory, ServiceClass: typeof Service): Service => {
+  const service = accessory.getService(ServiceClass);
+  assert(service, `Unexpected missing service "${ServiceClass.name}" in accessory`);
+  return service;
+};
+
+export const getAccessoryServiceWithSubtype = (
+  accessory: PlatformAccessory,
+  ServiceClass: typeof Service,
+  subtype: string
+): Service => {
+  const service = accessory.getServiceByUUIDAndSubType(ServiceClass, subtype);
+  assert(service, `Unexpected missing service "${ServiceClass.name}" with subtype="${subtype}" in accessory`);
+  return service;
+};
+
 export const addAccessoryService = (
   accessory: PlatformAccessory,
   service: Service | typeof Service,

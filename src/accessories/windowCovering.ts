@@ -12,14 +12,16 @@ import {TydomDeviceShutterData} from 'src/typings/tydom';
 import {
   addAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
+  setupAccessoryInformationService,
+  getAccessoryService
 } from 'src/utils/accessory';
-import assert from 'src/utils/assert';
-import {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
-import {getTydomDeviceData, getTydomDataPropValue} from 'src/utils/tydom';
+import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from 'src/utils/debug';
+import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
+
+const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
 
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
-  const {displayName: name, UUID: id, context} = accessory;
+  const {context} = accessory;
   const {client} = controller;
 
   const {deviceId, endpointId} = context;
@@ -28,47 +30,54 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
 
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.WindowCovering, `${accessory.displayName}`, true);
-  const {TargetPosition, CurrentPosition} = Characteristic;
+  // State
+  const state: {latestTargetPosition?: number} = {
+    latestTargetPosition: undefined
+  };
 
-  (service.getCharacteristic(CurrentPosition) as Characteristic).on(
-    CharacteristicEventTypes.GET,
-    async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet('CurrentPosition', {name, id});
-      try {
-        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
-        const nextValue = getTydomDataPropValue<number>(data, 'position');
-        debugGetResult('CurrentPosition', {name, id, value: nextValue});
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err);
-      }
-    }
-  );
-
-  (service.getCharacteristic(TargetPosition) as Characteristic)
+  service
+    .getCharacteristic(CurrentPosition)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet('TargetPosition', {name, id});
+      debugGet(CurrentPosition, service);
       try {
         const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
-        const nextValue = getTydomDataPropValue<number>(data, 'position');
-        debugGetResult('TargetPosition', {name, id, value: nextValue});
-        callback(null, nextValue);
+        const position = getTydomDataPropValue<number>(data, 'position');
+        // @NOTE set currentPosition as targetPosition on start
+        if (state.latestTargetPosition === undefined) {
+          state.latestTargetPosition = position;
+        }
+        debugGetResult(CurrentPosition, service, position);
+        callback(null, position);
       } catch (err) {
         callback(err);
       }
     })
+    .getValue();
+
+  service
+    .getCharacteristic(TargetPosition)
+    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      debugGet(TargetPosition, service);
+      debugGetResult(TargetPosition, service, state.latestTargetPosition);
+      callback(null, state.latestTargetPosition);
+    })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debugSet('TargetPosition', {name, id, value});
-      const nextValue = Math.round(value as number);
-      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: 'position',
-          value: nextValue
-        }
-      ]);
-      debugSetResult('TargetPosition', {name, id, value: nextValue});
-      callback(null, nextValue);
-    });
+      debugSet(TargetPosition, service, value);
+      try {
+        state.latestTargetPosition = value as number;
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+          {
+            name: 'position',
+            value
+          }
+        ]);
+        debugSetResult(TargetPosition, service, value);
+        callback();
+      } catch (err) {
+        callback(err);
+      }
+    })
+    .getValue();
 };
 
 export const updateWindowCovering = (
@@ -76,14 +85,21 @@ export const updateWindowCovering = (
   _controller: TydomController,
   updates: Record<string, unknown>[]
 ) => {
-  const {CurrentPosition} = Characteristic;
   updates.forEach((update) => {
-    const {name} = update;
+    const {name, value} = update;
     switch (name) {
       case 'position': {
-        const service = accessory.getService(Service.WindowCovering);
-        assert(service, `Unexpected missing service "Service.WindowCovering" in accessory`);
-        service.getCharacteristic(CurrentPosition)!.updateValue(update!.value as number);
+        const service = getAccessoryService(accessory, Service.WindowCovering);
+        if (value !== null) {
+          debugSetUpdate(CurrentPosition, service, value);
+          service.updateCharacteristic(CurrentPosition, value as number);
+        }
+        return;
+      }
+      case 'obstacleDefect': {
+        const service = getAccessoryService(accessory, Service.WindowCovering);
+        debugSetUpdate(ObstructionDetected, service, value);
+        service.updateCharacteristic(ObstructionDetected, value as boolean);
         return;
       }
       default:
@@ -91,13 +107,3 @@ export const updateWindowCovering = (
     }
   });
 };
-
-/*
-// https://github.com/mgcrea/homebridge-tydom/issues/2
-{name: 'thermicDefect', validity: 'upToDate', value: false},
-{name: 'position', validity: 'upToDate', value: 98},
-{name: 'onFavPos', validity: 'upToDate', value: false},
-{name: 'obstacleDefect', validity: 'upToDate', value: false},
-{name: 'intrusion', validity: 'upToDate', value: false},
-{name: 'battDefect', validity: 'upToDate', value: false}
-*/

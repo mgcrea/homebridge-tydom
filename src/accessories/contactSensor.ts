@@ -4,15 +4,17 @@ import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';
 import {
   addAccessoryService,
+  getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
-import assert from 'src/utils/assert';
-import {debugGet, debugGetResult} from 'src/utils/debug';
+import {debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
+const {ContactSensorState} = Characteristic;
+
 export const setupContactSensor = (accessory: PlatformAccessory, controller: TydomController): void => {
-  const {displayName: name, UUID: id, context} = accessory;
+  const {context} = accessory;
   const {client} = controller;
 
   const {deviceId, endpointId} = context;
@@ -23,13 +25,13 @@ export const setupContactSensor = (accessory: PlatformAccessory, controller: Tyd
   const service = addAccessoryService(accessory, Service.ContactSensor, `${accessory.displayName}`, true);
 
   service
-    .getCharacteristic(Characteristic.ContactSensorState)!
+    .getCharacteristic(ContactSensorState)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet('ContactSensorState', {name, id});
+      debugGet(ContactSensorState, service);
       try {
         const data = await getTydomDeviceData<TydomEndpointData>(client, {deviceId, endpointId});
         const intrusionDetect = getTydomDataPropValue<boolean>(data, 'intrusionDetect');
-        debugGetResult('ContactSensorState', {name, id, value: intrusionDetect});
+        debugGetResult(ContactSensorState, service, intrusionDetect);
         callback(null, intrusionDetect);
       } catch (err) {
         callback(err);
@@ -42,14 +44,13 @@ export const updateContactSensor = (
   _controller: TydomController,
   updates: Record<string, unknown>[]
 ) => {
-  const {ContactSensorState} = Characteristic;
   updates.forEach((update) => {
-    const {name} = update;
+    const {name, value} = update;
     switch (name) {
       case 'intrusionDetect': {
-        const service = accessory.getService(Service.ContactSensor);
-        assert(service, `Unexpected missing service "Service.ContactSensor" in accessory`);
-        service.getCharacteristic(ContactSensorState)!.updateValue(update!.value as boolean);
+        const service = getAccessoryService(accessory, Service.ContactSensor);
+        debugSetUpdate(ContactSensorState, service, value);
+        service.updateCharacteristic(ContactSensorState, value as boolean);
         return;
       }
       default:

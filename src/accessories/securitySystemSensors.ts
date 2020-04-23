@@ -4,21 +4,24 @@ import locale from 'src/config/locale';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {
+  SecuritySystemHistoOpenIssuesCommandResult,
+  SecuritySystemLabelCommandResult,
+  SecuritySystemProduct
+} from 'src/typings/tydom';
+import {
   addAccessoryServiceWithSubtype,
+  getAccessoryServiceWithSubtype,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
-import assert from 'src/utils/assert';
-import debug, {debugGet, debugGetResult} from 'src/utils/debug';
+import {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
 import {runTydomDeviceCommand} from 'src/utils/tydom';
-import {
-  SecuritySystemLabelCommandResult,
-  SecuritySystemHistoOpenIssuesCommandResult,
-  SecuritySystemProduct
-} from 'src/typings/tydom';
+
+const {ContactSensorState} = Characteristic;
 
 const getOpenedIssues = (commandResults: SecuritySystemHistoOpenIssuesCommandResult[]) =>
   keyBy(
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     commandResults.filter((result) => result.product).map((result) => result.product!),
     'id'
   );
@@ -30,7 +33,7 @@ export const setupSecuritySystemSensors = async (
   accessory: PlatformAccessory,
   controller: TydomController
 ): Promise<void> => {
-  const {displayName: name, UUID: id, context} = accessory;
+  const {context} = accessory;
   const {client} = controller;
 
   const {deviceId, endpointId} = context;
@@ -63,13 +66,13 @@ export const setupSecuritySystemSensors = async (
       subDeviceId,
       true
     );
-    debug(`Adding new "Service.ContactSensor" with name="${subDeviceName}", id="${subDeviceId}"`);
-    // contactSensorService.linkedServices = [service];
+    debugAddSubService(contactSensorService, accessory);
+    // service.addLinkedService(contactSensorService); // @TODO ServiceLabel?
     contactSensorService
-      .getCharacteristic(Characteristic.ContactSensorState)!
+      .getCharacteristic(ContactSensorState)
       .setValue(initialOpenedIssues[productId] ? 1 : 0)
       .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-        debugGet(subDeviceId, {name, id});
+        debugGet(ContactSensorState, contactSensorService);
         try {
           const openedIssues = getOpenedIssues(
             await runTydomDeviceCommand<SecuritySystemHistoOpenIssuesCommandResult>(client, 'histo', {
@@ -79,14 +82,14 @@ export const setupSecuritySystemSensors = async (
             })
           );
           const nextValue = openedIssues[productId] ? 1 : 0;
-          debugGetResult(subDeviceId, {name, id, value: nextValue});
+          debugGetResult(ContactSensorState, contactSensorService, nextValue);
           callback(null, nextValue);
         } catch (err) {
           callback(err);
         }
       });
-    contactSensorService.getCharacteristic(Characteristic.StatusActive)!.setValue(1);
-    contactSensorService.getCharacteristic(Characteristic.StatusFault)!.setValue(0);
+    contactSensorService.getCharacteristic(Characteristic.StatusActive).setValue(1);
+    contactSensorService.getCharacteristic(Characteristic.StatusFault).setValue(0);
   });
 };
 
@@ -99,19 +102,17 @@ export const updateSecuritySystemSensors = (
   updates.forEach(async (update) => {
     const {context} = accessory;
     const {deviceId, endpointId} = context;
-    const {name} = update;
+    const {name, value} = update;
     switch (name) {
       case 'systOpenIssue': {
-        const systOpenIssue = update!.value as boolean;
+        const systOpenIssue = value as boolean;
         if (!systOpenIssue) {
           contactSensorProducts.forEach(({id: productId}) => {
             const subDeviceId = `systOpenIssue_${productId}`;
-            const service = accessory.getServiceByUUIDAndSubType(Service.ContactSensor, subDeviceId);
-            assert(
-              service,
-              `Unexpected missing service "Service.ContactSensor" with subtype="${subDeviceId}" in accessory`
-            );
-            service.getCharacteristic(Characteristic.ContactSensorState)!.updateValue(0);
+            const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, subDeviceId);
+            const nextValue = 0;
+            debugSetUpdate(ContactSensorState, service, nextValue);
+            service.updateCharacteristic(ContactSensorState, nextValue);
           });
         } else {
           const openedIssues = getOpenedIssues(
@@ -123,12 +124,10 @@ export const updateSecuritySystemSensors = (
           );
           contactSensorProducts.forEach(({id: productId}) => {
             const subDeviceId = `systOpenIssue_${productId}`;
-            const service = accessory.getServiceByUUIDAndSubType(Service.ContactSensor, subDeviceId);
-            assert(
-              service,
-              `Unexpected missing service "Service.ContactSensor" with subtype="${subDeviceId}" in accessory`
-            );
-            service.getCharacteristic(Characteristic.ContactSensorState)!.updateValue(openedIssues[productId] ? 1 : 0);
+            const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, subDeviceId);
+            const nextValue = openedIssues[productId] ? 1 : 0;
+            debugSetUpdate(ContactSensorState, service, nextValue);
+            service.updateCharacteristic(ContactSensorState, nextValue);
           });
         }
         return;

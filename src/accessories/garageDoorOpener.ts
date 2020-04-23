@@ -3,7 +3,6 @@ import {
   CharacteristicEventTypes,
   CharacteristicSetCallback,
   CharacteristicValue,
-  NodeCallback,
   Service
 } from 'hap-nodejs';
 import TydomController from 'src/controller';
@@ -16,7 +15,7 @@ import {
 import {debugSet, debugSetResult} from 'src/utils/debug';
 
 export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
-  const {displayName: name, UUID: id, context} = accessory;
+  const {context} = accessory;
   const {client} = controller;
 
   const {deviceId, endpointId} = context;
@@ -25,35 +24,36 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
 
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.Switch, `${accessory.displayName}`, true);
-  let latestValue = false;
-
+  // State
+  // const state = {
+  //   isOn: false
+  // };
   service
-    .getCharacteristic(Characteristic.On)!
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      callback(null, latestValue);
-    })
+    .getCharacteristic(Characteristic.On)
+    // .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    //   callback(null, state.isOn);
+    // })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debugSet('On', {name, id, value});
-      const nextValue = 'TOGGLE';
-      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: 'levelCmd',
-          value: nextValue
-        }
-      ]);
-      debugSetResult('On', {name, id, value: nextValue});
-      latestValue = value as boolean;
-      callback(null, false);
-    });
-  // .on(CharacteristicEventTypes.CHANGE, async (value: CharacteristicChange) => {
-  //   debugSet('On', {name, id, value});
-  //   const nextValue = 'TOGGLE';
-  //   await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-  //     {
-  //       name: 'levelCmd',
-  //       value: nextValue
-  //     }
-  //   ]);
-  //   debugSetResult('On', {name, id, value: nextValue});
-  // });
+      debugSet(Characteristic.On, service, value);
+      if (!value) {
+        callback();
+        return;
+      }
+      try {
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+          {
+            name: 'levelCmd',
+            value: 'TOGGLE'
+          }
+        ]);
+        debugSetResult(Characteristic.On, service, value);
+        callback();
+        setTimeout(() => {
+          service.updateCharacteristic(Characteristic.On, false);
+        }, 1000);
+      } catch (err) {
+        callback(err);
+      }
+    })
+    .updateValue(false);
 };

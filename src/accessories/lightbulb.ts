@@ -1,3 +1,4 @@
+import debug from 'debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -6,27 +7,29 @@ import {
   NodeCallback,
   Service
 } from 'hap-nodejs';
-import {find, debounce} from 'lodash';
+import {debounce, find} from 'lodash';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';
 import {
   addAccessoryService,
-  asNumber,
+  getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
-import assert from 'src/utils/assert';
-import {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
-import {getTydomDeviceData, getTydomDataPropValue} from 'src/utils/tydom';
+import {chalkString} from 'src/utils/chalk';
+import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from 'src/utils/debug';
+import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
+
+const {On, Brightness} = Characteristic;
 
 export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomController): void => {
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   // Add the actual accessory Service
 
-  const {displayName: name, UUID: id, context} = accessory;
+  const {context} = accessory;
   const {deviceId, endpointId, metadata} = context;
   const {client} = controller;
   const levelMeta = find(metadata, {name: 'level'});
@@ -39,78 +42,78 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
 
   // Dimmable
   const service = addAccessoryService(accessory, Service.Lightbulb, `${accessory.displayName}`, true);
-  const serviceOnCharacteristic = service.getCharacteristic(Characteristic.On);
-  assert(serviceOnCharacteristic);
-  const serviceBrightnessCharacteristic = service.getCharacteristic(Characteristic.Brightness);
-  assert(serviceBrightnessCharacteristic);
-  const lastStateWasOff: {current: boolean} = {current: false};
-  const latestBrightness: {current: number} = {current: 100};
+  // State
+  const state = {
+    latestBrightness: 100
+  };
 
-  const debouncedSetLevel = debounce(async (value: number) => {
-    return await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-      {
-        name: 'level',
-        value
-      }
-    ]);
-  }, 15);
-
-  serviceOnCharacteristic.on(
-    CharacteristicEventTypes.SET,
-    async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debugSet('On', {name, id, value});
-      if (value === false || lastStateWasOff.current) {
-        const nextValue = value ? latestBrightness.current : 0;
-        await debouncedSetLevel(nextValue);
-        debugSetResult('On', {name, id, value: nextValue});
-      }
-      lastStateWasOff.current = value === false;
-      callback(null, value);
-    }
+  const debouncedSetLevel = debounce(
+    async (value: number) => {
+      debugTydomPut('level', accessory, value);
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: 'level',
+          value
+        }
+      ]);
+    },
+    15,
+    {leading: true, trailing: false}
   );
 
-  serviceOnCharacteristic.on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-    debugGet('On', {name, id});
-    try {
-      const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
-      const level = getTydomDataPropValue<number>(data, 'level');
-      const nextValue = level > 0;
-      debugGetResult('On', {name, id, value: nextValue});
-      callback(null, nextValue);
-    } catch (err) {
-      callback(err);
-    }
-  });
-
-  serviceBrightnessCharacteristic.on(
-    CharacteristicEventTypes.SET,
-    async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debugSet('Brightness', {name, id, value});
-      const nextValue = asNumber(value);
-      if (!lastStateWasOff.current) {
-        // Do not update brightness on toggle
-        latestBrightness.current = nextValue;
-        await debouncedSetLevel(nextValue);
-        debugSetResult('Brightness', {name, id, value: nextValue});
+  service
+    .getCharacteristic(Characteristic.On)
+    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      debugGet(On, service);
+      try {
+        const data = (await getTydomDeviceData(client, {deviceId, endpointId})) as TydomEndpointData;
+        const level = getTydomDataPropValue<number>(data, 'level');
+        const nextValue = level > 0;
+        debugGetResult(On, service, nextValue);
+        callback(null, nextValue);
+      } catch (err) {
+        callback(err);
       }
-      callback(null, value);
-    }
-  );
+    })
+    .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+      debugSet(On, service, value);
+      try {
+        const nextLevel = value ? state.latestBrightness || 100 : 0;
+        await debouncedSetLevel(nextLevel);
+        debugSetResult(On, service, value);
+        callback();
+      } catch (err) {
+        callback(err);
+      }
+    })
+    .getValue();
 
-  serviceBrightnessCharacteristic.on(
-    CharacteristicEventTypes.GET,
-    async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet('Brightness', {name, id});
+  service
+    .getCharacteristic(Characteristic.Brightness)
+    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      debugGet(Brightness, service);
       try {
         const data = await getTydomDeviceData<TydomEndpointData>(client, {deviceId, endpointId});
         const level = getTydomDataPropValue<number>(data, 'level');
-        debugGetResult('Brightness', {name, id, value: level});
+        debugGetResult(Brightness, service, level);
         callback(null, level);
       } catch (err) {
         callback(err);
       }
-    }
-  );
+    })
+    .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+      debugSet(Brightness, service, value);
+      try {
+        const nextValue = value as number;
+        state.latestBrightness = nextValue;
+        await debouncedSetLevel(nextValue);
+        debugSetResult(Brightness, service, value);
+        callback();
+      } catch (err) {
+        callback(err);
+      }
+    })
+    .getValue();
 };
 
 export const updateLightbulb = (
@@ -131,15 +134,20 @@ export const updateLightbulb = (
     const {name, value} = update;
     switch (name) {
       case 'level': {
-        const service = accessory.getService(Service.Lightbulb);
-        assert(service, `Unexpected missing service "${Service.Lightbulb} in accessory`);
-        const valueAsNumber = asNumber(value);
-        const serviceOnCharacteristic = service.getCharacteristic(Characteristic.On);
-        assert(serviceOnCharacteristic);
-        serviceOnCharacteristic.updateValue(valueAsNumber > 0);
-        const serviceBrightnessCharacteristic = service.getCharacteristic(Characteristic.Brightness);
-        assert(serviceBrightnessCharacteristic);
-        serviceBrightnessCharacteristic.updateValue(valueAsNumber);
+        const service = getAccessoryService(accessory, Service.Lightbulb);
+        const level = value as number;
+        if (level === null) {
+          debug(`Encountered a ${chalkString('setpoint')} update with a null value!`);
+          return;
+        }
+        debugSetUpdate(On, service, level > 0);
+        service.updateCharacteristic(On, level > 0);
+        // @NOTE Only update brightness for non-null values
+        if (level > 0) {
+          // @TODO ignore updates for legacy previous values
+          debugSetUpdate(Brightness, service, level);
+          service.updateCharacteristic(Brightness, level);
+        }
         return;
       }
       default:

@@ -20,18 +20,32 @@ import {
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
+  getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
-import {chalkKeyword, chalkString} from 'src/utils/chalk';
-import debug, {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils/debug';
+import {chalkString} from 'src/utils/chalk';
+import debug, {
+  debugAddSubService,
+  debugGet,
+  debugGetResult,
+  debugSet,
+  debugSetResult,
+  debugSetUpdate
+} from 'src/utils/debug';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
-const {TargetHeatingCoolingState, CurrentHeatingCoolingState, TargetTemperature, CurrentTemperature} = Characteristic;
+const {
+  TargetHeatingCoolingState,
+  CurrentHeatingCoolingState,
+  TargetTemperature,
+  CurrentTemperature,
+  On
+} = Characteristic;
 
 export const setupThermostat = (accessory: PlatformAccessory, controller: TydomController): void => {
-  const {displayName: name, UUID: id, context} = accessory;
+  const {context} = accessory;
   const {client} = controller;
 
   const {deviceId, endpointId, metadata} = context;
@@ -42,10 +56,10 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
   const service = addAccessoryService(accessory, Service.Thermostat, `${accessory.displayName}`, true);
 
   service
-    .getCharacteristic(CurrentHeatingCoolingState)!
+    .getCharacteristic(CurrentHeatingCoolingState)
     .setProps({validValues: [0, 1]} as Partial<CharacteristicProps>) // [OFF, HEAT, COOL]
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet('CurrentHeatingCoolingState', {name, id});
+      debugGet(CurrentHeatingCoolingState, service);
       try {
         const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
         const authorization = getTydomDataPropValue<TydomDeviceThermostatAuthorization>(data, 'authorization');
@@ -55,18 +69,19 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
           authorization === 'HEATING' && setpoint > temperature
             ? CurrentHeatingCoolingState.HEAT
             : CurrentHeatingCoolingState.OFF;
-        debugGetResult('CurrentHeatingCoolingState', {name, id, value: nextValue});
+        debugGetResult(CurrentHeatingCoolingState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
         callback(err);
       }
-    });
+    })
+    .getValue();
 
   service
-    .getCharacteristic(TargetHeatingCoolingState)!
+    .getCharacteristic(TargetHeatingCoolingState)
     .setProps({validValues: [0, 1]} as Partial<CharacteristicProps>) // [OFF, HEAT, COOL, AUTO]
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet('TargetHeatingCoolingState', {name, id});
+      debugGet(TargetHeatingCoolingState, service);
       try {
         const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
         const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, 'hvacMode');
@@ -75,67 +90,81 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
           authorization === 'HEATING' && ['NORMAL'].includes(hvacMode)
             ? TargetHeatingCoolingState.HEAT
             : TargetHeatingCoolingState.OFF;
-        debugGetResult('TargetHeatingCoolingState', {name, id, value: nextValue});
+        debugGetResult(TargetHeatingCoolingState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
         callback(err);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debugSet('TargetHeatingCoolingState', {name, id, value});
-      const nextValue = [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(value as number)
-        ? 'NORMAL'
-        : 'STOP';
-      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: 'hvacMode',
-          value: nextValue
-        }
-      ]);
-      debugSetResult('TargetHeatingCoolingState', {name, id, value: nextValue});
-      callback(null, value);
+      debugSet(TargetHeatingCoolingState, service, value);
+      try {
+        const shouldHeat = [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(value as number);
+        const tydomValue = shouldHeat ? 'NORMAL' : 'STOP';
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+          {
+            name: 'hvacMode',
+            value: tydomValue
+          }
+        ]);
+        debugSetResult(TargetHeatingCoolingState, service, value, tydomValue);
+        // @NOTE directly update currentHeadingCoolingState
+        service
+          .getCharacteristic(CurrentHeatingCoolingState)
+          .updateValue(shouldHeat ? CurrentHeatingCoolingState.HEAT : CurrentHeatingCoolingState.OFF);
+        callback();
+      } catch (err) {
+        callback(err);
+      }
     });
 
   service
-    .getCharacteristic(TargetTemperature)!
+    .getCharacteristic(CurrentTemperature)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet('TargetTemperature', {name, id});
+      debugGet(CurrentTemperature, service);
+      try {
+        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
+        const temperature = getTydomDataPropValue<number>(data, 'temperature');
+        debugGetResult(CurrentTemperature, service, temperature);
+        callback(null, temperature);
+      } catch (err) {
+        callback(err);
+      }
+    })
+    .getValue();
+
+  service
+    .getCharacteristic(TargetTemperature)
+    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      debugGet(TargetTemperature, service);
       try {
         const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
         const setpoint = getTydomDataPropValue<number>(data, 'setpoint');
-        debugGetResult('TargetTemperature', {name, id, value: setpoint});
+        debugGetResult(TargetTemperature, service, setpoint);
         callback(null, setpoint);
       } catch (err) {
         callback(err);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debugSet('TargetTemperature', {name, id, value});
-      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: 'setpoint',
-          value: value
-        }
-      ]);
-      debugSetResult('TargetTemperature', {name, id, value});
-      callback(null, value);
-    });
-
-  service
-    .getCharacteristic(CurrentTemperature)!
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet('CurrentTemperature', {name, id});
       try {
-        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
-        const temperature = getTydomDataPropValue<number>(data, 'temperature');
-        debugGetResult('CurrentTemperature', {name, id, value: temperature});
-        callback(null, temperature);
+        debugSet(TargetTemperature, service, value);
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+          {
+            name: 'setpoint',
+            value: value
+          }
+        ]);
+        debugSetResult(TargetTemperature, service, value);
+        callback();
       } catch (err) {
         callback(err);
       }
     });
 
-  const thermicLevelValues = metadata.find(({name}) => name === 'thermicLevel')!.enum_values as string[];
+  const thermicLevelData = metadata.find(({name}) => name === 'thermicLevel');
+  assert(thermicLevelData);
+  const thermicLevelValues = thermicLevelData.enum_values as string[];
 
   // Only absence (aka. anti-frost) mode
   if (thermicLevelValues.length === 1) {
@@ -148,91 +177,98 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
       absenceModeId,
       true
     );
-    debug(
-      `Adding new ${chalkKeyword('Service.Switch')} with name=${chalkString(absenceModeName)} and id="${chalkString(
-        absenceModeId
-      )}"`
-    );
-    absenceModeService.linkedServices = [service];
+    debugAddSubService(absenceModeService, accessory);
+    service.addLinkedService(absenceModeService);
     absenceModeService
-      .getCharacteristic(Characteristic.On)!
+      .getCharacteristic(On)
       .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-        debugGet(`absenceMode_On`, {name, id});
+        debugGet(On, absenceModeService);
         try {
           const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
           const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, 'hvacMode');
           // const antifrostOn = getTydomDataPropValue<boolean>(data, 'antifrostOn');
           // const nextValue = hvacMode === 'ANTI_FROST' && antifrostOn;
           const nextValue = hvacMode === 'ANTI_FROST';
-          debugGetResult(`absenceMode_On`, {name, id, value: nextValue});
+          debugGetResult(On, absenceModeService, nextValue);
           callback(null, nextValue);
         } catch (err) {
           callback(err);
         }
       })
       .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(`absenceMode_On`, {name, id, value});
-        const nextValue = value ? 'ANTI_FROST' : 'STOP';
-        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-          {
-            name: 'hvacMode',
-            value: nextValue
-          }
-        ]);
-        debugSetResult(`absenceMode_On`, {name, id, value: nextValue});
-        callback(null, value);
+        debugSet(On, absenceModeService, value);
+        try {
+          const tydomValue = value ? 'ANTI_FROST' : 'NORMAL';
+          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+            {
+              name: 'hvacMode',
+              value: tydomValue
+            }
+          ]);
+          debugSetResult(On, absenceModeService, value, tydomValue);
+          callback();
+        } catch (err) {
+          callback(err);
+        }
       });
   }
 
   // Multiple thermic levels
+  // "enum_values": ["ECO", "MODERATO", "MEDIO", "COMFORT", "STOP", "ANTI_FROST"]
   if (thermicLevelValues.length > 1) {
-    thermicLevelValues.forEach((thermicLevelValue) => {
-      if (['MODERATO', 'MEDIO', 'STOP'].includes(thermicLevelValue)) {
-        return;
-      }
-      // Setup anti-frost switch
-      const thermicLevelId = `thermicLevel_${thermicLevelValue.toLowerCase()}`;
-      const thermicLevelName = get(locale, `HVAC_LEVEL_${thermicLevelValue}`, 'N/A') as string;
-      const thermicLevelService = addAccessoryServiceWithSubtype(
-        accessory,
-        Service.Switch,
-        thermicLevelName,
-        thermicLevelId,
-        true
-      );
-      debug(
-        `Adding new ${chalkKeyword('Service.Switch')} with name=${chalkString(thermicLevelName)} and id="${chalkString(
-          thermicLevelId
-        )}"`
-      );
-      thermicLevelService.linkedServices = [service];
-      thermicLevelService
-        .getCharacteristic(Characteristic.On)!
-        .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-          debugGet(`${thermicLevelId}_On`, {name, id});
-          try {
-            const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
-            const thermicLevel = getTydomDataPropValue<TydomDeviceThermostatThermicLevel>(data, 'thermicLevel');
-            const nextValue = thermicLevel === thermicLevelValue;
-            debugGetResult(`${thermicLevelId}_On`, {name, id, value: nextValue});
-            callback(null, nextValue);
-          } catch (err) {
-            callback(err);
-          }
-        })
-        .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-          debugSet(`${thermicLevelId}_On`, {name, id, value});
-          const nextValue = value ? thermicLevelValue : 'STOP';
-          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-            {
-              name: 'hvacMode',
-              value: nextValue
+    const THERMIC_LEVELS_WHITELIST = ['ANTI_FROST', 'ECO', 'COMFORT'];
+    const thermicLevelServices = thermicLevelValues
+      .filter((value) => THERMIC_LEVELS_WHITELIST.includes(value))
+      .map((thermicLevelValue) => {
+        const thermicLevelId = `thermicLevel_${thermicLevelValue.toLowerCase()}`;
+        const thermicLevelName = get(locale, `HVAC_LEVEL_${thermicLevelValue}`, 'N/A') as string;
+        const thermicLevelService = addAccessoryServiceWithSubtype(
+          accessory,
+          Service.Switch,
+          thermicLevelName,
+          thermicLevelId,
+          true
+        );
+        debugAddSubService(thermicLevelService, accessory);
+        service.addLinkedService(thermicLevelService);
+        thermicLevelService
+          .getCharacteristic(On)
+          .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+            debugGet(On, thermicLevelService);
+            try {
+              const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
+              const thermicLevel = getTydomDataPropValue<TydomDeviceThermostatThermicLevel>(data, 'thermicLevel');
+              const nextValue = thermicLevel === thermicLevelValue;
+              debugGetResult(On, thermicLevelService, nextValue);
+              callback(null, nextValue);
+            } catch (err) {
+              callback(err);
             }
-          ]);
-          debugSetResult(`${thermicLevelId}_On`, {name, id, value: nextValue});
-          callback(null, value);
-        });
-    });
+          })
+          .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+            debugSet(On, thermicLevelService, value);
+            try {
+              const tydomValue = value ? thermicLevelValue : 'NORMAL';
+              await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+                {
+                  name: 'hvacMode',
+                  value: tydomValue
+                }
+              ]);
+              debugSetResult(On, thermicLevelService, tydomValue);
+              callback();
+              // @NOTE disable any other existing thermicLevel
+              thermicLevelServices
+                .filter(({value}) => value !== thermicLevelValue)
+                .forEach(({service}) => {
+                  service.updateCharacteristic(On, false);
+                });
+            } catch (err) {
+              callback(err);
+            }
+          });
+        return {value: thermicLevelValue, service: thermicLevelService};
+      });
   }
 };
 
@@ -243,43 +279,46 @@ export const updateThermostat = (
 ) => {
   const {CurrentTemperature, TargetTemperature} = Characteristic;
   updates.forEach((update) => {
-    const {name} = update;
+    const {name, value} = update;
     switch (name) {
       case 'authorization': {
-        const service = accessory.getService(Service.Thermostat);
-        assert(service, `Unexpected missing service "Service.Thermostat" in accessory`);
-        const authorization = update!.value as TydomDeviceThermostatAuthorization;
+        const service = getAccessoryService(accessory, Service.Thermostat);
+        const authorization = value as TydomDeviceThermostatAuthorization;
         if (authorization === 'HEATING') {
           // @TODO Trigger a get as we miss info
           return;
         }
         if (authorization === 'STOP') {
-          service.getCharacteristic(CurrentHeatingCoolingState)!.updateValue(CurrentHeatingCoolingState.OFF);
+          debugSetUpdate(CurrentHeatingCoolingState, service, CurrentHeatingCoolingState.OFF);
+          service.updateCharacteristic(CurrentHeatingCoolingState, CurrentHeatingCoolingState.OFF);
           // External update probably comes from the Tydom app, let's agree on the target state
-          service.getCharacteristic(TargetHeatingCoolingState)!.updateValue(TargetHeatingCoolingState.OFF);
+          debugSetUpdate(TargetHeatingCoolingState, service, TargetHeatingCoolingState.OFF);
+          service.updateCharacteristic(TargetHeatingCoolingState, TargetHeatingCoolingState.OFF);
           return;
         }
+        return;
       }
       case 'hvacMode': {
-        const service = accessory.getService(Service.Thermostat);
-        assert(service, `Unexpected missing service "Service.Thermostat" in accessory`);
-        const hvacMode = update!.value as TydomDeviceThermostatHvacMode;
+        const service = getAccessoryService(accessory, Service.Thermostat);
+        const hvacMode = value as TydomDeviceThermostatHvacMode;
         if (hvacMode === 'NORMAL') {
           // @TODO Trigger a get as we miss info
           return;
         }
-        service.getCharacteristic(TargetHeatingCoolingState)!.updateValue(CurrentHeatingCoolingState.OFF);
+        service.updateCharacteristic(TargetHeatingCoolingState, CurrentHeatingCoolingState.OFF);
         if (hvacMode === 'ANTI_FROST') {
           const subtype = 'hvacMode_absence';
           const service = accessory.getServiceByUUIDAndSubType(Service.Switch, subtype);
           if (service) {
-            service.getCharacteristic(Characteristic.On)!.updateValue(true);
+            debugSetUpdate(On, service, true);
+            service.updateCharacteristic(On, true);
             return;
           }
         }
+        return;
       }
       case 'thermicLevel': {
-        const thermicLevel = update!.value as TydomDeviceThermostatThermicLevel;
+        const thermicLevel = value as TydomDeviceThermostatThermicLevel;
         if (thermicLevel === null) {
           debug(`Encountered a ${chalkString('thermicLevel')} update with a null value!`);
           return;
@@ -289,33 +328,35 @@ export const updateThermostat = (
           `thermicLevel_${thermicLevel.toLowerCase()}`
         );
         if (service) {
-          service.getCharacteristic(Characteristic.On)!.updateValue(true);
+          debugSetUpdate(On, service, true);
+          service.updateCharacteristic(On, true);
           return;
         }
+        return;
       }
       // case 'antifrostOn': {
       //   const subtype = 'antifrostOn';
       //   const service = accessory.getServiceByUUIDAndSubType(Service.Switch, subtype);
       //   assert(service, `Unexpected missing service "Service.Switch" with subtype="${subtype}" in accessory`);
-      //   const antifrostOn = update!.value as boolean;
-      //   service.getCharacteristic(Characteristic.On)!.updateValue(antifrostOn);
+      //   const antifrostOn = value as boolean;
+      //   service.updateCharacteristic(Characteristic, antifrostOn);
       //   return;
       // }
       case 'setpoint': {
-        const setpoint = update!.value as number;
+        const setpoint = value as number;
         if (setpoint === null) {
           debug(`Encountered a ${chalkString('setpoint')} update with a null value!`);
           return;
         }
-        const service = accessory.getService(Service.Thermostat);
-        assert(service, `Unexpected missing service "Service.Thermostat" in accessory`);
-        service.getCharacteristic(TargetTemperature)!.updateValue(setpoint);
+        const service = getAccessoryService(accessory, Service.Thermostat);
+        debugSetUpdate(TargetTemperature, service, setpoint);
+        service.updateCharacteristic(TargetTemperature, setpoint);
         return;
       }
       case 'temperature': {
-        const service = accessory.getService(Service.Thermostat);
-        assert(service, `Unexpected missing service "Service.Thermostat" in accessory`);
-        service.getCharacteristic(CurrentTemperature)!.updateValue(update!.value as number);
+        const service = getAccessoryService(accessory, Service.Thermostat);
+        debugSetUpdate(CurrentTemperature, service, value);
+        service.updateCharacteristic(CurrentTemperature, value as number);
         return;
       }
       default:
