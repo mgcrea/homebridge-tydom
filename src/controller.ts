@@ -102,7 +102,7 @@ export default class TydomController extends EventEmitter {
   }
   async scan() {
     const {hostname} = this.config;
-    debug(`Scaning devicesd from hostname=${chalkString(hostname)}...`);
+    debug(`Scaning devices from hostname=${chalkString(hostname)}...`);
     const {
       settings = {},
       includedDevices = [],

@@ -66,6 +66,7 @@ const getTargetStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): 
   return SecuritySystemTargetState.DISARM;
 };
 
+let setupPerformed = false;
 export const setupSecuritySystem = async (accessory: PlatformAccessory, controller: TydomController): Promise<void> => {
   const {context} = accessory;
   const {client} = controller;
@@ -272,6 +273,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         callback();
       });
   }
+  setupPerformed = true;
 };
 
 export const updateSecuritySystem = (
@@ -279,6 +281,10 @@ export const updateSecuritySystem = (
   _controller: TydomController,
   updates: Record<string, unknown>[]
 ) => {
+  if (!setupPerformed) {
+    // @NOTE ignore update while the setup is still running
+    return;
+  }
   // Process alarmState/alarmMode together
   if (updates.some(({name}) => name === 'alarmState') && updates.some(({name}) => name === 'alarmMode')) {
     const alarmState = updates.find(({name}) => name === 'alarmState')?.value as TydomDeviceSecuritySystemAlarmState;

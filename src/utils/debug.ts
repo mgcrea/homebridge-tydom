@@ -92,7 +92,7 @@ export const debugTydomPut = (
 
 export const debugAddSubService = (service: Service, {displayName: name, UUID: id}: IdentifiableAccessoryObject) => {
   debug(
-    `Adding new sub service "${chalkKeyword(service.constructor.name)}" with name=${chalkString(
+    `Adding new sub service ${chalkKeyword(service.constructor.name)} with name=${chalkString(
       service.displayName
     )}, subtype=${chalkString(service.subtype)} and id="${chalkString(service.UUID)}" for accessory named=${chalkString(
       name
