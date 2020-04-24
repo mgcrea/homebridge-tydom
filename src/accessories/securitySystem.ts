@@ -70,7 +70,6 @@ const getTargetStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): 
   return SecuritySystemTargetState.DISARM;
 };
 
-let setupPerformed = false;
 export const setupSecuritySystem = async (accessory: PlatformAccessory, controller: TydomController): Promise<void> => {
   const {context} = accessory;
   const {client} = controller;
@@ -297,7 +296,6 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         callback();
       });
   }
-  setupPerformed = true;
 };
 
 export const updateSecuritySystem = (
@@ -306,11 +304,6 @@ export const updateSecuritySystem = (
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType
 ) => {
-  if (!setupPerformed) {
-    // @NOTE ignore update while the setup is still running
-    return;
-  }
-
   // Process command updates
   if (type === 'cdata') {
     updates.forEach((update) => {
@@ -379,7 +372,7 @@ export const updateSecuritySystem = (
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const zoneIndex = parseInt(name.match(/zone(\d+)State/)![1], 10) - 1; // @NOTE Adjust for productId starting at 0
-        const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, `zone_${zoneIndex}`);
+        const service = getAccessoryServiceWithSubtype(accessory, Service.Switch, `zone_${zoneIndex}`);
         const nextValue = zoneState === 'ON';
         debugSetUpdate(ContactSensorState, service, nextValue);
         service.updateCharacteristic(On, nextValue);
