@@ -30,6 +30,7 @@ export interface Platform {
 
 export type TydomAccessoryContext = {
   name: string;
+  category: Categories;
   metadata: TydomMetaElement[];
   settings: Record<string, unknown>;
   deviceId: number;
@@ -41,7 +42,10 @@ export type TydomAccessoryContext = {
   model: string;
 };
 
-export type TydomAccessoryUpdateContext = Pick<TydomAccessoryContext, 'deviceId' | 'endpointId' | 'accessoryId'>;
+export type TydomAccessoryUpdateContext = Pick<
+  TydomAccessoryContext,
+  'category' | 'deviceId' | 'endpointId' | 'accessoryId'
+>;
 
 declare class PlatformAccessory extends EventEmitter {
   UUID: string;

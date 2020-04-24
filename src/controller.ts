@@ -14,24 +14,19 @@ import {decode} from 'src/utils/hash';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomHttpMessage, TydomResponse} from 'tydom-client/lib/utils/tydom';
 import {HOMEBRIDGE_TYDOM_PASSWORD} from './config/env';
-import locale from './config/locale';
 import {TydomPlatformConfig} from './platform';
 import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/homebridge';
-import {SECURITY_SYSTEM_SENSORS, TydomAccessoryUpdateType} from './utils/accessory';
+import {TydomAccessoryUpdateType} from './utils/accessory';
 import {stringIncludes} from './utils/array';
 import {chalkJson, chalkNumber, chalkString} from './utils/chalk';
 import {
+  asyncWait,
   getEndpointDetailsFromMeta,
   getEndpointGroupIdFromGroups,
-  resolveEndpointCategory,
-  asyncWait
+  resolveEndpointCategory
 } from './utils/tydom';
 
-export type ControllerDevicePayload = {
-  name: string;
-  category: Categories;
-  context: TydomAccessoryContext;
-};
+export type ControllerDevicePayload = TydomAccessoryContext;
 
 export type ControllerUpdatePayload = {
   type: TydomAccessoryUpdateType;
@@ -58,7 +53,11 @@ export default class TydomController extends EventEmitter {
     this.log.info(`Creating tydom client with username=${chalkString(username)} and hostname=${chalkString(hostname)}`);
     this.client = createTydomClient({username, password, hostname, followUpDebounce: 500});
     this.client.on('message', (message) => {
-      this.handleMessage(message);
+      try {
+        this.handleMessage(message);
+      } catch (err) {
+        this.log.error(`Encountered an uncaught error while processing message=${chalkJson(message)}"`);
+      }
     });
     this.client.on('connect', () => {
       this.log.info(
@@ -155,6 +154,7 @@ export default class TydomController extends EventEmitter {
         this.devices.set(deviceId, category);
         const context: TydomAccessoryContext = {
           name,
+          category,
           metadata,
           settings: deviceSettings,
           group,
@@ -165,27 +165,7 @@ export default class TydomController extends EventEmitter {
           serialNumber: `${deviceId}`,
           model: 'N/A'
         };
-        this.emit('device', {
-          name,
-          category,
-          context
-        } as ControllerDevicePayload);
-        // Create a special extra device for SECURITY_SYSTEM.sensors
-        if (category === Categories.SECURITY_SYSTEM) {
-          const extraAccessoryId = `${accessoryId}:sensors`;
-          const extraName = `${get(locale, 'ALARME_ISSUES_OUVERTES', 'N/A') as string}`;
-          const extraCategory = SECURITY_SYSTEM_SENSORS;
-          const extraContext: TydomAccessoryContext = {
-            ...context,
-            name: extraName,
-            accessoryId: extraAccessoryId
-          };
-          this.emit('device', {
-            name: extraName,
-            category: extraCategory,
-            context: extraContext
-          } as ControllerDevicePayload);
-        }
+        this.emit('device', context);
       }
     });
   }
@@ -231,6 +211,7 @@ export default class TydomController extends EventEmitter {
         )}, updates:\n${chalkJson(updates)}`
       );
       const context: TydomAccessoryUpdateContext = {
+        category,
         deviceId,
         endpointId,
         accessoryId
@@ -238,24 +219,8 @@ export default class TydomController extends EventEmitter {
       this.emit('update', {
         type,
         updates,
-        category,
         context
       } as ControllerUpdatePayload);
-      // Create a special extra update for SECURITY_SYSTEM.sensors
-      if (category === Categories.SECURITY_SYSTEM) {
-        const extraAccessoryId = `${accessoryId}:sensors`;
-        const extraCategory = SECURITY_SYSTEM_SENSORS;
-        const extraContext: TydomAccessoryUpdateContext = {
-          ...context,
-          accessoryId: extraAccessoryId
-        };
-        this.emit('update', {
-          type,
-          updates,
-          category: extraCategory,
-          context: extraContext
-        } as ControllerUpdatePayload);
-      }
     });
   }
 }

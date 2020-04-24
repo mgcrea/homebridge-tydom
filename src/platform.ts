@@ -59,8 +59,9 @@ export default class TydomPlatform implements Platform {
     });
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
   }
-  async handleControllerDevice({name, category, context}: ControllerDevicePayload) {
-    const id = this.api.hap.uuid.generate(context.accessoryId);
+  async handleControllerDevice(context: ControllerDevicePayload) {
+    const {name, category, accessoryId} = context;
+    const id = this.api.hap.uuid.generate(accessoryId);
     this.log.info(`Found new tydom device named="${name}" with id="${id}"`);
     this.log.debug(`Tydom device="${id}" context="${JSON.stringify(context)}"`);
     // Prevent automatic cleanup

@@ -10,8 +10,8 @@ import {
 import {get} from 'lodash';
 import {HOMEBRIDGE_TYDOM_PIN} from 'src/config/env';
 import locale from 'src/config/locale';
-import TydomController from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
+import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from 'src/controller';
+import {PlatformAccessory, TydomAccessoryUpdateContext} from 'src/typings/homebridge';
 import {
   SecuritySystemAlarmEvent,
   SecuritySystemLabelCommandResult,
@@ -25,6 +25,7 @@ import {
   addAccessoryServiceWithSubtype,
   getAccessoryService,
   getAccessoryServiceWithSubtype,
+  SECURITY_SYSTEM_SENSORS,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
   TydomAccessoryUpdateType
@@ -79,6 +80,16 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   const aliases = (settings.aliases || {}) as ZoneAliases;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
+
+  // Create separate dedicated sensor extra accessory;
+  const {accessoryId} = context;
+  const extraDevice: ControllerDevicePayload = {
+    ...context,
+    name: `${get(locale, 'ALARME_ISSUES_OUVERTES', 'N/A') as string}`,
+    category: SECURITY_SYSTEM_SENSORS,
+    accessoryId: `${accessoryId}:sensors`
+  };
+  controller.emit('device', extraDevice);
 
   const initialData = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
   const labelResults = await client.command<SecuritySystemLabelCommandResult>(
@@ -300,10 +311,24 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
 
 export const updateSecuritySystem = (
   accessory: PlatformAccessory,
-  _controller: TydomController,
+  controller: TydomController,
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType
 ) => {
+  // Relay to separate dedicated sensor extra accessory;
+  const {deviceId, endpointId, accessoryId} = accessory.context;
+  const extraUpdateContext: TydomAccessoryUpdateContext = {
+    category: SECURITY_SYSTEM_SENSORS,
+    deviceId,
+    endpointId,
+    accessoryId: `${accessoryId}:sensors`
+  };
+  controller.emit('update', {
+    type,
+    updates,
+    context: extraUpdateContext
+  } as ControllerUpdatePayload);
+
   // Process command updates
   if (type === 'cdata') {
     updates.forEach((update) => {
