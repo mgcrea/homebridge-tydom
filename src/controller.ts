@@ -57,6 +57,7 @@ export default class TydomController extends EventEmitter {
         this.handleMessage(message);
       } catch (err) {
         this.log.error(`Encountered an uncaught error while processing message=${chalkJson(message)}"`);
+        this.log.debug(err);
       }
     });
     this.client.on('connect', () => {
