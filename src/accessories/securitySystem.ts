@@ -1,3 +1,4 @@
+import debug from 'debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -12,6 +13,7 @@ import locale from 'src/config/locale';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {
+  SecuritySystemAlarmEvent,
   SecuritySystemLabelCommandResult,
   TydomDeviceSecuritySystemAlarmMode,
   TydomDeviceSecuritySystemAlarmState,
@@ -21,12 +23,14 @@ import {
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
+  getAccessoryService,
+  getAccessoryServiceWithSubtype,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-  getAccessoryService,
-  getAccessoryServiceWithSubtype
+  TydomAccessoryUpdateType
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
+import {chalkKeyword} from 'src/utils/chalk';
 import {debugAddSubService, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from 'src/utils/debug';
 import {decode} from 'src/utils/hash';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
@@ -146,6 +150,10 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         callback();
         return;
       }
+      // Clear preAlarm trigger
+      if ([SecuritySystemTargetState.DISARM].includes(value as number)) {
+        preAlarmService.updateCharacteristic(ContactSensorState, false);
+      }
       // Global ON/OFF
       if ([SecuritySystemTargetState.AWAY_ARM, SecuritySystemTargetState.DISARM].includes(value as number)) {
         const tydomValue = value === SecuritySystemTargetState.DISARM ? 'OFF' : 'ON';
@@ -174,7 +182,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
       }
     });
 
-  // Setup global contact sensor
+  // Setup systOpenIssue contactSensor
   const systOpenIssueId = `systOpenIssue`;
   const systOpenIssueName = get(locale, 'ALARME_ISSUES_OUVERTES', 'N/A') as string;
   const systOpenIssueService = addAccessoryServiceWithSubtype(
@@ -202,7 +210,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   systOpenIssueService.getCharacteristic(Characteristic.StatusActive).setValue(true);
   systOpenIssueService.getCharacteristic(Characteristic.StatusFault).setValue(false);
 
-  // Setup global contact sensor
+  // Setup alarmSOS contactSensor
   const alarmSOSId = `alarmSOS`;
   const alarmSOSName = get(locale, 'DISCRETE_ALARM_V3', 'N/A') as string;
   const alarmSOSService = addAccessoryServiceWithSubtype(
@@ -229,6 +237,22 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
     });
   alarmSOSService.getCharacteristic(Characteristic.StatusActive).setValue(true);
   alarmSOSService.getCharacteristic(Characteristic.StatusFault).setValue(false);
+
+  // Setup preAlarm contactSensor
+  const preAlarmId = `preAlarm`;
+  const preAlarmName = get(locale, 'PREALARM', 'N/A') as string;
+  const preAlarmService = addAccessoryServiceWithSubtype(
+    accessory,
+    Service.ContactSensor,
+    preAlarmName,
+    preAlarmId,
+    true
+  );
+  debugAddSubService(preAlarmService, accessory);
+  service.addLinkedService(preAlarmService);
+  preAlarmService.getCharacteristic(ContactSensorState).setValue(false);
+  preAlarmService.getCharacteristic(Characteristic.StatusActive).setValue(true);
+  preAlarmService.getCharacteristic(Characteristic.StatusFault).setValue(false);
 
   // Setup zones switches
   for (let zoneIndex = 1; zoneIndex < 9; zoneIndex++) {
@@ -279,12 +303,37 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
 export const updateSecuritySystem = (
   accessory: PlatformAccessory,
   _controller: TydomController,
-  updates: Record<string, unknown>[]
+  updates: Record<string, unknown>[],
+  type: TydomAccessoryUpdateType
 ) => {
   if (!setupPerformed) {
     // @NOTE ignore update while the setup is still running
     return;
   }
+
+  // Process command updates
+  if (type === 'cdata') {
+    updates.forEach((update) => {
+      const {name, values} = update;
+      switch (name) {
+        case 'eventAlarm': {
+          const {event} = values as {event: SecuritySystemAlarmEvent};
+          debug(`New ${chalkKeyword('SecuritySystem')} alarm event=${JSON.stringify(event)}`);
+          if (event.name === 'preAlarm') {
+            const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, 'preAlarm');
+            debugSetUpdate(ContactSensorState, service, true);
+            service.updateCharacteristic(ContactSensorState, true);
+            return;
+          }
+          return;
+        }
+        default:
+          return;
+      }
+    });
+    return;
+  }
+
   // Process alarmState/alarmMode together
   if (updates.some(({name}) => name === 'alarmState') && updates.some(({name}) => name === 'alarmMode')) {
     const alarmState = updates.find(({name}) => name === 'alarmState')?.value as TydomDeviceSecuritySystemAlarmState;

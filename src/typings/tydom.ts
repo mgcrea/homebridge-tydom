@@ -160,3 +160,10 @@ export type SecuritySystemHistoOpenIssuesCommandResult = {
   index: number;
   product?: SecuritySystemProduct;
 };
+
+export type SecuritySystemAlarmEvent = {
+  name: 'preAlarm';
+  date: string;
+  zones: Array<{id: number; nameStd: string}>;
+  product?: SecuritySystemProduct;
+};

@@ -73,18 +73,15 @@ export default class TydomPlatform implements Platform {
     this.accessories.set(id, accessory);
     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
   }
-  handleControllerDataUpdate({updates, context}: ControllerUpdatePayload) {
+  handleControllerDataUpdate({type, updates, context}: ControllerUpdatePayload) {
     const id = this.api.hap.uuid.generate(context.accessoryId);
-    this.log.debug(
-      `Tydom device="${id}" data update="${JSON.stringify(updates)} with context="${JSON.stringify(context)}"`
-    );
     if (!this.accessories.has(id)) {
       return;
     }
     const accessory = this.accessories.get(id)!;
     const tydomAccessoryUpdate = getTydomAccessoryDataUpdate(accessory);
     if (tydomAccessoryUpdate) {
-      tydomAccessoryUpdate(accessory, this.controller!, updates);
+      tydomAccessoryUpdate(accessory, this.controller!, updates, type);
     }
   }
   async createAccessory(name: string, id: string, category: Categories, context: TydomAccessoryContext) {

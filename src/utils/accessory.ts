@@ -95,10 +95,13 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
   }
 };
 
+export type TydomAccessoryUpdateType = 'data' | 'cdata';
+
 type TydomAccessoryUpdate = (
   accessory: PlatformAccessory,
   controller: TydomController,
-  updates: Record<string, unknown>[]
+  updates: Record<string, unknown>[],
+  type: TydomAccessoryUpdateType
 ) => void | Promise<void>;
 
 export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): TydomAccessoryUpdate => {

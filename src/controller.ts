@@ -17,7 +17,7 @@ import {HOMEBRIDGE_TYDOM_PASSWORD} from './config/env';
 import locale from './config/locale';
 import {TydomPlatformConfig} from './platform';
 import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/homebridge';
-import {SECURITY_SYSTEM_SENSORS} from './utils/accessory';
+import {SECURITY_SYSTEM_SENSORS, TydomAccessoryUpdateType} from './utils/accessory';
 import {stringIncludes} from './utils/array';
 import {chalkJson, chalkNumber, chalkString} from './utils/chalk';
 import {
@@ -34,6 +34,7 @@ export type ControllerDevicePayload = {
 };
 
 export type ControllerUpdatePayload = {
+  type: TydomAccessoryUpdateType;
   category: Categories;
   updates: Record<string, unknown>[];
   context: TydomAccessoryContext;
@@ -196,12 +197,17 @@ export default class TydomController extends EventEmitter {
     const {uri, method, body} = message;
     const isDeviceUpdate = uri === '/devices/data' && method === 'PUT';
     if (isDeviceUpdate) {
-      this.handleDeviceDataUpdate(body);
+      this.handleDeviceDataUpdate(body, 'data');
+      return;
+    }
+    const isDeviceCommandUpdate = uri === '/devices/cdata' && method === 'PUT';
+    if (isDeviceCommandUpdate) {
+      this.handleDeviceDataUpdate(body, 'cdata');
       return;
     }
     debug(`Unkown message from Tydom client:\n${chalkJson(message)}`);
   }
-  handleDeviceDataUpdate(body: TydomResponse) {
+  handleDeviceDataUpdate(body: TydomResponse, type: 'data' | 'cdata') {
     if (!Array.isArray(body)) {
       debug('Unsupported non-array device update', body);
       return;
@@ -230,6 +236,7 @@ export default class TydomController extends EventEmitter {
         accessoryId
       };
       this.emit('update', {
+        type,
         updates,
         category,
         context
@@ -243,6 +250,7 @@ export default class TydomController extends EventEmitter {
           accessoryId: extraAccessoryId
         };
         this.emit('update', {
+          type,
           updates,
           category: extraCategory,
           context: extraContext
