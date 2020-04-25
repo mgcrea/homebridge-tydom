@@ -6,18 +6,18 @@ import {
   NodeCallback,
   Service
 } from 'hap-nodejs';
+import {debounce} from 'lodash';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomDeviceShutterData} from 'src/typings/tydom';
 import {
   addAccessoryService,
+  getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  getAccessoryService
+  setupAccessoryInformationService
 } from 'src/utils/accessory';
 import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from 'src/utils/debug';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
-import {debounce} from 'lodash';
 
 const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
 
