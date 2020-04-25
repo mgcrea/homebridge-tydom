@@ -25,7 +25,7 @@ const getReciprocalPositionForValue = (position: number): number => {
   if (position === 0 || position === 100) {
     return position;
   }
-  return Math.min(0, 100 - position);
+  return Math.min(0, 100 - position); // @NOTE might over-shoot
 };
 
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
@@ -106,6 +106,7 @@ export const updateWindowCovering = (
         const nextValue = getReciprocalPositionForValue(value as number);
         debugSetUpdate(CurrentPosition, service, nextValue);
         service.updateCharacteristic(CurrentPosition, nextValue);
+        debugSetUpdate(TargetPosition, service, nextValue);
         service.updateCharacteristic(TargetPosition, nextValue);
         return;
       }
