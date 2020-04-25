@@ -15,10 +15,18 @@ import {
   setupAccessoryInformationService,
   getAccessoryService
 } from 'src/utils/accessory';
-import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from 'src/utils/debug';
+import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from 'src/utils/debug';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
+import {debounce} from 'lodash';
 
 const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
+
+const getReciprocalPositionForValue = (position: number): number => {
+  if (position === 0 || position === 100) {
+    return position;
+  }
+  return Math.min(0, 100 - position);
+};
 
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
@@ -30,10 +38,16 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
 
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.WindowCovering, `${accessory.displayName}`, true);
-  // State
-  const state: {latestTargetPosition?: number} = {
-    latestTargetPosition: undefined
-  };
+
+  const debouncedSetPosition = debounce((value: number) => {
+    debugTydomPut('position', accessory, value);
+    client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+      {
+        name: 'position',
+        value
+      }
+    ]);
+  }, 250);
 
   service
     .getCharacteristic(CurrentPosition)
@@ -41,13 +55,10 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
       debugGet(CurrentPosition, service);
       try {
         const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
-        const position = getTydomDataPropValue<number>(data, 'position');
-        // @NOTE set currentPosition as targetPosition on start
-        if (state.latestTargetPosition === undefined) {
-          state.latestTargetPosition = position;
-        }
-        debugGetResult(CurrentPosition, service, position);
-        callback(null, position);
+        const position = getTydomDataPropValue<number>(data, 'position') || 0;
+        const nextValue = getReciprocalPositionForValue(position);
+        debugGetResult(CurrentPosition, service, nextValue);
+        callback(null, nextValue);
       } catch (err) {
         callback(err);
       }
@@ -58,20 +69,22 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
     .getCharacteristic(TargetPosition)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(TargetPosition, service);
-      debugGetResult(TargetPosition, service, state.latestTargetPosition);
-      callback(null, state.latestTargetPosition);
+      try {
+        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
+        const position = getTydomDataPropValue<number>(data, 'position') || 0;
+        const nextValue = getReciprocalPositionForValue(position);
+        debugGetResult(CurrentPosition, service, nextValue);
+        callback(null, nextValue);
+      } catch (err) {
+        callback(err);
+      }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet(TargetPosition, service, value);
       try {
-        state.latestTargetPosition = value as number;
-        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-          {
-            name: 'position',
-            value
-          }
-        ]);
-        debugSetResult(TargetPosition, service, value);
+        const tydomValue = getReciprocalPositionForValue(value as number);
+        debouncedSetPosition(tydomValue);
+        debugSetResult(TargetPosition, service, value, tydomValue);
         callback();
       } catch (err) {
         callback(err);
@@ -90,10 +103,10 @@ export const updateWindowCovering = (
     switch (name) {
       case 'position': {
         const service = getAccessoryService(accessory, Service.WindowCovering);
-        if (value !== null) {
-          debugSetUpdate(CurrentPosition, service, value);
-          service.updateCharacteristic(CurrentPosition, value as number);
-        }
+        const nextValue = getReciprocalPositionForValue(value as number);
+        debugSetUpdate(CurrentPosition, service, nextValue);
+        service.updateCharacteristic(CurrentPosition, nextValue);
+        service.updateCharacteristic(TargetPosition, nextValue);
         return;
       }
       case 'obstacleDefect': {
