@@ -25,7 +25,7 @@ const getReciprocalPositionForValue = (position: number): number => {
   if (position === 0 || position === 100) {
     return position;
   }
-  return Math.min(0, 100 - position); // @NOTE might over-shoot
+  return Math.max(0, 100 - position); // @NOTE might over-shoot
 };
 
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
