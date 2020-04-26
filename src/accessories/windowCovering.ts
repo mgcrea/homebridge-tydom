@@ -14,19 +14,20 @@ import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
+  setupAccessoryInformationService,
+  asNumber
 } from 'src/utils/accessory';
 import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from 'src/utils/debug';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
 const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
 
-const getReciprocalPositionForValue = (position: number): number => {
-  if (position === 0 || position === 100) {
-    return position;
-  }
-  return Math.max(0, 100 - position); // @NOTE might over-shoot
-};
+// const getReciprocalPositionForValue = (position: number): number => {
+//   if (position === 0 || position === 100) {
+//     return position;
+//   }
+//   return Math.max(0, 100 - position); // @NOTE might over-shoot
+// };
 
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
@@ -56,7 +57,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
       try {
         const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
         const position = getTydomDataPropValue<number>(data, 'position') || 0;
-        const nextValue = getReciprocalPositionForValue(position);
+        const nextValue = asNumber(position);
         debugGetResult(CurrentPosition, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
@@ -72,7 +73,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
       try {
         const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
         const position = getTydomDataPropValue<number>(data, 'position') || 0;
-        const nextValue = getReciprocalPositionForValue(position);
+        const nextValue = asNumber(position);
         debugGetResult(CurrentPosition, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
@@ -82,7 +83,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet(TargetPosition, service, value);
       try {
-        const tydomValue = getReciprocalPositionForValue(value as number);
+        const tydomValue = value as number;
         debouncedSetPosition(tydomValue);
         debugSetResult(TargetPosition, service, value, tydomValue);
         callback();
@@ -103,7 +104,7 @@ export const updateWindowCovering = (
     switch (name) {
       case 'position': {
         const service = getAccessoryService(accessory, Service.WindowCovering);
-        const nextValue = getReciprocalPositionForValue(value as number);
+        const nextValue = asNumber(value as number);
         debugSetUpdate(CurrentPosition, service, nextValue);
         service.updateCharacteristic(CurrentPosition, nextValue);
         debugSetUpdate(TargetPosition, service, nextValue);
