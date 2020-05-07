@@ -69,19 +69,15 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         let nextValue;
         switch (authorization) {
           case 'COOLING':
-            nextValue = setpoint < temperature
-              ? CurrentHeatingCoolingState.COOL
-              : CurrentHeatingCoolingState.OFF
+            nextValue = setpoint < temperature ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.OFF;
             break;
           case 'HEATING':
-            nextValue = setpoint > temperature 
-              ? CurrentHeatingCoolingState.HEAT
-              : CurrentHeatingCoolingState.OFF;
+            nextValue = setpoint > temperature ? CurrentHeatingCoolingState.HEAT : CurrentHeatingCoolingState.OFF;
             break;
           default:
             nextValue = CurrentHeatingCoolingState.OFF;
         }
-        if ( ['STOP'].includes(hvacMode) || setpoint === null) {
+        if (['STOP'].includes(hvacMode) || setpoint === null) {
           nextValue = CurrentHeatingCoolingState.OFF;
         }
         debugGetResult(CurrentHeatingCoolingState, service, nextValue);
@@ -104,17 +100,13 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         let nextValue;
         switch (authorization) {
           case 'COOLING':
-            nextValue = ['NORMAL'].includes(hvacMode)
-            ? TargetHeatingCoolingState.COOL
-            : TargetHeatingCoolingState.OFF;
+            nextValue = ['NORMAL'].includes(hvacMode) ? TargetHeatingCoolingState.COOL : TargetHeatingCoolingState.OFF;
             break;
           case 'HEATING':
-            nextValue = ['NORMAL'].includes(hvacMode)
-              ? TargetHeatingCoolingState.HEAT
-              : TargetHeatingCoolingState.OFF;
+            nextValue = ['NORMAL'].includes(hvacMode) ? TargetHeatingCoolingState.HEAT : TargetHeatingCoolingState.OFF;
             break;
           default:
-            nextValue = TargetHeatingCoolingState.OFF
+            nextValue = TargetHeatingCoolingState.OFF;
         }
         debugGetResult(TargetHeatingCoolingState, service, nextValue);
         callback(null, nextValue);
