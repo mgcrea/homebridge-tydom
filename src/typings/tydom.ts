@@ -56,7 +56,7 @@ export type TydomDataElement<K = string, V = AnyTydomDataValue> = {
 
 export type TydomEndpointDataResponse = {error: number; data: TydomDataElement[]};
 export type TydomEndpointData = TydomDataElement[];
-export type TydomDeviceThermostatAuthorization = 'STOP' | 'HEATING';
+export type TydomDeviceThermostatAuthorization = 'STOP' | 'HEATING' | 'COOLING';
 export type TydomDeviceThermostatHvacMode = 'NORMAL' | 'STOP' | 'ANTI_FROST';
 export type TydomDeviceThermostatThermicLevel = 'ECO' | 'MODERATO' | 'MEDIO' | 'COMFORT' | 'STOP' | 'ANTI_FROST';
 

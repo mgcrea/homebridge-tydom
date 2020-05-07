@@ -57,7 +57,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
 
   service
     .getCharacteristic(CurrentHeatingCoolingState)
-    .setProps({validValues: [0, 1]} as Partial<CharacteristicProps>) // [OFF, HEAT, COOL]
+    .setProps({validValues: [0, 1, 2]} as Partial<CharacteristicProps>) // [OFF, HEAT, COOL]
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(CurrentHeatingCoolingState, service);
       try {
@@ -65,10 +65,25 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         const authorization = getTydomDataPropValue<TydomDeviceThermostatAuthorization>(data, 'authorization');
         const setpoint = getTydomDataPropValue<number>(data, 'setpoint');
         const temperature = getTydomDataPropValue<number>(data, 'temperature');
-        const nextValue =
-          authorization === 'HEATING' && setpoint > temperature
-            ? CurrentHeatingCoolingState.HEAT
-            : CurrentHeatingCoolingState.OFF;
+        const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, 'hvacMode');
+        let nextValue;
+        switch (authorization) {
+          case 'COOLING':
+            nextValue = setpoint < temperature
+              ? CurrentHeatingCoolingState.COOL
+              : CurrentHeatingCoolingState.OFF
+            break;
+          case 'HEATING':
+            nextValue = setpoint > temperature 
+              ? CurrentHeatingCoolingState.HEAT
+              : CurrentHeatingCoolingState.OFF;
+            break;
+          default:
+            nextValue = CurrentHeatingCoolingState.OFF;
+        }
+        if ( ['STOP'].includes(hvacMode) || setpoint === null) {
+          nextValue = CurrentHeatingCoolingState.OFF;
+        }
         debugGetResult(CurrentHeatingCoolingState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
@@ -79,17 +94,28 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
 
   service
     .getCharacteristic(TargetHeatingCoolingState)
-    .setProps({validValues: [0, 1]} as Partial<CharacteristicProps>) // [OFF, HEAT, COOL, AUTO]
+    .setProps({validValues: [0, 1, 2]} as Partial<CharacteristicProps>) // [OFF, HEAT, COOL, AUTO]
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(TargetHeatingCoolingState, service);
       try {
         const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {deviceId, endpointId});
         const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, 'hvacMode');
-        const authorization = getTydomDataPropValue<'STOP' | 'HEATING'>(data, 'authorization');
-        const nextValue =
-          authorization === 'HEATING' && ['NORMAL'].includes(hvacMode)
-            ? TargetHeatingCoolingState.HEAT
+        const authorization = getTydomDataPropValue<'STOP' | 'HEATING' | 'COOLING'>(data, 'authorization');
+        let nextValue;
+        switch (authorization) {
+          case 'COOLING':
+            nextValue = ['NORMAL'].includes(hvacMode)
+            ? TargetHeatingCoolingState.COOL
             : TargetHeatingCoolingState.OFF;
+            break;
+          case 'HEATING':
+            nextValue = ['NORMAL'].includes(hvacMode)
+              ? TargetHeatingCoolingState.HEAT
+              : TargetHeatingCoolingState.OFF;
+            break;
+          default:
+            nextValue = TargetHeatingCoolingState.OFF
+        }
         debugGetResult(TargetHeatingCoolingState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
