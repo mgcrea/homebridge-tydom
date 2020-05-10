@@ -1,4 +1,4 @@
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'homebridge';
+import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'hap-nodejs';
 import {get, keyBy} from 'lodash';
 import locale from 'src/config/locale';
 import TydomController from 'src/controller';

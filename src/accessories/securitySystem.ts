@@ -5,7 +5,7 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from 'homebridge';
+} from 'hap-nodejs';
 import {get} from 'lodash';
 import {HOMEBRIDGE_TYDOM_PIN} from 'src/config/env';
 import locale from 'src/config/locale';

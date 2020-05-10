@@ -1,4 +1,4 @@
-import {AccessoryEventTypes, Categories, Characteristic, Service, VoidCallback} from 'homebridge';
+import {AccessoryEventTypes, Categories, Characteristic, Service, VoidCallback} from 'hap-nodejs';
 import {setupFan, updateFan} from 'src/accessories/fan';
 import {setupGarageDoorOpener} from 'src/accessories/garageDoorOpener';
 import {setupLightbulb, updateLightbulb} from 'src/accessories/lightbulb';

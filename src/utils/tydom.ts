@@ -1,4 +1,4 @@
-import {Categories} from 'homebridge';
+import {Categories} from 'hap-nodejs';
 import {find} from 'lodash';
 import {
   TydomConfigEndpoint,

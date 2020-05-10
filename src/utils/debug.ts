@@ -5,7 +5,7 @@ import createDebug from 'debug';
 import {name} from './../../package.json';
 import chalk from 'chalk';
 import {chalkString, chalkKeyword} from './chalk.js';
-import {Characteristic, Service} from 'homebridge';
+import {Characteristic, Service} from 'hap-nodejs';
 import {PlatformAccessory} from 'src/typings/homebridge';
 
 type IdentifiableAccessoryObject = PlatformAccessory | Service;
