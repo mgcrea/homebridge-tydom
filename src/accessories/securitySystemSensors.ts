@@ -12,9 +12,10 @@ import {
   addAccessoryServiceWithSubtype,
   getAccessoryServiceWithSubtype,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
+  setupAccessoryInformationService,
+  TydomAccessoryUpdateType
 } from 'src/utils/accessory';
-import {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
+import debug, {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
 import {runTydomDeviceCommand} from 'src/utils/tydom';
 
 const {ContactSensorState} = Characteristic;
@@ -96,9 +97,15 @@ export const setupSecuritySystemSensors = async (
 export const updateSecuritySystemSensors = (
   accessory: PlatformAccessory,
   controller: TydomController,
-  updates: Record<string, unknown>[]
+  updates: Record<string, unknown>[],
+  type: TydomAccessoryUpdateType
 ) => {
   const {client} = controller;
+  // Process command updates
+  if (type === 'cdata') {
+    return;
+  }
+
   updates.forEach(async (update) => {
     const {context} = accessory;
     const {deviceId, endpointId} = context;

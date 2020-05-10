@@ -1,4 +1,3 @@
-import debug from 'debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -31,8 +30,15 @@ import {
   TydomAccessoryUpdateType
 } from 'src/utils/accessory';
 import assert from 'src/utils/assert';
-import {chalkKeyword} from 'src/utils/chalk';
-import {debugAddSubService, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from 'src/utils/debug';
+import {chalkJson, chalkKeyword} from 'src/utils/chalk';
+import debug, {
+  debugAddSubService,
+  debugGet,
+  debugGetResult,
+  debugSet,
+  debugSetResult,
+  debugSetUpdate
+} from 'src/utils/debug';
 import {decode} from 'src/utils/hash';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
@@ -336,14 +342,17 @@ export const updateSecuritySystem = (
       switch (name) {
         case 'eventAlarm': {
           const {event} = values as {event: SecuritySystemAlarmEvent};
-          debug(`New ${chalkKeyword('SecuritySystem')} alarm event=${JSON.stringify(event)}`);
-          if (event.name === 'preAlarm') {
-            const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, 'preAlarm');
-            debugSetUpdate(ContactSensorState, service, true);
-            service.updateCharacteristic(ContactSensorState, true);
-            return;
+          debug(`New ${chalkKeyword('SecuritySystem')} alarm event=${chalkJson(event)}`);
+          switch (event.name) {
+            case 'preAlarm': {
+              const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, 'preAlarm');
+              debugSetUpdate(ContactSensorState, service, true);
+              service.updateCharacteristic(ContactSensorState, true);
+              return;
+            }
+            default:
+              return;
           }
-          return;
         }
         default:
           return;

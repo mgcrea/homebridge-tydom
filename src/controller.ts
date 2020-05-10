@@ -57,7 +57,7 @@ export default class TydomController extends EventEmitter {
         this.handleMessage(message);
       } catch (err) {
         this.log.error(`Encountered an uncaught error while processing message=${chalkJson(message)}"`);
-        this.log.debug(err);
+        this.log.debug(err.stack || err);
       }
     });
     this.client.on('connect', () => {
@@ -204,7 +204,8 @@ export default class TydomController extends EventEmitter {
         return;
       }
       const category = this.devices.get(deviceId) as Categories;
-      const {id: endpointId, data: updates} = endpoints[0];
+      const {id: endpointId, data, cdata} = endpoints[0];
+      const updates = type === 'data' ? data : cdata;
       const accessoryId = this.getAccessoryId(deviceId);
       debug(
         `${chalk.bold.green('←PUT')}:${chalk.blue('update')} for device id=${chalkString(

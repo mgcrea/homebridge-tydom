@@ -133,7 +133,7 @@ export type TydomDeviceSecuritySystemData = [
 
 export type TydomDeviceDataUpdateBody = {
   id: number;
-  endpoints: {id: number; error: number; data: Record<string, unknown>[]}[];
+  endpoints: {id: number; error: number; data: Record<string, unknown>[]; cdata: Record<string, unknown>[]}[];
 }[];
 
 export type SecuritySystemProduct = {
@@ -162,7 +162,7 @@ export type SecuritySystemHistoOpenIssuesCommandResult = {
 };
 
 export type SecuritySystemAlarmEvent = {
-  name: 'preAlarm';
+  name: 'arret' | 'preAlarm' | 'arretZone' | 'marcheZone' | 'marcheTotale';
   date: string;
   zones: Array<{id: number; nameStd: string}>;
   product?: SecuritySystemProduct;
