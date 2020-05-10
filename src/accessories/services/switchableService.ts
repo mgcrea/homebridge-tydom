@@ -5,7 +5,7 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from 'hap-nodejs';
+} from 'homebridge';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';

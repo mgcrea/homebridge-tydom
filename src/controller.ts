@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import {EventEmitter} from 'events';
-import {Categories} from 'hap-nodejs';
+import {Categories} from 'homebridge';
 import {get} from 'lodash';
 import {
   TydomConfigResponse,

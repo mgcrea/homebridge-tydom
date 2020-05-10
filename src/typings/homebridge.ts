@@ -1,5 +1,5 @@
 import {EventEmitter} from 'events';
-import Hap, {Accessory, Categories, Service} from 'hap-nodejs';
+import Hap, {Accessory, Categories, Service} from 'homebridge';
 import {TydomConfigGroup, TydomMetaElement} from './tydom';
 
 export interface HomebridgeApi extends EventEmitter {

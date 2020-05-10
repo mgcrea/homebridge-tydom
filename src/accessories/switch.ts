@@ -1,4 +1,4 @@
-import {Service} from 'hap-nodejs';
+import {Service} from 'homebridge';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {setupAccessoryIdentifyHandler, setupAccessoryInformationService} from 'src/utils/accessory';

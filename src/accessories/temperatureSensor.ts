@@ -1,4 +1,4 @@
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'hap-nodejs';
+import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'homebridge';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
 import {TydomEndpointData} from 'src/typings/tydom';

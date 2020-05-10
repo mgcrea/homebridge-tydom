@@ -6,7 +6,7 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from 'hap-nodejs';
+} from 'homebridge';
 import {get} from 'lodash';
 import locale from 'src/config/locale';
 import TydomController from 'src/controller';

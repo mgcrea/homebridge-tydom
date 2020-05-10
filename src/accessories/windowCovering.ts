@@ -5,7 +5,7 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from 'hap-nodejs';
+} from 'homebridge';
 import {debounce} from 'lodash';
 import TydomController from 'src/controller';
 import {PlatformAccessory} from 'src/typings/homebridge';
