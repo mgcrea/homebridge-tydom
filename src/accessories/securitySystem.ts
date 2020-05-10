@@ -88,14 +88,16 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   setupAccessoryIdentifyHandler(accessory, controller);
 
   // Create separate dedicated sensor extra accessory;
-  const {accessoryId} = context;
-  const extraDevice: ControllerDevicePayload = {
-    ...context,
-    name: `${get(locale, 'ALARME_ISSUES_OUVERTES', 'N/A') as string}`,
-    category: SECURITY_SYSTEM_SENSORS,
-    accessoryId: `${accessoryId}:sensors`
-  };
-  controller.emit('device', extraDevice);
+  if (settings.sensors !== false) {
+    const {accessoryId} = context;
+    const extraDevice: ControllerDevicePayload = {
+      ...context,
+      name: `${get(locale, 'ALARME_ISSUES_OUVERTES', 'N/A') as string}`,
+      category: SECURITY_SYSTEM_SENSORS,
+      accessoryId: `${accessoryId}:sensors`
+    };
+    controller.emit('device', extraDevice);
+  }
 
   const initialData = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
   const labelResults = await client.command<SecuritySystemLabelCommandResult>(
@@ -322,18 +324,20 @@ export const updateSecuritySystem = (
   type: TydomAccessoryUpdateType
 ) => {
   // Relay to separate dedicated sensor extra accessory;
-  const {deviceId, endpointId, accessoryId} = accessory.context;
-  const extraUpdateContext: TydomAccessoryUpdateContext = {
-    category: SECURITY_SYSTEM_SENSORS,
-    deviceId,
-    endpointId,
-    accessoryId: `${accessoryId}:sensors`
-  };
-  controller.emit('update', {
-    type,
-    updates,
-    context: extraUpdateContext
-  } as ControllerUpdatePayload);
+  const {deviceId, endpointId, accessoryId, settings} = accessory.context;
+  if (settings.sensors !== false) {
+    const extraUpdateContext: TydomAccessoryUpdateContext = {
+      category: SECURITY_SYSTEM_SENSORS,
+      deviceId,
+      endpointId,
+      accessoryId: `${accessoryId}:sensors`
+    };
+    controller.emit('update', {
+      type,
+      updates,
+      context: extraUpdateContext
+    } as ControllerUpdatePayload);
+  }
 
   // Process command updates
   if (type === 'cdata') {
