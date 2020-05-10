@@ -15,7 +15,7 @@ import {
   setupAccessoryInformationService,
   TydomAccessoryUpdateType
 } from 'src/utils/accessory';
-import debug, {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
+import {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
 import {runTydomDeviceCommand} from 'src/utils/tydom';
 
 const {ContactSensorState} = Characteristic;
