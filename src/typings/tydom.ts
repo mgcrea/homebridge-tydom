@@ -162,7 +162,15 @@ export type SecuritySystemHistoOpenIssuesCommandResult = {
 };
 
 export type SecuritySystemAlarmEvent = {
-  name: 'arret' | 'preAlarm' | 'arretZone' | 'marcheZone' | 'marcheTotale';
+  name:
+    | 'arret'
+    | 'preAlarm'
+    | 'arretZone'
+    | 'marcheZone'
+    | 'marcheTotale'
+    | 'refusMiseEnMarche'
+    | 'preavisMarcheAuto'
+    | 'alarmIntrusion';
   date: string;
   zones: Array<{id: number; nameStd: string}>;
   product?: SecuritySystemProduct;
