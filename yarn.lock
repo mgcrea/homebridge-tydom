@@ -5675,10 +5675,10 @@ tweetnacl@^1.0.3:
   resolved "https://registry.npmjs.org/tweetnacl/-/tweetnacl-1.0.3.tgz#ac0af71680458d8a6378d0d0d050ab1407d35596"
   integrity sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==
 
-tydom-client@^0.11.8:
-  version "0.11.8"
-  resolved "https://registry.npmjs.org/tydom-client/-/tydom-client-0.11.8.tgz#fc1630d57b7127b27c6be8f9bf2c319165c92da8"
-  integrity sha512-1ZO3YW65XbxEnOjkwPnL2JJw3J0dEot8YLDD2IUWO93iN4vtv8ckdV3uW8JkUtBi3t96Fdr0PPU/djCzI6khPQ==
+tydom-client@^0.11.9:
+  version "0.11.9"
+  resolved "https://registry.npmjs.org/tydom-client/-/tydom-client-0.11.9.tgz#4d5f14ada6138ea0ade29919a93a86b93cde5cb6"
+  integrity sha512-RlpAAtytB/FhKP6rMWRn7bmA7cn+jrBUzq22nUY4Sv9eOsnFr87HVpa9UziKLCmDA5AQs6msqlyDyWppfhBRzQ==
   dependencies:
     "@babel/runtime" "^7.9.6"
     chalk "^4.0.0"
