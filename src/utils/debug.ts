@@ -14,14 +14,14 @@ export const debug = createDebug(name);
 
 export default debug;
 
-export const dir = (...args: unknown[]) => {
+export const dir = (...args: unknown[]): void => {
   console.dir(args.length > 1 ? args : args[0], {colors: true, depth: 10});
 };
 
 export const debugGet = (
   characteristic: typeof Characteristic,
   {displayName: name, UUID: id}: IdentifiableAccessoryObject
-) => {
+): void => {
   debug(
     `${chalk.bold.green('→GET')}:${chalk.blue(characteristic.name)} for accessory named=${chalkString(
       name
@@ -33,7 +33,7 @@ export const debugGetResult = (
   characteristic: typeof Characteristic,
   {displayName: name, UUID: id}: IdentifiableAccessoryObject,
   value: unknown
-) => {
+): void => {
   debug(
     `${chalk.bold.green('←GET')}:${chalk.blue(characteristic.name)} value=${chalk.yellow(
       value
@@ -45,7 +45,7 @@ export const debugSetUpdate = (
   characteristic: typeof Characteristic,
   {displayName: name, UUID: id}: IdentifiableAccessoryObject,
   value: unknown
-) => {
+): void => {
   debug(
     `${chalk.bold.yellow('←UPD')}:${chalk.blue(characteristic.name)} value=${chalk.yellow(
       value
@@ -57,7 +57,7 @@ export const debugSet = (
   characteristic: typeof Characteristic,
   {displayName: name, UUID: id}: IdentifiableAccessoryObject,
   value: unknown
-) => {
+): void => {
   debug(
     `${chalk.bold.red('→SET')}:${chalk.blue(characteristic.name)} value=${chalk.yellow(
       value
@@ -70,7 +70,7 @@ export const debugSetResult = (
   {displayName: name, UUID: id}: IdentifiableAccessoryObject,
   value: unknown,
   tydomValue?: unknown
-) => {
+): void => {
   debug(
     `${chalk.bold.red('←SET')}:${chalk.blue(characteristic.name)} value=${chalk.yellow(value)}${
       tydomValue !== undefined ? ` (tydomValue=${chalk.yellow(tydomValue)})` : ''
@@ -82,7 +82,7 @@ export const debugTydomPut = (
   property: string,
   {displayName: name, UUID: id}: IdentifiableAccessoryObject,
   value: unknown
-) => {
+): void => {
   debug(
     `${chalk.bold.red('→PUT')}:${chalk.blue(property)} value=${chalk.yellow(value)} for accessory named=${chalkString(
       name
@@ -90,7 +90,10 @@ export const debugTydomPut = (
   );
 };
 
-export const debugAddSubService = (service: Service, {displayName: name, UUID: id}: IdentifiableAccessoryObject) => {
+export const debugAddSubService = (
+  service: Service,
+  {displayName: name, UUID: id}: IdentifiableAccessoryObject
+): void => {
   debug(
     `Adding new sub service ${chalkKeyword(service.constructor.name)} with name=${chalkString(
       service.displayName

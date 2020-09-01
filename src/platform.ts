@@ -46,7 +46,7 @@ export default class TydomPlatform implements Platform {
     this.controller.on('device', this.handleControllerDevice.bind(this));
     this.controller.on('update', this.handleControllerDataUpdate.bind(this));
   }
-  async didFinishLaunching() {
+  async didFinishLaunching(): Promise<void> {
     assert(this.controller);
     this.cleanupAccessoriesIds = new Set(this.accessories.keys());
     await this.controller.connect();
@@ -59,7 +59,7 @@ export default class TydomPlatform implements Platform {
     });
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
   }
-  async handleControllerDevice(context: ControllerDevicePayload) {
+  async handleControllerDevice(context: ControllerDevicePayload): Promise<void> {
     const {name, category, accessoryId} = context;
     const id = this.api.hap.uuid.generate(accessoryId);
     this.log.info(`Found new tydom device named="${name}" with id="${id}"`);
@@ -74,7 +74,7 @@ export default class TydomPlatform implements Platform {
     this.accessories.set(id, accessory);
     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
   }
-  handleControllerDataUpdate({type, updates, context}: ControllerUpdatePayload) {
+  handleControllerDataUpdate({type, updates, context}: ControllerUpdatePayload): void {
     const id = this.api.hap.uuid.generate(context.accessoryId);
     if (!this.accessories.has(id)) {
       return;
@@ -85,7 +85,12 @@ export default class TydomPlatform implements Platform {
       tydomAccessoryUpdate(accessory, this.controller!, updates, type);
     }
   }
-  async createAccessory(name: string, id: string, category: Categories, context: TydomAccessoryContext) {
+  async createAccessory(
+    name: string,
+    id: string,
+    category: Categories,
+    context: TydomAccessoryContext
+  ): Promise<PlatformAccessory> {
     const {platformAccessory: PlatformAccessory} = this.api;
     const {group} = context;
     const accessoryName = category === Categories.WINDOW && group ? group.name || name : name;
@@ -95,7 +100,7 @@ export default class TydomPlatform implements Platform {
     await this.updateAccessory(accessory, context);
     return accessory;
   }
-  async updateAccessory(accessory: PlatformAccessory, context: TydomAccessoryContext) {
+  async updateAccessory(accessory: PlatformAccessory, context: TydomAccessoryContext): Promise<void> {
     const {displayName: name, UUID: id} = accessory;
     this.log.info(`Updating accessory named="${name}" with id="${id}"`);
     Object.assign(accessory.context, context);
@@ -104,7 +109,7 @@ export default class TydomPlatform implements Platform {
     this.api.updatePlatformAccessories([accessory]);
   }
   // Called by homebridge with existing cached accessories
-  configureAccessory(accessory: PlatformAccessory) {
+  configureAccessory(accessory: PlatformAccessory): void {
     this.log.debug(`Found cached accessory with id="${accessory.UUID}"`);
     this.accessories.set(accessory.UUID, accessory);
   }

@@ -7,7 +7,8 @@ import {
   TydomMetaElement,
   TydomMetaResponse,
   AnyTydomDataValue,
-  TydomGroupsResponse
+  TydomGroupsResponse,
+  TydomMetaEndpoint
 } from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import TydomClient from 'tydom-client';
@@ -84,7 +85,7 @@ export const getTydomDataPropValue = <
 export const getEndpointDetailsFromMeta = (
   {id_endpoint: endpointId, id_device: deviceId}: TydomConfigEndpoint,
   meta: TydomMetaResponse
-) => {
+): TydomMetaEndpoint => {
   const device = find(meta, {id: deviceId});
   assert(device, `Device with id="${deviceId}" not found in Tydom meta`);
   const details = find(device.endpoints, {id: endpointId});
@@ -152,7 +153,7 @@ export const resolveEndpointCategory = ({firstUsage, metadata}: ResolveEndpointC
   return null;
 };
 
-export const asyncWait = (ms: number) =>
+export const asyncWait = (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });

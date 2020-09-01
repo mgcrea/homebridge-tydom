@@ -8,6 +8,6 @@ interface Homebridge {
   registerPlatform: (pluginName: string, platformName: string, constructor: unknown, dynamic?: boolean) => unknown;
 }
 
-export default (homebridge: Homebridge) => {
+export default (homebridge: Homebridge): void => {
   homebridge.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, TydomPlatform, true);
 };

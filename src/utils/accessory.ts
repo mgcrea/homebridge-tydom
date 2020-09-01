@@ -15,7 +15,7 @@ import {setupContactSensor, updateContactSensor} from 'src/accessories/contactSe
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
-export const asNumber = (maybeNumber: unknown) => parseInt(`${maybeNumber}`, 10);
+export const asNumber = (maybeNumber: unknown): number => parseInt(`${maybeNumber}`, 10);
 
 export const getAccessoryService = (accessory: PlatformAccessory, ServiceClass: typeof Service): Service => {
   const service = accessory.getService(ServiceClass);
@@ -38,7 +38,7 @@ export const addAccessoryService = (
   service: Service | typeof Service,
   name: string,
   removeExisting: boolean = false
-) => {
+): Service => {
   const existingService = accessory.getService(service);
   if (existingService) {
     if (!removeExisting) {
@@ -55,7 +55,7 @@ export const addAccessoryServiceWithSubtype = (
   name: string,
   subtype: string,
   removeExisting: boolean = false
-) => {
+): Service => {
   const existingService = accessory.getServiceByUUIDAndSubType(service, subtype);
   if (existingService) {
     if (!removeExisting) {
@@ -133,6 +133,7 @@ export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): Tydom
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const setupAccessoryInformationService = (accessory: PlatformAccessory, _controller: TydomController): void => {
   const {context} = accessory;
   const {manufacturer, serialNumber, model} = context as TydomAccessoryContext;
@@ -145,6 +146,7 @@ export const setupAccessoryInformationService = (accessory: PlatformAccessory, _
     .setCharacteristic(Characteristic.Model, model);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const setupAccessoryIdentifyHandler = (accessory: PlatformAccessory, _controller: TydomController): void => {
   const {displayName: name, UUID: id} = accessory;
   // listen for the "identify" event for this Accessory
