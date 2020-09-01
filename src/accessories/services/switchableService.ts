@@ -12,17 +12,16 @@ import {
 } from '../../utils/hap';
 import {getTydomDataPropValue, getTydomDeviceData} from '../../utils/tydom';
 
-const {On} = Characteristic;
-
 export const addAccessorySwitchableService = (
   accessory: PlatformAccessory,
   controller: TydomController,
   serviceClass: ServiceClass
 ): Service => {
   const {context} = accessory;
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
   const {client} = controller;
+  const {On} = Characteristic;
 
+  const {deviceId, endpointId} = context as TydomAccessoryContext;
   const service = addAccessoryService(accessory, serviceClass, `${accessory.displayName}`, true);
 
   service
@@ -67,6 +66,7 @@ export const updateAccessorySwitchableService = (
 ): void => {
   updates.forEach((update) => {
     const {name, value} = update;
+    const {On} = Characteristic;
     switch (name) {
       case 'level': {
         const service = getAccessoryService(accessory, ServiceClass);

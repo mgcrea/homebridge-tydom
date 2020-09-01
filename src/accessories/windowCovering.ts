@@ -20,8 +20,6 @@ import {
 } from '../utils/hap';
 import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 
-const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
-
 // const getReciprocalPositionForValue = (position: number): number => {
 //   if (position === 0 || position === 100) {
 //     return position;
@@ -32,6 +30,7 @@ const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
   const {client} = controller;
+  const {CurrentPosition, TargetPosition} = Characteristic;
 
   const {deviceId, endpointId} = context as TydomAccessoryContext;
   setupAccessoryInformationService(accessory, controller);
@@ -99,6 +98,7 @@ export const updateWindowCovering = (
   _controller: TydomController,
   updates: Record<string, unknown>[]
 ): void => {
+  const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
   updates.forEach((update) => {
     const {name, value} = update;
     switch (name) {

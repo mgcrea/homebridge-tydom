@@ -19,8 +19,6 @@ import {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from '../u
 import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../utils/hap';
 import {runTydomDeviceCommand} from '../utils/tydom';
 
-const {ContactSensorState} = Characteristic;
-
 const getOpenedIssues = (commandResults: SecuritySystemHistoOpenIssuesCommandResult[]) =>
   keyBy(
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -37,6 +35,7 @@ export const setupSecuritySystemSensors = async (
 ): Promise<void> => {
   const {context} = accessory;
   const {client} = controller;
+  const {ContactSensorState} = Characteristic;
 
   const {deviceId, endpointId} = context as TydomAccessoryContext;
   setupAccessoryInformationService(accessory, controller);
@@ -110,6 +109,7 @@ export const updateSecuritySystemSensors = (
   updates.forEach(async (update) => {
     const {context} = accessory;
     const {deviceId, endpointId} = context;
+    const {ContactSensorState} = Characteristic;
     const {name, value} = update;
     switch (name) {
       case 'systOpenIssue': {

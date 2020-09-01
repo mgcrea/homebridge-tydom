@@ -11,11 +11,10 @@ import {debugGet, debugGetResult, debugSetUpdate} from '../utils/debug';
 import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../utils/hap';
 import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 
-const {ContactSensorState} = Characteristic;
-
 export const setupContactSensor = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
   const {client} = controller;
+  const {ContactSensorState} = Characteristic;
 
   const {deviceId, endpointId} = context as TydomAccessoryContext;
   setupAccessoryInformationService(accessory, controller);
@@ -46,6 +45,7 @@ export const updateContactSensor = (
 ): void => {
   updates.forEach((update) => {
     const {name, value} = update;
+    const {ContactSensorState} = Characteristic;
     switch (name) {
       case 'intrusionDetect': {
         const service = getAccessoryService(accessory, Service.ContactSensor);

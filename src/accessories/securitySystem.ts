@@ -49,12 +49,11 @@ type ZoneAliases = {
   night?: number[];
 };
 
-const {SecuritySystemTargetState, SecuritySystemCurrentState, StatusTampered, ContactSensorState, On} = Characteristic;
-
 const getCurrrentStateForValue = (
   alarmState: TydomDeviceSecuritySystemAlarmState,
   alarmMode: TydomDeviceSecuritySystemAlarmMode
 ): number => {
+  const {SecuritySystemCurrentState} = Characteristic;
   if (['DELAYED', 'ON', 'QUIET'].includes(alarmState)) {
     return SecuritySystemCurrentState.ALARM_TRIGGERED;
   }
@@ -69,6 +68,7 @@ const getCurrrentStateForValue = (
 };
 
 const getTargetStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): number => {
+  const {SecuritySystemTargetState} = Characteristic;
   if (alarmMode === 'ON') {
     return SecuritySystemTargetState.AWAY_ARM;
   }
@@ -82,12 +82,19 @@ const getTargetStateForValue = (alarmMode: TydomDeviceSecuritySystemAlarmMode): 
 export const setupSecuritySystem = async (accessory: PlatformAccessory, controller: TydomController): Promise<void> => {
   const {context} = accessory;
   const {client} = controller;
+  const {
+    SecuritySystemTargetState,
+    SecuritySystemCurrentState,
+    StatusTampered,
+    ContactSensorState,
+    On
+  } = Characteristic;
 
   const {deviceId, endpointId, settings} = context as TydomAccessoryContext;
-  // const zones = (settings.zones || []) as string[];
-  const aliases = (settings.aliases || {}) as ZoneAliases;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
+
+  const aliases = (settings.aliases || {}) as ZoneAliases;
 
   // Create separate dedicated sensor extra accessory;
   if (settings.sensors !== false) {
@@ -327,6 +334,8 @@ export const updateSecuritySystem = (
 ): void => {
   // Relay to separate dedicated sensor extra accessory;
   const {deviceId, endpointId, accessoryId, settings} = accessory.context;
+  const {SecuritySystemTargetState, SecuritySystemCurrentState, ContactSensorState, On} = Characteristic;
+
   if (settings.sensors !== false) {
     const extraUpdateContext: TydomAccessoryUpdateContext = {
       category: SECURITY_SYSTEM_SENSORS,
