@@ -28,9 +28,7 @@
     "pretty": "prettier --check '{src,test}/**/*.ts'",
     "pretty:fix": "prettier --write '{src,test}/**/*.ts'",
     "typecheck": "tsc --noEmit",
-    "build": "yarn build:source && yarn build:typings && rsync -avh --remove-source-files lib/src/* lib/ && rm -rf lib/src",
-    "build:source": "babel --source-maps --extensions .js,.ts --out-dir lib/ --delete-dir-on-start --ignore **/__tests__ src/",
-    "build:typings": "tsc --declaration",
+    "build": "tsc --build",
     "build:watch": "yarn build:source --watch --verbose",
     "prepare": "yarn build"
   },

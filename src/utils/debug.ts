@@ -1,8 +1,5 @@
 import console from 'console';
 import createDebug from 'debug';
-// eslint-disable-next-line
-// @ts-ignore
-import {name} from './../../package.json';
 import chalk from 'chalk';
 import {chalkString, chalkKeyword} from './chalk.js';
 import {Characteristic} from 'src/utils/hap';
@@ -10,7 +7,7 @@ import type {PlatformAccessory, Service} from 'homebridge';
 
 type IdentifiableAccessoryObject = PlatformAccessory | Service;
 
-export const debug = createDebug(name);
+export const debug = createDebug('homebridge-tydom');
 
 export default debug;
 
