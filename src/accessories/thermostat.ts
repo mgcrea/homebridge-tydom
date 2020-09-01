@@ -163,7 +163,10 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
     });
 
   const thermicLevelData = metadata.find(({name}) => name === 'thermicLevel');
-  assert(thermicLevelData);
+  assert(
+    thermicLevelData,
+    `Did not found object in array that matches {"name": "thermicLevel"} in ${JSON.stringify(metadata)}`
+  );
   const thermicLevelValues = thermicLevelData.enum_values as string[];
 
   // Only absence (aka. anti-frost) mode
