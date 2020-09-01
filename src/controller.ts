@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import {EventEmitter} from 'events';
-import {Categories} from 'hap-nodejs';
+import type {Logging} from 'homebridge';
 import {get} from 'lodash';
 import {
   TydomConfigResponse,
@@ -10,12 +10,13 @@ import {
 } from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
+import {Categories} from 'src/utils/hap';
 import {decode} from 'src/utils/hash';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomHttpMessage, TydomResponse} from 'tydom-client/lib/utils/tydom';
 import {HOMEBRIDGE_TYDOM_PASSWORD} from './config/env';
 import {TydomPlatformConfig} from './platform';
-import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/homebridge';
+import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/tydom';
 import {TydomAccessoryUpdateType} from './utils/accessory';
 import {stringIncludes} from './utils/array';
 import {chalkJson, chalkNumber, chalkString} from './utils/chalk';
@@ -40,8 +41,8 @@ export default class TydomController extends EventEmitter {
   config: TydomPlatformConfig;
   devices: Map<number, Categories> = new Map();
   state: Map<string, unknown> = new Map();
-  log: typeof console;
-  constructor(log: typeof console, config: TydomPlatformConfig) {
+  log: Logging;
+  constructor(log: Logging, config: TydomPlatformConfig) {
     super();
     this.config = config;
     this.log = log;
@@ -71,11 +72,11 @@ export default class TydomController extends EventEmitter {
       this.emit('disconnect');
     });
   }
-  getAccessoryId(deviceId: number) {
+  getAccessoryId(deviceId: number): string {
     const {username} = this.config;
     return `tydom:${username.slice(6)}:accessories:${deviceId}`;
   }
-  async connect() {
+  async connect(): Promise<void> {
     const {hostname, username} = this.config;
     debug(`Connecting to hostname=${chalkString(hostname)}...`);
     try {
@@ -90,7 +91,7 @@ export default class TydomController extends EventEmitter {
       throw err;
     }
   }
-  async sync() {
+  async sync(): Promise<{config: TydomConfigResponse; groups: TydomGroupsResponse; meta: TydomMetaResponse}> {
     const {hostname} = this.config;
     debug(`Syncing state from hostname=${chalkString(hostname)}...`);
     const config = await this.client.get<TydomConfigResponse>('/configs/file');
@@ -101,7 +102,7 @@ export default class TydomController extends EventEmitter {
     Object.assign(this.state, {config, groups, meta});
     return {config, groups, meta};
   }
-  async scan() {
+  async scan(): Promise<void> {
     const {hostname} = this.config;
     debug(`Scaning devices from hostname=${chalkString(hostname)}...`);
     const {
@@ -170,11 +171,11 @@ export default class TydomController extends EventEmitter {
       }
     });
   }
-  async refresh() {
+  async refresh(): Promise<unknown> {
     debug(`Refreshing Tydom controller ...`);
     return await this.client.post('/refresh/all');
   }
-  handleMessage(message: TydomHttpMessage) {
+  handleMessage(message: TydomHttpMessage): void {
     const {uri, method, body} = message;
     const isDeviceUpdate = uri === '/devices/data' && method === 'PUT';
     if (isDeviceUpdate) {
@@ -188,7 +189,7 @@ export default class TydomController extends EventEmitter {
     }
     debug(`Unkown message from Tydom client:\n${chalkJson(message)}`);
   }
-  handleDeviceDataUpdate(body: TydomResponse, type: 'data' | 'cdata') {
+  handleDeviceDataUpdate(body: TydomResponse, type: 'data' | 'cdata'): void {
     if (!Array.isArray(body)) {
       debug('Unsupported non-array device update', body);
       return;

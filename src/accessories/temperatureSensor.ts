@@ -1,7 +1,6 @@
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'hap-nodejs';
+import type {PlatformAccessory} from 'homebridge';
 import TydomController from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
-import {TydomEndpointData} from 'src/typings/tydom';
+import type {TydomAccessoryContext, TydomEndpointData} from 'src/typings/tydom';
 import {
   addAccessoryService,
   getAccessoryService,
@@ -9,6 +8,7 @@ import {
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import {debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
+import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'src/utils/hap';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
 const {CurrentTemperature} = Characteristic;
@@ -17,7 +17,7 @@ export const setupTemperatureSensor = (accessory: PlatformAccessory, controller:
   const {context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId} = context;
+  const {deviceId, endpointId} = context as TydomAccessoryContext;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -43,7 +43,7 @@ export const updateTemperatureSensor = (
   accessory: PlatformAccessory,
   _controller: TydomController,
   updates: Record<string, unknown>[]
-) => {
+): void => {
   const {CurrentTemperature} = Characteristic;
   updates.forEach((update) => {
     const {name, value} = update;

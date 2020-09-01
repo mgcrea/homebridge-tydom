@@ -1,13 +1,13 @@
-import {Categories} from 'hap-nodejs';
+import type {API as Homebridge, PlatformAccessory, Logging, PlatformConfig, DynamicPlatformPlugin} from 'homebridge';
+import {TydomAccessoryContext} from 'src/typings/tydom';
+import {Categories} from 'src/utils/hap';
 import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
 import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from './controller';
-import {HomebridgeApi, Platform, PlatformAccessory, TydomAccessoryContext} from './typings/homebridge';
 import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './utils/accessory';
 import assert from './utils/assert';
 import {chalkNumber} from './utils/chalk';
 
-export type TydomPlatformConfig = {
-  platform: string;
+export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
   username: string;
   password: string;
@@ -18,18 +18,18 @@ export type TydomPlatformConfig = {
   excludedCategories?: string[];
 };
 
-export default class TydomPlatform implements Platform {
+export default class TydomPlatform implements DynamicPlatformPlugin {
   cleanupAccessoriesIds: Set<string> = new Set();
   accessories: Map<string, PlatformAccessory> = new Map();
   controller?: TydomController;
-  api: HomebridgeApi;
+  api: Homebridge;
   config: TydomPlatformConfig;
   disabled: boolean = false;
-  log: typeof console;
+  log: Logging;
 
-  constructor(log: typeof console, config: TydomPlatformConfig, api: HomebridgeApi) {
+  constructor(log: Logging, config: PlatformConfig, api: Homebridge) {
     // Expose args
-    this.config = config;
+    this.config = config as TydomPlatformConfig;
     this.log = log;
     this.api = api;
 
@@ -39,7 +39,7 @@ export default class TydomPlatform implements Platform {
       return;
     }
 
-    this.controller = new TydomController(log, config);
+    this.controller = new TydomController(log, this.config);
     // Prevent configureAccessory getting called after node ready
     this.api.on('didFinishLaunching', () => setTimeout(() => this.didFinishLaunching(), 16));
     // this.controller.on('connect', () => {});
@@ -52,6 +52,7 @@ export default class TydomPlatform implements Platform {
     await this.controller.connect();
     await this.controller.scan();
     this.cleanupAccessoriesIds.forEach((accessoryId) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const accessory = this.accessories.get(accessoryId)!;
       this.log.warn(`Deleting missing accessory with id=${chalkNumber(accessoryId)}`);
       // accessory.updateReachability(false);
@@ -67,6 +68,7 @@ export default class TydomPlatform implements Platform {
     // Prevent automatic cleanup
     this.cleanupAccessoriesIds.delete(id);
     if (this.accessories.has(id)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       await this.updateAccessory(this.accessories.get(id)!, context);
       return;
     }
@@ -79,9 +81,11 @@ export default class TydomPlatform implements Platform {
     if (!this.accessories.has(id)) {
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const accessory = this.accessories.get(id)!;
     const tydomAccessoryUpdate = getTydomAccessoryDataUpdate(accessory);
     if (tydomAccessoryUpdate) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       tydomAccessoryUpdate(accessory, this.controller!, updates, type);
     }
   }
@@ -105,6 +109,7 @@ export default class TydomPlatform implements Platform {
     this.log.info(`Updating accessory named="${name}" with id="${id}"`);
     Object.assign(accessory.context, context);
     const tydomAccessorySetup = getTydomAccessorySetup(accessory);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     await tydomAccessorySetup(accessory, this.controller!);
     this.api.updatePlatformAccessories([accessory]);
   }

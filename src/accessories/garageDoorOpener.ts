@@ -1,24 +1,25 @@
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  Service
-} from 'hap-nodejs';
+import type {PlatformAccessory} from 'homebridge';
 import TydomController from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
+import type {TydomAccessoryContext} from 'src/typings/tydom';
 import {
   addAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import {debugSet, debugSetResult} from 'src/utils/debug';
+import {
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicValue,
+  Service
+} from 'src/utils/hap';
 
 export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId} = context;
+  const {deviceId, endpointId} = context as TydomAccessoryContext;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 

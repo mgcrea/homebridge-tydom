@@ -1,6 +1,6 @@
-import {Service} from 'hap-nodejs';
+import {Service} from 'src/utils/hap';
 import TydomController from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
+import type {PlatformAccessory} from 'homebridge';
 import {setupAccessoryIdentifyHandler, setupAccessoryInformationService} from 'src/utils/accessory';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
@@ -15,6 +15,6 @@ export const updateSwitch = (
   accessory: PlatformAccessory,
   controller: TydomController,
   updates: Record<string, unknown>[]
-) => {
+): void => {
   updateAccessorySwitchableService(accessory, controller, updates, Service.Switch);
 };

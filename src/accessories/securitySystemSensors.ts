@@ -1,12 +1,12 @@
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'hap-nodejs';
+import type {PlatformAccessory} from 'homebridge';
 import {get, keyBy} from 'lodash';
 import locale from 'src/config/locale';
 import TydomController from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
-import {
+import type {
   SecuritySystemHistoOpenIssuesCommandResult,
   SecuritySystemLabelCommandResult,
-  SecuritySystemProduct
+  SecuritySystemProduct,
+  TydomAccessoryContext
 } from 'src/typings/tydom';
 import {
   addAccessoryServiceWithSubtype,
@@ -16,6 +16,7 @@ import {
   TydomAccessoryUpdateType
 } from 'src/utils/accessory';
 import {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
+import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'src/utils/hap';
 import {runTydomDeviceCommand} from 'src/utils/tydom';
 
 const {ContactSensorState} = Characteristic;
@@ -37,7 +38,7 @@ export const setupSecuritySystemSensors = async (
   const {context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId} = context;
+  const {deviceId, endpointId} = context as TydomAccessoryContext;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -99,7 +100,7 @@ export const updateSecuritySystemSensors = (
   controller: TydomController,
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType
-) => {
+): void => {
   const {client} = controller;
   // Process command updates
   if (type === 'cdata') {

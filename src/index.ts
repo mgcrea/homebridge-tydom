@@ -1,13 +1,10 @@
 import 'source-map-support/register';
 import {PLATFORM_NAME, PLUGIN_NAME} from 'src/config/env';
 import TydomPlatform from './platform';
-
-interface Homebridge {
-  version: number;
-  serverVersion: string;
-  registerPlatform: (pluginName: string, platformName: string, constructor: unknown, dynamic?: boolean) => unknown;
-}
+import {defineHAPGlobals} from 'src/utils/hap';
+import type {API as Homebridge} from 'homebridge';
 
 export default (homebridge: Homebridge): void => {
-  homebridge.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, TydomPlatform, true);
+  defineHAPGlobals(homebridge);
+  homebridge.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, TydomPlatform);
 };

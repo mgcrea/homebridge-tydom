@@ -1,4 +1,5 @@
-import {AccessoryEventTypes, Categories, Characteristic, Service, VoidCallback} from 'hap-nodejs';
+import type {PlatformAccessory, Service, WithUUID} from 'homebridge';
+import {setupContactSensor, updateContactSensor} from 'src/accessories/contactSensor';
 import {setupFan, updateFan} from 'src/accessories/fan';
 import {setupGarageDoorOpener} from 'src/accessories/garageDoorOpener';
 import {setupLightbulb, updateLightbulb} from 'src/accessories/lightbulb';
@@ -6,18 +7,20 @@ import {setupSecuritySystem, updateSecuritySystem} from 'src/accessories/securit
 import {setupSecuritySystemSensors, updateSecuritySystemSensors} from 'src/accessories/securitySystemSensors';
 import {setupTemperatureSensor, updateTemperatureSensor} from 'src/accessories/temperatureSensor';
 import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
-import {updateWindowCovering, setupWindowCovering} from 'src/accessories/windowCovering';
+import {setupWindowCovering, updateWindowCovering} from 'src/accessories/windowCovering';
 import TydomController from 'src/controller';
-import {PlatformAccessory, TydomAccessoryContext} from 'src/typings/homebridge';
+import {TydomAccessoryContext} from 'src/typings/tydom';
 import assert from 'src/utils/assert';
 import debug from 'src/utils/debug';
-import {setupContactSensor, updateContactSensor} from 'src/accessories/contactSensor';
+import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics} from 'src/utils/hap';
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
 export const asNumber = (maybeNumber: unknown): number => parseInt(`${maybeNumber}`, 10);
 
-export const getAccessoryService = (accessory: PlatformAccessory, ServiceClass: typeof Service): Service => {
+export type ServiceClass = WithUUID<typeof Service>;
+
+export const getAccessoryService = (accessory: PlatformAccessory, ServiceClass: ServiceClass): Service => {
   const service = accessory.getService(ServiceClass);
   assert(service, `Unexpected missing service "${ServiceClass.name}" in accessory`);
   return service;
@@ -25,7 +28,7 @@ export const getAccessoryService = (accessory: PlatformAccessory, ServiceClass: 
 
 export const getAccessoryServiceWithSubtype = (
   accessory: PlatformAccessory,
-  ServiceClass: typeof Service,
+  ServiceClass: ServiceClass,
   subtype: string
 ): Service => {
   const service = accessory.getServiceByUUIDAndSubType(ServiceClass, subtype);
@@ -35,7 +38,7 @@ export const getAccessoryServiceWithSubtype = (
 
 export const addAccessoryService = (
   accessory: PlatformAccessory,
-  service: Service | typeof Service,
+  service: ServiceClass,
   name: string,
   removeExisting: boolean = false
 ): Service => {
@@ -51,7 +54,7 @@ export const addAccessoryService = (
 
 export const addAccessoryServiceWithSubtype = (
   accessory: PlatformAccessory,
-  service: typeof Service,
+  service: ServiceClass,
   name: string,
   subtype: string,
   removeExisting: boolean = false
@@ -138,7 +141,7 @@ export const setupAccessoryInformationService = (accessory: PlatformAccessory, _
   const {context} = accessory;
   const {manufacturer, serialNumber, model} = context as TydomAccessoryContext;
 
-  const informationService = accessory.getService(Service.AccessoryInformation);
+  const informationService = accessory.getService(ServiceStatics.AccessoryInformation);
   assert(informationService, `Did not found AccessoryInformation service`);
   informationService
     .setCharacteristic(Characteristic.Manufacturer, manufacturer)
@@ -150,10 +153,10 @@ export const setupAccessoryInformationService = (accessory: PlatformAccessory, _
 export const setupAccessoryIdentifyHandler = (accessory: PlatformAccessory, _controller: TydomController): void => {
   const {displayName: name, UUID: id} = accessory;
   // listen for the "identify" event for this Accessory
-  accessory.on(AccessoryEventTypes.IDENTIFY, async (paired: boolean, callback: VoidCallback) => {
-    debug({id, type: 'AccessoryEventTypes.IDENTIFY', paired});
+  accessory.on(AccessoryEventTypes.IDENTIFY, (/* paired: boolean, callback: VoidCallback */) => {
+    // debug({id, type: 'AccessoryEventTypes.IDENTIFY', paired});
     debug(`New identify request for device named="${name}" with id="${id}"`);
-    callback();
+    // callback();
   });
 };
 

@@ -1,3 +1,24 @@
+import {Categories} from 'src/utils/hap';
+
+export type TydomAccessoryContext = {
+  name: string;
+  category: Categories;
+  metadata: TydomMetaElement[];
+  settings: Record<string, unknown>;
+  deviceId: number;
+  endpointId: number;
+  accessoryId: string;
+  manufacturer: string;
+  serialNumber: string;
+  group?: TydomConfigGroup;
+  model: string;
+};
+
+export type TydomAccessoryUpdateContext = Pick<
+  TydomAccessoryContext,
+  'category' | 'deviceId' | 'endpointId' | 'accessoryId'
+>;
+
 export type TydomConfigEndpoint = {
   id_endpoint: number;
   id_device: number;

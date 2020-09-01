@@ -1,16 +1,7 @@
-import debug from 'debug';
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  Service
-} from 'hap-nodejs';
+import type {PlatformAccessory} from 'homebridge';
 import {debounce, find} from 'lodash';
 import TydomController from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
-import {TydomEndpointData} from 'src/typings/tydom';
+import {TydomAccessoryContext, TydomEndpointData} from 'src/typings/tydom';
 import {
   addAccessoryService,
   getAccessoryService,
@@ -18,7 +9,23 @@ import {
   setupAccessoryInformationService
 } from 'src/utils/accessory';
 import {chalkString} from 'src/utils/chalk';
-import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from 'src/utils/debug';
+import {
+  debug,
+  debugGet,
+  debugGetResult,
+  debugSet,
+  debugSetResult,
+  debugSetUpdate,
+  debugTydomPut
+} from 'src/utils/debug';
+import {
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicValue,
+  NodeCallback,
+  Service
+} from 'src/utils/hap';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
@@ -30,7 +37,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
   // Add the actual accessory Service
 
   const {context} = accessory;
-  const {deviceId, endpointId, metadata} = context;
+  const {deviceId, endpointId, metadata} = context as TydomAccessoryContext;
   const {client} = controller;
   const levelMeta = find(metadata, {name: 'level'});
 
@@ -120,7 +127,7 @@ export const updateLightbulb = (
   accessory: PlatformAccessory,
   controller: TydomController,
   updates: Record<string, unknown>[]
-) => {
+): void => {
   const {context} = accessory;
   const {metadata} = context;
   const levelMeta = find(metadata, {name: 'level'});

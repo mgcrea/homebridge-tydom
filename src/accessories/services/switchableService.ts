@@ -1,16 +1,15 @@
+import type {PlatformAccessory, Service} from 'homebridge';
+import TydomController from 'src/controller';
+import type {TydomAccessoryContext, TydomEndpointData} from 'src/typings/tydom';
+import {addAccessoryService, getAccessoryService, ServiceClass} from 'src/utils/accessory';
+import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from 'src/utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
   CharacteristicValue,
-  NodeCallback,
-  Service
-} from 'hap-nodejs';
-import TydomController from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
-import {TydomEndpointData} from 'src/typings/tydom';
-import {addAccessoryService, getAccessoryService} from 'src/utils/accessory';
-import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from 'src/utils/debug';
+  NodeCallback
+} from 'src/utils/hap';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
 const {On} = Characteristic;
@@ -18,10 +17,10 @@ const {On} = Characteristic;
 export const addAccessorySwitchableService = (
   accessory: PlatformAccessory,
   controller: TydomController,
-  serviceClass: typeof Service
+  serviceClass: ServiceClass
 ): Service => {
   const {context} = accessory;
-  const {deviceId, endpointId} = context;
+  const {deviceId, endpointId} = context as TydomAccessoryContext;
   const {client} = controller;
 
   const service = addAccessoryService(accessory, serviceClass, `${accessory.displayName}`, true);
@@ -64,7 +63,7 @@ export const updateAccessorySwitchableService = (
   accessory: PlatformAccessory,
   _controller: TydomController,
   updates: Record<string, unknown>[],
-  ServiceClass: typeof Service
+  ServiceClass: ServiceClass
 ): void => {
   updates.forEach((update) => {
     const {name, value} = update;

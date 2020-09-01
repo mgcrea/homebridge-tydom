@@ -1,19 +1,13 @@
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  Service
-} from 'hap-nodejs';
+import type {PlatformAccessory} from 'homebridge';
 import {get} from 'lodash';
 import {HOMEBRIDGE_TYDOM_PIN} from 'src/config/env';
 import locale from 'src/config/locale';
 import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from 'src/controller';
-import {PlatformAccessory, TydomAccessoryUpdateContext} from 'src/typings/homebridge';
-import {
+import type {
   SecuritySystemAlarmEvent,
   SecuritySystemLabelCommandResult,
+  TydomAccessoryContext,
+  TydomAccessoryUpdateContext,
   TydomDeviceSecuritySystemAlarmMode,
   TydomDeviceSecuritySystemAlarmState,
   TydomDeviceSecuritySystemData,
@@ -39,6 +33,14 @@ import debug, {
   debugSetResult,
   debugSetUpdate
 } from 'src/utils/debug';
+import {
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicValue,
+  NodeCallback,
+  Service
+} from 'src/utils/hap';
 import {decode} from 'src/utils/hash';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
@@ -81,7 +83,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   const {context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId, settings} = context;
+  const {deviceId, endpointId, settings} = context as TydomAccessoryContext;
   // const zones = (settings.zones || []) as string[];
   const aliases = (settings.aliases || {}) as ZoneAliases;
   setupAccessoryInformationService(accessory, controller);
@@ -91,7 +93,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   if (settings.sensors !== false) {
     const {accessoryId} = context;
     const extraDevice: ControllerDevicePayload = {
-      ...context,
+      ...(context as TydomAccessoryContext),
       name: `${get(locale, 'ALARME_ISSUES_OUVERTES', 'N/A') as string}`,
       category: SECURITY_SYSTEM_SENSORS,
       accessoryId: `${accessoryId}:sensors`
@@ -322,7 +324,7 @@ export const updateSecuritySystem = (
   controller: TydomController,
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType
-) => {
+): void => {
   // Relay to separate dedicated sensor extra accessory;
   const {deviceId, endpointId, accessoryId, settings} = accessory.context;
   if (settings.sensors !== false) {

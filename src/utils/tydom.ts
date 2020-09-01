@@ -1,4 +1,4 @@
-import {Categories} from 'hap-nodejs';
+import {Categories} from 'src/utils/hap';
 import {find} from 'lodash';
 import {
   TydomConfigEndpoint,
@@ -33,6 +33,7 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
   const now = Date.now();
   const uri = `/devices/${deviceId}/endpoints/${endpointId}/data`;
   if (cacheMap.has(uri)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const {time, promise} = cacheMap.get(uri)!;
     if (now < time + DEBOUNCE_TIME) {
       return promise as Promise<T>;
@@ -60,6 +61,7 @@ export const runTydomDeviceCommand = async <T extends Record<string, unknown> = 
     searchParams ? `&${new URLSearchParams(searchParams)}` : ''
   }`;
   if (cacheMap.has(uri)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const {time, promise} = cacheMap.get(uri)!;
     if (now < time + DEBOUNCE_TIME) {
       return promise as Promise<T[]>;

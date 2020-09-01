@@ -1,3 +1,15 @@
+import type {PlatformAccessory} from 'homebridge';
+import {debounce} from 'lodash';
+import TydomController from 'src/controller';
+import type {TydomAccessoryContext, TydomDeviceShutterData} from 'src/typings/tydom';
+import {
+  addAccessoryService,
+  asNumber,
+  getAccessoryService,
+  setupAccessoryIdentifyHandler,
+  setupAccessoryInformationService
+} from 'src/utils/accessory';
+import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from 'src/utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -5,19 +17,7 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from 'hap-nodejs';
-import {debounce} from 'lodash';
-import TydomController from 'src/controller';
-import {PlatformAccessory} from 'src/typings/homebridge';
-import {TydomDeviceShutterData} from 'src/typings/tydom';
-import {
-  addAccessoryService,
-  getAccessoryService,
-  setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  asNumber
-} from 'src/utils/accessory';
-import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from 'src/utils/debug';
+} from 'src/utils/hap';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
 
 const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
@@ -33,7 +33,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
   const {context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId} = context;
+  const {deviceId, endpointId} = context as TydomAccessoryContext;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -98,7 +98,7 @@ export const updateWindowCovering = (
   accessory: PlatformAccessory,
   _controller: TydomController,
   updates: Record<string, unknown>[]
-) => {
+): void => {
   updates.forEach((update) => {
     const {name, value} = update;
     switch (name) {
