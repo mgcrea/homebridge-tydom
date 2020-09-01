@@ -1,23 +1,23 @@
 import type {PlatformAccessory} from 'homebridge';
 import {get, keyBy} from 'lodash';
-import locale from 'src/config/locale';
-import TydomController from 'src/controller';
+import locale from '../config/locale';
+import TydomController from '../controller';
 import type {
   SecuritySystemHistoOpenIssuesCommandResult,
   SecuritySystemLabelCommandResult,
   SecuritySystemProduct,
   TydomAccessoryContext
-} from 'src/typings/tydom';
+} from '../typings/tydom';
 import {
   addAccessoryServiceWithSubtype,
   getAccessoryServiceWithSubtype,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
   TydomAccessoryUpdateType
-} from 'src/utils/accessory';
-import {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'src/utils/hap';
-import {runTydomDeviceCommand} from 'src/utils/tydom';
+} from '../utils/accessory';
+import {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from '../utils/debug';
+import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../utils/hap';
+import {runTydomDeviceCommand} from '../utils/tydom';
 
 const {ContactSensorState} = Characteristic;
 

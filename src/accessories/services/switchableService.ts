@@ -1,16 +1,16 @@
 import type {PlatformAccessory, Service} from 'homebridge';
-import TydomController from 'src/controller';
-import type {TydomAccessoryContext, TydomEndpointData} from 'src/typings/tydom';
-import {addAccessoryService, getAccessoryService, ServiceClass} from 'src/utils/accessory';
-import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from 'src/utils/debug';
+import TydomController from '../../controller';
+import type {TydomAccessoryContext, TydomEndpointData} from '../../typings/tydom';
+import {addAccessoryService, getAccessoryService, ServiceClass} from '../../utils/accessory';
+import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from '../../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback
-} from 'src/utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
+} from '../../utils/hap';
+import {getTydomDataPropValue, getTydomDeviceData} from '../../utils/tydom';
 
 const {On} = Characteristic;
 

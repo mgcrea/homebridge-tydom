@@ -1,23 +1,15 @@
 import type {PlatformAccessory} from 'homebridge';
 import {debounce, find} from 'lodash';
-import TydomController from 'src/controller';
-import {TydomAccessoryContext, TydomEndpointData} from 'src/typings/tydom';
+import TydomController from '../controller';
+import {TydomAccessoryContext, TydomEndpointData} from '../typings/tydom';
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
-} from 'src/utils/accessory';
-import {chalkString} from 'src/utils/chalk';
-import {
-  debug,
-  debugGet,
-  debugGetResult,
-  debugSet,
-  debugSetResult,
-  debugSetUpdate,
-  debugTydomPut
-} from 'src/utils/debug';
+} from '../utils/accessory';
+import {chalkString} from '../utils/chalk';
+import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -25,8 +17,8 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from 'src/utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
+} from '../utils/hap';
+import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
 const {On, Brightness} = Characteristic;

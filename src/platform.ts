@@ -1,11 +1,11 @@
-import type {API as Homebridge, PlatformAccessory, Logging, PlatformConfig, DynamicPlatformPlugin} from 'homebridge';
-import {TydomAccessoryContext} from 'src/typings/tydom';
-import {Categories} from 'src/utils/hap';
+import type {API as Homebridge, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig} from 'homebridge';
 import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
 import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from './controller';
+import {TydomAccessoryContext} from './typings/tydom';
 import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './utils/accessory';
 import assert from './utils/assert';
 import {chalkNumber} from './utils/chalk';
+import {Categories} from './utils/hap';
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;

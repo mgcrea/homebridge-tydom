@@ -1,23 +1,23 @@
 import type {PlatformAccessory} from 'homebridge';
 import {get} from 'lodash';
-import locale from 'src/config/locale';
-import TydomController from 'src/controller';
+import locale from '../config/locale';
+import TydomController from '../controller';
 import type {
   TydomAccessoryContext,
   TydomDeviceThermostatAuthorization,
   TydomDeviceThermostatData,
   TydomDeviceThermostatHvacMode,
   TydomDeviceThermostatThermicLevel
-} from 'src/typings/tydom';
+} from '../typings/tydom';
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
-} from 'src/utils/accessory';
-import assert from 'src/utils/assert';
-import {chalkString} from 'src/utils/chalk';
+} from '../utils/accessory';
+import assert from '../utils/assert';
+import {chalkString} from '../utils/chalk';
 import debug, {
   debugAddSubService,
   debugGet,
@@ -25,7 +25,7 @@ import debug, {
   debugSet,
   debugSetResult,
   debugSetUpdate
-} from 'src/utils/debug';
+} from '../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -34,8 +34,8 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from 'src/utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
+} from '../utils/hap';
+import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 
 const {
   TargetHeatingCoolingState,

@@ -1,15 +1,15 @@
 import type {PlatformAccessory} from 'homebridge';
-import TydomController from 'src/controller';
-import type {TydomAccessoryContext, TydomEndpointData} from 'src/typings/tydom';
+import TydomController from '../controller';
+import type {TydomAccessoryContext, TydomEndpointData} from '../typings/tydom';
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
-} from 'src/utils/accessory';
-import {debugGet, debugGetResult, debugSetUpdate} from 'src/utils/debug';
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from 'src/utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
+} from '../utils/accessory';
+import {debugGet, debugGetResult, debugSetUpdate} from '../utils/debug';
+import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../utils/hap';
+import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 
 const {CurrentTemperature} = Characteristic;
 

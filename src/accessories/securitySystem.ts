@@ -1,8 +1,8 @@
 import type {PlatformAccessory} from 'homebridge';
 import {get} from 'lodash';
-import {HOMEBRIDGE_TYDOM_PIN} from 'src/config/env';
-import locale from 'src/config/locale';
-import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from 'src/controller';
+import {HOMEBRIDGE_TYDOM_PIN} from '../config/env';
+import locale from '../config/locale';
+import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from '../controller';
 import type {
   SecuritySystemAlarmEvent,
   SecuritySystemLabelCommandResult,
@@ -12,7 +12,7 @@ import type {
   TydomDeviceSecuritySystemAlarmState,
   TydomDeviceSecuritySystemData,
   TydomDeviceSecuritySystemZoneState
-} from 'src/typings/tydom';
+} from '../typings/tydom';
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
@@ -22,9 +22,9 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
   TydomAccessoryUpdateType
-} from 'src/utils/accessory';
-import assert from 'src/utils/assert';
-import {chalkJson, chalkKeyword} from 'src/utils/chalk';
+} from '../utils/accessory';
+import assert from '../utils/assert';
+import {chalkJson, chalkKeyword} from '../utils/chalk';
 import debug, {
   debugAddSubService,
   debugGet,
@@ -32,7 +32,7 @@ import debug, {
   debugSet,
   debugSetResult,
   debugSetUpdate
-} from 'src/utils/debug';
+} from '../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -40,9 +40,9 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from 'src/utils/hap';
-import {decode} from 'src/utils/hash';
-import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
+} from '../utils/hap';
+import {decode} from '../utils/hash';
+import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 
 type ZoneAliases = {
   stay?: number[];

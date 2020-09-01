@@ -1,18 +1,18 @@
 import type {PlatformAccessory, Service, WithUUID} from 'homebridge';
-import {setupContactSensor, updateContactSensor} from 'src/accessories/contactSensor';
-import {setupFan, updateFan} from 'src/accessories/fan';
-import {setupGarageDoorOpener} from 'src/accessories/garageDoorOpener';
-import {setupLightbulb, updateLightbulb} from 'src/accessories/lightbulb';
-import {setupSecuritySystem, updateSecuritySystem} from 'src/accessories/securitySystem';
-import {setupSecuritySystemSensors, updateSecuritySystemSensors} from 'src/accessories/securitySystemSensors';
-import {setupTemperatureSensor, updateTemperatureSensor} from 'src/accessories/temperatureSensor';
-import {setupThermostat, updateThermostat} from 'src/accessories/thermostat';
-import {setupWindowCovering, updateWindowCovering} from 'src/accessories/windowCovering';
-import TydomController from 'src/controller';
-import {TydomAccessoryContext} from 'src/typings/tydom';
-import assert from 'src/utils/assert';
-import debug from 'src/utils/debug';
-import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics} from 'src/utils/hap';
+import {setupContactSensor, updateContactSensor} from '../accessories/contactSensor';
+import {setupFan, updateFan} from '../accessories/fan';
+import {setupGarageDoorOpener} from '../accessories/garageDoorOpener';
+import {setupLightbulb, updateLightbulb} from '../accessories/lightbulb';
+import {setupSecuritySystem, updateSecuritySystem} from '../accessories/securitySystem';
+import {setupSecuritySystemSensors, updateSecuritySystemSensors} from '../accessories/securitySystemSensors';
+import {setupTemperatureSensor, updateTemperatureSensor} from '../accessories/temperatureSensor';
+import {setupThermostat, updateThermostat} from '../accessories/thermostat';
+import {setupWindowCovering, updateWindowCovering} from '../accessories/windowCovering';
+import TydomController from '../controller';
+import {TydomAccessoryContext} from '../typings/tydom';
+import assert from '../utils/assert';
+import debug from '../utils/debug';
+import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics} from '../utils/hap';
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 

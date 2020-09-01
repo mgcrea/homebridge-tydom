@@ -1,15 +1,15 @@
 import type {PlatformAccessory} from 'homebridge';
 import {debounce} from 'lodash';
-import TydomController from 'src/controller';
-import type {TydomAccessoryContext, TydomDeviceShutterData} from 'src/typings/tydom';
+import TydomController from '../controller';
+import type {TydomAccessoryContext, TydomDeviceShutterData} from '../typings/tydom';
 import {
   addAccessoryService,
   asNumber,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
-} from 'src/utils/accessory';
-import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from 'src/utils/debug';
+} from '../utils/accessory';
+import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -17,8 +17,8 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from 'src/utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from 'src/utils/tydom';
+} from '../utils/hap';
+import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 
 const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
 

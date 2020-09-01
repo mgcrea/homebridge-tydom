@@ -1,4 +1,4 @@
-import {Categories} from 'src/utils/hap';
+import {Categories} from '../utils/hap';
 
 export type TydomAccessoryContext = {
   name: string;

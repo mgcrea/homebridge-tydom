@@ -1,4 +1,4 @@
-import {Categories} from 'src/utils/hap';
+import {Categories} from '../utils/hap';
 import {find} from 'lodash';
 import {
   TydomConfigEndpoint,
@@ -9,8 +9,8 @@ import {
   AnyTydomDataValue,
   TydomGroupsResponse,
   TydomMetaEndpoint
-} from 'src/typings/tydom';
-import assert from 'src/utils/assert';
+} from '../typings/tydom';
+import assert from '../utils/assert';
 import TydomClient from 'tydom-client';
 import debug from './debug';
 import {sha256Sync} from './hash';

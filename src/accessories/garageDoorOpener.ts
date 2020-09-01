@@ -1,19 +1,15 @@
 import type {PlatformAccessory} from 'homebridge';
-import TydomController from 'src/controller';
-import type {TydomAccessoryContext} from 'src/typings/tydom';
-import {
-  addAccessoryService,
-  setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
-} from 'src/utils/accessory';
-import {debugSet, debugSetResult} from 'src/utils/debug';
+import TydomController from '../controller';
+import type {TydomAccessoryContext} from '../typings/tydom';
+import {addAccessoryService, setupAccessoryIdentifyHandler, setupAccessoryInformationService} from '../utils/accessory';
+import {debugSet, debugSetResult} from '../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
   CharacteristicValue,
   Service
-} from 'src/utils/hap';
+} from '../utils/hap';
 
 export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;

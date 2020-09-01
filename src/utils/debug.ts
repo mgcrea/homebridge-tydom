@@ -2,7 +2,7 @@ import console from 'console';
 import createDebug from 'debug';
 import chalk from 'chalk';
 import {chalkString, chalkKeyword} from './chalk.js';
-import {Characteristic} from 'src/utils/hap';
+import {Characteristic} from '../utils/hap';
 import type {PlatformAccessory, Service} from 'homebridge';
 
 type IdentifiableAccessoryObject = PlatformAccessory | Service;

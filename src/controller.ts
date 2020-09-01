@@ -2,24 +2,25 @@ import chalk from 'chalk';
 import {EventEmitter} from 'events';
 import type {Logging} from 'homebridge';
 import {get} from 'lodash';
-import {
-  TydomConfigResponse,
-  TydomDeviceDataUpdateBody,
-  TydomGroupsResponse,
-  TydomMetaResponse
-} from 'src/typings/tydom';
-import assert from 'src/utils/assert';
-import debug from 'src/utils/debug';
-import {Categories} from 'src/utils/hap';
-import {decode} from 'src/utils/hash';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomHttpMessage, TydomResponse} from 'tydom-client/lib/utils/tydom';
 import {HOMEBRIDGE_TYDOM_PASSWORD} from './config/env';
 import {TydomPlatformConfig} from './platform';
-import {TydomAccessoryContext, TydomAccessoryUpdateContext} from './typings/tydom';
+import {
+  TydomAccessoryContext,
+  TydomAccessoryUpdateContext,
+  TydomConfigResponse,
+  TydomDeviceDataUpdateBody,
+  TydomGroupsResponse,
+  TydomMetaResponse
+} from './typings/tydom';
 import {TydomAccessoryUpdateType} from './utils/accessory';
 import {stringIncludes} from './utils/array';
+import assert from './utils/assert';
 import {chalkJson, chalkNumber, chalkString} from './utils/chalk';
+import debug from './utils/debug';
+import {Categories} from './utils/hap';
+import {decode} from './utils/hash';
 import {
   asyncWait,
   getEndpointDetailsFromMeta,
