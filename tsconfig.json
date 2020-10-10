@@ -1,26 +1,13 @@
 {
+  "extends": "@tsconfig/node10/tsconfig.json",
   "compilerOptions": {
-    "target": "es2018", // ~node10
-    "module": "commonjs",
-    "lib": ["dom", "es2015", "es2016", "es2017", "es2018"],
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
     "outDir": "./lib",
     "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "preserveConstEnums": false,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "baseUrl": "./src",
+    "baseUrl": "./",
     "paths": {
-      "src/*": ["./*"]
-    },
-    "skipLibCheck": true
+      "src/*": ["./src/*"]
+    }
   },
-  "include": ["src/"],
-  "exclude": ["**/*.spec.ts"]
+  "include": ["src/"]
 }

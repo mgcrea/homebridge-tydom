@@ -14,6 +14,7 @@ import assert from '../utils/assert';
 import TydomClient from 'tydom-client';
 import debug from './debug';
 import {sha256Sync} from './hash';
+import {URLSearchParams} from 'url';
 
 type DataOperation = {
   promise: Promise<unknown> | null;
