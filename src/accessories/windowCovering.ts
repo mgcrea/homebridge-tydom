@@ -9,7 +9,8 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from '../utils/accessory';
-import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
+import {chalkNumber, chalkString} from '../utils/chalk';
+import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -27,12 +28,24 @@ import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 //   return Math.max(0, 100 - position); // @NOTE might over-shoot
 // };
 
+type State = {
+  latestPosition: number;
+  lastUpdatedAt: number;
+};
+
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
   const {client} = controller;
   const {CurrentPosition, TargetPosition} = Characteristic;
 
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
+  const {
+    deviceId,
+    endpointId,
+    state = {
+      latestPosition: 100,
+      lastUpdatedAt: 0
+    }
+  } = context as TydomAccessoryContext<State>;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -82,9 +95,13 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet(TargetPosition, service, value);
       try {
-        const tydomValue = value as number;
-        debouncedSetPosition(tydomValue);
-        debugSetResult(TargetPosition, service, value, tydomValue);
+        const nextValue = value as number;
+        Object.assign(state, {
+          latestPosition: nextValue,
+          lastUpdatedAt: Date.now()
+        });
+        debouncedSetPosition(nextValue);
+        debugSetResult(TargetPosition, service, value, nextValue);
         callback();
       } catch (err) {
         callback(err);
@@ -98,17 +115,28 @@ export const updateWindowCovering = (
   _controller: TydomController,
   updates: Record<string, unknown>[]
 ): void => {
+  const {context} = accessory;
+  const {state} = context as TydomAccessoryContext<State>;
   const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
   updates.forEach((update) => {
     const {name, value} = update;
     switch (name) {
       case 'position': {
         const service = getAccessoryService(accessory, Service.WindowCovering);
-        const nextValue = asNumber(value as number);
-        debugSetUpdate(CurrentPosition, service, nextValue);
-        service.updateCharacteristic(CurrentPosition, nextValue);
-        debugSetUpdate(TargetPosition, service, nextValue);
-        service.updateCharacteristic(TargetPosition, nextValue);
+        const position = asNumber(value as number);
+        if (position === null) {
+          debug(`Encountered a ${chalkString('position')} update with a null value!`);
+          return;
+        }
+        // @NOTE ignore invalid delayed updates when a set has occured <10s
+        if (Date.now() - state.lastUpdatedAt < 10e3) {
+          debug(`Ignoring a delayed ${chalkString('level')} update with value=${chalkNumber(position)} !`);
+          return;
+        }
+        debugSetUpdate(CurrentPosition, service, position);
+        service.updateCharacteristic(CurrentPosition, position);
+        debugSetUpdate(TargetPosition, service, position);
+        service.updateCharacteristic(TargetPosition, position);
         return;
       }
       case 'obstacleDefect': {

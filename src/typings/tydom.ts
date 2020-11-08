@@ -1,6 +1,6 @@
 import {Categories} from '../utils/hap';
 
-export type TydomAccessoryContext = {
+export type TydomAccessoryContext<T extends Record<string, any> = Record<string, any>> = {
   name: string;
   category: Categories;
   metadata: TydomMetaElement[];
@@ -12,6 +12,7 @@ export type TydomAccessoryContext = {
   serialNumber: string;
   group?: TydomConfigGroup;
   model: string;
+  state: T;
 };
 
 export type TydomAccessoryUpdateContext = Pick<

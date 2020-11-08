@@ -8,7 +8,7 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from '../utils/accessory';
-import {chalkString} from '../utils/chalk';
+import {chalkNumber, chalkString} from '../utils/chalk';
 import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
 import {
   Characteristic,
@@ -21,12 +21,25 @@ import {
 import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
+type State = {
+  latestBrightness: number;
+  lastUpdatedAt: number;
+};
+
 export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
   const {client} = controller;
   const {On, Brightness} = Characteristic;
 
-  const {deviceId, endpointId, metadata} = context as TydomAccessoryContext;
+  const {
+    deviceId,
+    endpointId,
+    metadata,
+    state = {
+      latestBrightness: 100,
+      lastUpdatedAt: 0
+    }
+  } = context as TydomAccessoryContext<State>;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -40,11 +53,6 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
 
   // Dimmable
   const service = addAccessoryService(accessory, Service.Lightbulb, `${accessory.displayName}`, true);
-  // State
-  const state = {
-    latestBrightness: 100
-  };
-
   const debouncedSetLevel = debounce(
     async (value: number) => {
       debugTydomPut('level', accessory, value);
@@ -103,7 +111,10 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
       debugSet(Brightness, service, value);
       try {
         const nextValue = value as number;
-        state.latestBrightness = nextValue;
+        Object.assign(state, {
+          latestBrightness: nextValue,
+          lastUpdatedAt: Date.now()
+        });
         await debouncedSetLevel(nextValue);
         debugSetResult(Brightness, service, value);
         callback();
@@ -120,7 +131,7 @@ export const updateLightbulb = (
   updates: Record<string, unknown>[]
 ): void => {
   const {context} = accessory;
-  const {metadata} = context;
+  const {metadata, state} = context as TydomAccessoryContext<State>;
   const {On, Brightness} = Characteristic;
   const levelMeta = find(metadata, {name: 'level'});
   // Not dimmable
@@ -136,14 +147,18 @@ export const updateLightbulb = (
         const service = getAccessoryService(accessory, Service.Lightbulb);
         const level = value as number;
         if (level === null) {
-          debug(`Encountered a ${chalkString('setpoint')} update with a null value!`);
+          debug(`Encountered a ${chalkString('level')} update with a null value!`);
+          return;
+        }
+        // @NOTE ignore invalid delayed updates when a set has occured <5s
+        if (Date.now() - state.lastUpdatedAt < 5e3) {
+          debug(`Ignoring a delayed ${chalkString('level')} update with value=${chalkNumber(level)} !`);
           return;
         }
         debugSetUpdate(On, service, level > 0);
         service.updateCharacteristic(On, level > 0);
         // @NOTE Only update brightness for non-null values
         if (level > 0) {
-          // @TODO ignore updates for legacy previous values
           debugSetUpdate(Brightness, service, level);
           service.updateCharacteristic(Brightness, level);
         }
