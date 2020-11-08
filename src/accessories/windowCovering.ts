@@ -30,6 +30,7 @@ import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 
 type State = {
   latestPosition: number;
+  pendingUpdatedValues: number[];
   lastUpdatedAt: number;
 };
 
@@ -38,28 +39,31 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
   const {client} = controller;
   const {CurrentPosition, TargetPosition} = Characteristic;
 
-  const {
-    deviceId,
-    endpointId,
-    state = {
-      latestPosition: 100,
-      lastUpdatedAt: 0
-    }
-  } = context as TydomAccessoryContext<State>;
+  const {deviceId, endpointId, state} = context as TydomAccessoryContext<State>;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
+  Object.assign(state, {
+    latestPosition: 100,
+    pendingUpdatedValues: [],
+    lastUpdatedAt: 0
+  });
 
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.WindowCovering, `${accessory.displayName}`, true);
 
-  const debouncedSetPosition = debounce((value: number) => {
+  const debouncedSetPosition = debounce(async (value: number) => {
     debugTydomPut('position', accessory, value);
-    client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+    await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
       {
         name: 'position',
         value
       }
     ]);
+    debugSetUpdate(TargetPosition, service, value);
+    service.updateCharacteristic(TargetPosition, value);
+    Object.assign(state, {
+      pendingUpdatedValues: state.pendingUpdatedValues.concat([value])
+    });
   }, 250);
 
   service
@@ -128,13 +132,14 @@ export const updateWindowCovering = (
           debug(`Encountered a ${chalkString('position')} update with a null value!`);
           return;
         }
-        // @NOTE ignore invalid delayed updates when a set has occured <10s
-        if (Date.now() - state.lastUpdatedAt < 10e3) {
-          debug(`Ignoring a delayed ${chalkString('level')} update with value=${chalkNumber(position)} !`);
-          return;
-        }
         debugSetUpdate(CurrentPosition, service, position);
         service.updateCharacteristic(CurrentPosition, position);
+        // @NOTE ignore pending updates
+        if (state.pendingUpdatedValues.includes(position)) {
+          debug(`Ignoring a pending ${chalkString('position')} update with value=${chalkNumber(position)} !`);
+          state.pendingUpdatedValues = [];
+          return;
+        }
         debugSetUpdate(TargetPosition, service, position);
         service.updateCharacteristic(TargetPosition, position);
         return;

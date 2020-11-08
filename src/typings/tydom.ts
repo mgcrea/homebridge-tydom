@@ -1,6 +1,6 @@
 import {Categories} from '../utils/hap';
 
-export type TydomAccessoryContext<T extends Record<string, any> | null = null> = {
+export type TydomAccessoryContext<T extends Record<string, any> = Record<string, any>> = {
   name: string;
   category: Categories;
   metadata: TydomMetaElement[];

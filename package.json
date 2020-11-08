@@ -1,6 +1,6 @@
 {
   "name": "homebridge-tydom",
-  "version": "0.19.8",
+  "version": "0.19.9",
   "description": "Homebridge plugin to manage Tydom devices by Delta Dore",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -17,7 +17,7 @@
   "scripts": {
     "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 DEBUG=homebridge-tydom homebridge -D -U ./.homebridge -P .",
     "start:node": "NODE_TLS_REJECT_UNAUTHORIZED=0 NODE_PATH=src/ ts-node .",
-    "start:watch": "nodemon --ext \"ts,tsx\" --watch \"src/\" --exec \"yarn start\"",
+    "start:watch": "nodemon --ext \"ts,tsx\" --watch \"lib/\" --exec \"yarn start\"",
     "start:prod": "yarn spec:watch",
     "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
     "test": "yarn pretty && yarn lint && yarn spec",

@@ -23,6 +23,7 @@ import {addAccessorySwitchableService, updateAccessorySwitchableService} from '.
 
 type State = {
   latestBrightness: number;
+  pendingUpdatedValues: number[];
   lastUpdatedAt: number;
 };
 
@@ -31,17 +32,14 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
   const {client} = controller;
   const {On, Brightness} = Characteristic;
 
-  const {
-    deviceId,
-    endpointId,
-    metadata,
-    state = {
-      latestBrightness: 100,
-      lastUpdatedAt: 0
-    }
-  } = context as TydomAccessoryContext<State>;
+  const {deviceId, endpointId, metadata, state} = context as TydomAccessoryContext<State>;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
+  Object.assign(state, {
+    latestBrightness: 100,
+    pendingUpdatedValues: [],
+    lastUpdatedAt: 0
+  });
 
   const levelMeta = find(metadata, {name: 'level'});
 
@@ -62,6 +60,11 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
           value
         }
       ]);
+      debugSetUpdate(Brightness, service, value);
+      service.updateCharacteristic(Brightness, value);
+      Object.assign(state, {
+        pendingUpdatedValues: state.pendingUpdatedValues.concat([value])
+      });
     },
     15,
     {leading: true, trailing: false}
@@ -150,9 +153,11 @@ export const updateLightbulb = (
           debug(`Encountered a ${chalkString('level')} update with a null value!`);
           return;
         }
-        // @NOTE ignore invalid delayed updates when a set has occured <5s
-        if (Date.now() - state.lastUpdatedAt < 5e3) {
-          debug(`Ignoring a delayed ${chalkString('level')} update with value=${chalkNumber(level)} !`);
+        // @NOTE ignore pending updates
+        if (state.pendingUpdatedValues.includes(level)) {
+          debug(`Ignoring a delayed ${chalkString('level')} update with value=${chalkNumber(level)}`);
+          // Reset pending updates stack
+          state.pendingUpdatedValues = [];
           return;
         }
         debugSetUpdate(On, service, level > 0);
