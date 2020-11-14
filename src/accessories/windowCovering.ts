@@ -51,20 +51,22 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.WindowCovering, `${accessory.displayName}`, true);
 
-  const debouncedSetPosition = debounce(async (value: number) => {
-    debugTydomPut('position', accessory, value);
-    await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-      {
-        name: 'position',
-        value
-      }
-    ]);
-    debugSetUpdate(TargetPosition, service, value);
-    service.updateCharacteristic(TargetPosition, value);
-    Object.assign(state, {
-      pendingUpdatedValues: state.pendingUpdatedValues.concat([value])
-    });
-  }, 250);
+  const debouncedSetPosition = debounce(
+    async (value: number) => {
+      debugTydomPut('position', accessory, value);
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: 'position',
+          value
+        }
+      ]);
+      Object.assign(state, {
+        pendingUpdatedValues: state.pendingUpdatedValues.concat([value])
+      });
+    },
+    250,
+    {leading: true, trailing: false}
+  );
 
   service
     .getCharacteristic(CurrentPosition)
@@ -104,7 +106,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
           latestPosition: nextValue,
           lastUpdatedAt: Date.now()
         });
-        debouncedSetPosition(nextValue);
+        await debouncedSetPosition(nextValue);
         debugSetResult(TargetPosition, service, value, nextValue);
         callback();
       } catch (err) {

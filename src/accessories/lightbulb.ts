@@ -60,8 +60,6 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
           value
         }
       ]);
-      debugSetUpdate(Brightness, service, value);
-      service.updateCharacteristic(Brightness, value);
       Object.assign(state, {
         pendingUpdatedValues: state.pendingUpdatedValues.concat([value])
       });
@@ -89,6 +87,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
       try {
         const nextLevel = value ? state.latestBrightness || 100 : 0;
         await debouncedSetLevel(nextLevel);
+        service.updateCharacteristic(Brightness, nextLevel);
         debugSetResult(On, service, value);
         callback();
       } catch (err) {
