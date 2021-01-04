@@ -59,7 +59,7 @@ export const addAccessoryServiceWithSubtype = (
   subtype: string,
   removeExisting: boolean = false
 ): Service => {
-  const existingService = accessory.getServiceByUUIDAndSubType(service, subtype);
+  const existingService = accessory.getServiceById(service, subtype);
   if (existingService) {
     if (!removeExisting) {
       return existingService;
