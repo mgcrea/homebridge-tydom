@@ -72,7 +72,7 @@ export type AnyTydomDataValue = string | number | boolean;
 
 export type TydomDataElement<K = string, V = AnyTydomDataValue> = {
   name: K;
-  validity: 'expired';
+  validity: 'expired' | 'upToDate';
   value: V;
 };
 

@@ -15,6 +15,7 @@ import TydomClient from 'tydom-client';
 import debug from './debug';
 import {sha256Sync} from './hash';
 import {URLSearchParams} from 'url';
+import type {PlatformAccessory} from 'homebridge';
 
 type DataOperation = {
   promise: Promise<unknown> | null;
@@ -24,6 +25,7 @@ type DataOperation = {
 export type GetTydomDeviceDataOptions = {
   deviceId: number;
   endpointId: number;
+  accessory?: PlatformAccessory;
 };
 const cacheMap = new Map<string, DataOperation>();
 const DEBOUNCE_TIME = 1 * 1e3;
@@ -41,6 +43,9 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
     }
   }
   const promise = client.get<TydomEndpointDataResponse>(uri).then((res) => {
+    // if (res.error === 4 && accessory) {
+    //   accessory._associatedHAPAccessory.updateReachability(false);
+    // }
     return res.data ? res.data : res;
   }) as Promise<T>;
   cacheMap.set(uri, {time: now, promise});
