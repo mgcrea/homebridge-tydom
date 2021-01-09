@@ -21,10 +21,11 @@ assignees: ''
 **Dumps**
 
 <!--
-To support new hardware, please provide a dump of your tydom configuration using node-tydom-client using https://gist.github.com
+To help speed up your issue, please provide a dump of your tydom configuration using node-tydom-client
 ```sh
 npx tydom-client request /configs/file /devices/data /devices/meta /devices/cmeta --file tydom_output.json --username 001A25XXXXXX --password XXXXXX
 ```
+Will create the file `tydom_output.json` to upload, you can use https://gist.github.com
 -->
 
 **Additional context**
