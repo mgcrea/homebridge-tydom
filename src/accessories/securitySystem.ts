@@ -412,23 +412,28 @@ export const updateSecuritySystem = (
             const nextValue = SecuritySystemCurrentState.DISARMED;
             debugSetUpdate(SecuritySystemCurrentState, service, nextValue);
             service.updateCharacteristic(SecuritySystemCurrentState, nextValue);
+            return;
           }
           case 'ON': {
             const nextValue = SecuritySystemCurrentState.AWAY_ARM;
             debugSetUpdate(SecuritySystemCurrentState, service, nextValue);
             service.updateCharacteristic(SecuritySystemCurrentState, nextValue);
+            return;
           }
           case 'ZONE': {
             const activeZones = getActiveZones((updates as unknown) as TydomDeviceSecuritySystemData);
             const nextValue = getStateForActiveZones(activeZones, aliases);
             debugSetUpdate(SecuritySystemCurrentState, service, nextValue);
             service.updateCharacteristic(SecuritySystemCurrentState, nextValue);
+            return;
           }
+          default:
+            return;
         }
       }
       case 'alarmSOS': {
         const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, 'alarmSOS');
-        const alarmSOS = value as boolean;
+        const alarmSOS = !!value;
         debugSetUpdate(ContactSensorState, service, alarmSOS);
         service.updateCharacteristic(ContactSensorState, alarmSOS);
         return;
@@ -455,7 +460,7 @@ export const updateSecuritySystem = (
       }
       case 'systOpenIssue': {
         const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, 'systOpenIssue');
-        const systOpenIssue = value as boolean;
+        const systOpenIssue = !!value;
         debugSetUpdate(ContactSensorState, service, systOpenIssue);
         service.updateCharacteristic(ContactSensorState, systOpenIssue);
         return;
