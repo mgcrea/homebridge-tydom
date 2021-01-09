@@ -37,12 +37,15 @@ export type ControllerUpdatePayload = {
   context: TydomAccessoryContext;
 };
 
+const REFRESH_INTERVAL_SEC = 2 * 60 * 60; // 2 hours
+
 export default class TydomController extends EventEmitter {
-  client: TydomClient;
-  config: TydomPlatformConfig;
-  devices: Map<number, Categories> = new Map();
-  state: Map<string, unknown> = new Map();
-  log: Logging;
+  public client: TydomClient;
+  public config: TydomPlatformConfig;
+  public log: Logging;
+  private devices: Map<number, Categories> = new Map();
+  private state: Map<string, unknown> = new Map();
+  private refreshInterval?: NodeJS.Timeout;
   constructor(log: Logging, config: TydomPlatformConfig) {
     super();
     this.config = config;
@@ -100,6 +103,18 @@ export default class TydomController extends EventEmitter {
     const meta = await this.client.get<TydomMetaResponse>('/devices/meta');
     // Final outro handshake
     await this.refresh();
+    if (this.refreshInterval) {
+      debug(`Removing existing refresh interval`);
+      clearInterval(this.refreshInterval);
+    }
+    debug(`Configuring refresh interval of ${chalkNumber(Math.round(REFRESH_INTERVAL_SEC))}s`);
+    this.refreshInterval = setInterval(async () => {
+      try {
+        await this.refresh();
+      } catch (err) {
+        debug(`Failed interval refresh with err ${err}`);
+      }
+    }, REFRESH_INTERVAL_SEC * 1000);
     Object.assign(this.state, {config, groups, meta});
     return {config, groups, meta};
   }
