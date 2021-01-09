@@ -7,9 +7,10 @@ import {
   asNumber,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
+  setupAccessoryInformationService,
+  TydomAccessoryUpdateType
 } from '../utils/accessory';
-import {chalkNumber, chalkString} from '../utils/chalk';
+import {chalkJson, chalkKeyword, chalkNumber, chalkString} from '../utils/chalk';
 import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
 import {
   Characteristic,
@@ -37,7 +38,7 @@ type State = {
 export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
   const {client} = controller;
-  const {CurrentPosition, TargetPosition} = Characteristic;
+  const {CurrentPosition, TargetPosition, PositionState, HoldPosition} = Characteristic;
 
   const {deviceId, endpointId, state} = context as TydomAccessoryContext<State>;
   setupAccessoryInformationService(accessory, controller);
@@ -67,6 +68,29 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
     250,
     {leading: true, trailing: false}
   );
+
+  service
+    .getCharacteristic(PositionState)
+    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      debugGet(PositionState, service);
+      try {
+        // @NOTE Tydom does not track the current position
+        const nextValue = PositionState.STOPPED;
+        debugGetResult(CurrentPosition, service, nextValue);
+        callback(null, nextValue);
+      } catch (err) {
+        callback(err);
+      }
+    })
+    .getValue();
+
+  service
+    .getCharacteristic(HoldPosition)
+    .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+      debugSet(HoldPosition, service, value);
+      callback();
+    })
+    .getValue();
 
   service
     .getCharacteristic(CurrentPosition)
@@ -119,11 +143,23 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
 export const updateWindowCovering = (
   accessory: PlatformAccessory,
   _controller: TydomController,
-  updates: Record<string, unknown>[]
+  updates: Record<string, unknown>[],
+  type: TydomAccessoryUpdateType
 ): void => {
   const {context} = accessory;
   const {state} = context as TydomAccessoryContext<State>;
   const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
+
+  // Process command updates
+  if (type === 'cdata') {
+    updates.forEach((update) => {
+      const {values} = update;
+      const {event} = values as {event: any};
+      debug(`New ${chalkKeyword('WindowCovering')} event=${chalkJson(event)}`);
+    });
+    return;
+  }
+
   updates.forEach((update) => {
     const {name, value} = update;
     switch (name) {
