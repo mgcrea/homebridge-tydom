@@ -43,9 +43,9 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
     }
   }
   const promise = client.get<TydomEndpointDataResponse>(uri).then((res) => {
-    // if (res.error === 4 && accessory) {
-    //   accessory._associatedHAPAccessory.updateReachability(false);
-    // }
+    if (res.error === 4) {
+      throw new Error('UnreacheableAccessory');
+    }
     return res.data ? res.data : res;
   }) as Promise<T>;
   cacheMap.set(uri, {time: now, promise});
