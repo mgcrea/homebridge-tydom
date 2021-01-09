@@ -43,7 +43,7 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
     }
   }
   const promise = client.get<TydomEndpointDataResponse>(uri).then((res) => {
-    if (res.error === 4) {
+    if (res.error > 1) {
       throw new Error('UnreacheableAccessory');
     }
     return res.data ? res.data : res;
