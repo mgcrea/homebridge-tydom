@@ -88,6 +88,19 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
     .getCharacteristic(HoldPosition)
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet(HoldPosition, service, value);
+      if (!value) {
+        // @NOTE asked to not hold position
+        return;
+      }
+      const nextValue = 'STOP';
+      debugTydomPut('positionCmd', accessory, nextValue);
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: 'positionCmd',
+          value: nextValue
+        }
+      ]);
+      debugSetResult(HoldPosition, service, value, nextValue);
       callback();
     })
     .getValue();
