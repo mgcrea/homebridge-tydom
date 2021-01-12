@@ -44,6 +44,7 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
   }
   const promise = client.get<TydomEndpointDataResponse>(uri).then((res) => {
     if (res.error > 1) {
+      debug(`Received non-zero error=${res.error} while querying uri="${uri}", accessory seems unreacheable.`);
       throw new Error('UnreacheableAccessory');
     }
     return res.data ? res.data : res;

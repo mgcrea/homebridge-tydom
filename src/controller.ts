@@ -37,7 +37,7 @@ export type ControllerUpdatePayload = {
   context: TydomAccessoryContext;
 };
 
-const REFRESH_INTERVAL_SEC = 2 * 60 * 60; // 2 hours
+const REFRESH_INTERVAL_SEC = 90 * 60; // 90 minutes
 
 export default class TydomController extends EventEmitter {
   public client: TydomClient;
