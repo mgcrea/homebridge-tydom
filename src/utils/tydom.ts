@@ -44,12 +44,14 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
     }
   }
   const promise = client.get<TydomEndpointDataResponse>(uri).then((res) => {
-    debug(`Received non-zero error=${chalkNumber(res.error)} while querying uri=${chalkString(uri)}`);
-    if (res.error === 2) {
-      debug(`Accessory with uri=${chalkString(uri)} seems unreacheable (error=${chalkNumber(res.error)}).`);
-      throw new Error('UnreacheableAccessory');
-    } else if (res.error > 0) {
-      debug(`Accessory with uri=${chalkString(uri)} is having unknown issues (error=${chalkNumber(res.error)}).`);
+    if (res.error > 0) {
+      debug(`Received non-zero error=${chalkNumber(res.error)} while querying uri=${chalkString(uri)}`);
+      if (res.error === 2) {
+        debug(`Accessory with uri=${chalkString(uri)} seems unreacheable (error=${chalkNumber(res.error)}).`);
+        throw new Error('UnreacheableAccessory');
+      } else {
+        debug(`Accessory with uri=${chalkString(uri)} is having unknown issues (error=${chalkNumber(res.error)}).`);
+      }
     }
     return res.data ? res.data : res;
   }) as Promise<T>;

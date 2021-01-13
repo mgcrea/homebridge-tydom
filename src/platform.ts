@@ -16,6 +16,7 @@ export type TydomPlatformConfig = PlatformConfig & {
   includedCategories?: string[];
   excludedDevices?: string[];
   excludedCategories?: string[];
+  refreshInterval?: number;
 };
 
 export default class TydomPlatform implements DynamicPlatformPlugin {
