@@ -37,7 +37,7 @@ export type ControllerUpdatePayload = {
   context: TydomAccessoryContext;
 };
 
-const REFRESH_INTERVAL_SEC = 90 * 60; // 90 minutes
+const DEFAULT_REFRESH_INTERVAL_SEC = 4 * 60 * 60; // 4 hours
 
 export default class TydomController extends EventEmitter {
   public client: TydomClient;
@@ -96,7 +96,7 @@ export default class TydomController extends EventEmitter {
     }
   }
   async sync(): Promise<{config: TydomConfigResponse; groups: TydomGroupsResponse; meta: TydomMetaResponse}> {
-    const {hostname} = this.config;
+    const {hostname, refreshInterval = DEFAULT_REFRESH_INTERVAL_SEC} = this.config;
     debug(`Syncing state from hostname=${chalkString(hostname)}...`);
     const config = await this.client.get<TydomConfigResponse>('/configs/file');
     const groups = await this.client.get<TydomGroupsResponse>('/groups/file');
@@ -107,14 +107,14 @@ export default class TydomController extends EventEmitter {
       debug(`Removing existing refresh interval`);
       clearInterval(this.refreshInterval);
     }
-    debug(`Configuring refresh interval of ${chalkNumber(Math.round(REFRESH_INTERVAL_SEC))}s`);
+    debug(`Configuring refresh interval of ${chalkNumber(Math.round(refreshInterval))}s`);
     this.refreshInterval = setInterval(async () => {
       try {
         await this.refresh();
       } catch (err) {
         debug(`Failed interval refresh with err ${err}`);
       }
-    }, REFRESH_INTERVAL_SEC * 1000);
+    }, refreshInterval * 1000);
     Object.assign(this.state, {config, groups, meta});
     return {config, groups, meta};
   }

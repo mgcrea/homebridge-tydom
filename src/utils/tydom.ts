@@ -16,6 +16,7 @@ import debug from './debug';
 import {sha256Sync} from './hash';
 import {URLSearchParams} from 'url';
 import type {PlatformAccessory} from 'homebridge';
+import {chalkNumber, chalkString} from './chalk';
 
 type DataOperation = {
   promise: Promise<unknown> | null;
@@ -43,9 +44,12 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
     }
   }
   const promise = client.get<TydomEndpointDataResponse>(uri).then((res) => {
-    if (res.error > 1) {
-      debug(`Received non-zero error=${res.error} while querying uri="${uri}", accessory seems unreacheable.`);
+    debug(`Received non-zero error=${chalkNumber(res.error)} while querying uri=${chalkString(uri)}`);
+    if (res.error === 2) {
+      debug(`Accessory with uri=${chalkString(uri)} seems unreacheable (error=${chalkNumber(res.error)}).`);
       throw new Error('UnreacheableAccessory');
+    } else if (res.error > 0) {
+      debug(`Accessory with uri=${chalkString(uri)} is having unknown issues (error=${chalkNumber(res.error)}).`);
     }
     return res.data ? res.data : res;
   }) as Promise<T>;
