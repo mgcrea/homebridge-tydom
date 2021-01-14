@@ -4691,10 +4691,10 @@ tweetnacl@^1.0.3:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-1.0.3.tgz#ac0af71680458d8a6378d0d0d050ab1407d35596"
   integrity sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==
 
-tydom-client@^0.12.2:
-  version "0.12.2"
-  resolved "https://registry.yarnpkg.com/tydom-client/-/tydom-client-0.12.2.tgz#60249203b60082300eb557434fafc9d5c2b9ef15"
-  integrity sha512-UWgyqgaSnf0TmjdE1Nn6nyG3DySnJ4OwchhVtsxCH+NBGmN3FjjKhv1x5w8tkWUAIDpD1d2pocvdD8zhPbOUlA==
+tydom-client@^0.12.3:
+  version "0.12.3"
+  resolved "https://registry.yarnpkg.com/tydom-client/-/tydom-client-0.12.3.tgz#e345bd5274d191ee1d90add74ac9e2150201b893"
+  integrity sha512-O5452+ehNvh/v09FMmaPDWZDD88CbX0v2gqpoQV2YrMg3/aMZ8/vc/Puf9Kxprz6KrMCjDUmWddDtqmB+VPAow==
   dependencies:
     chalk "^4.1.0"
     debug "^4.3.1"

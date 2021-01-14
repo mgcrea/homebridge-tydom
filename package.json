@@ -1,6 +1,6 @@
 {
   "name": "homebridge-tydom",
-  "version": "0.20.10",
+  "version": "0.20.11",
   "description": "Homebridge plugin to manage Tydom devices by Delta Dore",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -37,7 +37,7 @@
     "fakegato-history": "^0.6.1",
     "lodash": "^4.17.20",
     "source-map-support": "^0.5.19",
-    "tydom-client": "^0.12.2"
+    "tydom-client": "^0.12.3"
   },
   "devDependencies": {
     "@tsconfig/node10": "^1.0.7",
