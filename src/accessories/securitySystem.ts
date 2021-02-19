@@ -359,7 +359,13 @@ export const updateSecuritySystem = (
   // Process command updates
   if (type === 'cdata') {
     updates.forEach((update) => {
-      const {name, values} = update;
+      const {name, parameters, values} = update;
+      // Notify with webhooks
+      controller.emit('notification', {
+        message: `SecuritySystem event name=${name}, parameters=${JSON.stringify(parameters)}, values=${JSON.stringify(
+          values
+        )}`
+      });
       switch (name) {
         case 'eventAlarm': {
           const {event} = values as {event: SecuritySystemAlarmEvent};
@@ -369,14 +375,12 @@ export const updateSecuritySystem = (
               const service = getAccessoryService(accessory, Service.SecuritySystem);
               debugSetUpdate(SecuritySystemCurrentState, service, SecuritySystemCurrentState.DISARMED);
               service.updateCharacteristic(SecuritySystemCurrentState, SecuritySystemCurrentState.DISARMED);
-              controller.emit('notification', {message: `SecuritySystem stopped`, level: 'info'});
               return;
             }
             case 'marcheTotale': {
               const service = getAccessoryService(accessory, Service.SecuritySystem);
               debugSetUpdate(SecuritySystemCurrentState, service, SecuritySystemCurrentState.AWAY_ARM);
               service.updateCharacteristic(SecuritySystemCurrentState, SecuritySystemCurrentState.AWAY_ARM);
-              controller.emit('notification', {message: `SecuritySystem all-enabled`, level: 'info'});
               return;
             }
             case 'marcheZone': {
@@ -385,24 +389,17 @@ export const updateSecuritySystem = (
               const nextValue = getStateForActiveZones(activeZones, aliases);
               debugSetUpdate(SecuritySystemCurrentState, service, nextValue);
               service.updateCharacteristic(SecuritySystemCurrentState, nextValue);
-              controller.emit('notification', {
-                message: `SecuritySystem zone(s) ${activeZones.join('&')} enabled`,
-                level: 'info'
-              });
               return;
             }
             case 'preAlarm': {
               const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, 'preAlarm');
               debugSetUpdate(ContactSensorState, service, true);
               service.updateCharacteristic(ContactSensorState, true);
-              controller.emit('notification', {
-                message: `SecuritySystem pre-alarm triggered`,
-                level: 'crit'
-              });
               return;
             }
-            default:
+            default: {
               return;
+            }
           }
         }
         default:

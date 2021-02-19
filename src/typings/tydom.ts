@@ -193,7 +193,8 @@ export type SecuritySystemAlarmEvent = {
     | 'marcheTotale'
     | 'refusMiseEnMarche'
     | 'preavisMarcheAuto'
-    | 'alarmIntrusion';
+    | 'alarmIntrusion'
+    | 'passageEnMaintenance';
   date: string;
   zones: Array<{id: number; nameStd: string}>;
   product?: SecuritySystemProduct;
