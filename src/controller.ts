@@ -40,7 +40,6 @@ export type ControllerUpdatePayload = {
 export type ControllerNotificationPayload = {
   level: string;
   message: string;
-  context: TydomAccessoryContext;
 };
 
 const DEFAULT_REFRESH_INTERVAL_SEC = 4 * 60 * 60; // 4 hours
