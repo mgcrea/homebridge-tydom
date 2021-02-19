@@ -1,9 +1,12 @@
+import {IncomingMessage} from 'http';
 import {request, RequestOptions} from 'https';
 import {URL} from 'url';
 
 export type PostJsonOptions = Omit<RequestOptions, 'hostname' | 'path'> & {url: string; json?: Record<string, unknown>};
 
-export const postJson = async <T>(options: PostJsonOptions): Promise<{body: T}> => {
+export const postJson = async <T>(
+  options: PostJsonOptions
+): Promise<Pick<IncomingMessage, 'statusCode' | 'statusMessage' | 'headers'> & {body: T}> => {
   const {url, json, ...otherOptions} = options;
   const {headers = {}} = otherOptions;
   const {hostname, port, protocol, pathname} = new URL(url);
@@ -28,6 +31,9 @@ export const postJson = async <T>(options: PostJsonOptions): Promise<{body: T}> 
       });
       res.on('end', () => {
         resolve({
+          statusCode: res.statusCode,
+          statusMessage: res.statusMessage,
+          headers: res.headers,
           body: chunks.length ? JSON.parse(Buffer.concat(chunks).toString()) : undefined
         });
       });

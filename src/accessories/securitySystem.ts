@@ -361,15 +361,17 @@ export const updateSecuritySystem = (
     updates.forEach((update) => {
       const {name, parameters, values} = update;
       // Notify with webhooks
-      controller.emit('notification', {
-        message: `SecuritySystem event name=\`${name}\`, parameters=\`${JSON.stringify(
-          parameters
-        )}\`, values=\`${JSON.stringify(values)}\``
-      });
+
       switch (name) {
         case 'eventAlarm': {
           const {event} = values as {event: SecuritySystemAlarmEvent};
           debug(`New ${chalkKeyword('SecuritySystem')} alarm event=${chalkJson(event)}`);
+          controller.emit('notification', {
+            level: 'warn',
+            message: `SecuritySystem \`${name}\` event, name=\`${event.name}\` parameters=\`${JSON.stringify(
+              parameters
+            )}\`, values=\`${JSON.stringify(values)}\``
+          });
           switch (event.name) {
             case 'arret': {
               const service = getAccessoryService(accessory, Service.SecuritySystem);
@@ -402,8 +404,15 @@ export const updateSecuritySystem = (
             }
           }
         }
-        default:
+        default: {
+          controller.emit('notification', {
+            level: 'debug',
+            message: `SecuritySystem \`${name}\` event parameters=\`${JSON.stringify(
+              parameters
+            )}\`, values=\`${JSON.stringify(values)}\``
+          });
           return;
+        }
       }
     });
     return;

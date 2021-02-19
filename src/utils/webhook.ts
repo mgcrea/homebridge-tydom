@@ -21,9 +21,20 @@ type DiscordPayload = {
   allowed_mentions?: boolean; //	allowed mention object	allowed mentions for the message	false
 };
 
-export const asDiscordPayload = ({level, message}: WebhookPayload): DiscordPayload => ({
-  content: `[${level}] ${message}`
-});
+export const asDiscordPayload = ({level, message}: WebhookPayload): DiscordPayload => {
+  let prefix = '';
+  switch (level) {
+    case 'warn':
+      prefix = ':warning: ';
+      break;
+    default:
+      prefix = ':question: ';
+      break;
+  }
+  return {
+    content: `${prefix}${message}`
+  };
+};
 
 export const triggerWebhook = async (webhook: Webhook, {message, level = 'info'}: WebhookPayload): Promise<void> => {
   const {url, type} = webhook;
