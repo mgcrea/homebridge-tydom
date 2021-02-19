@@ -362,7 +362,7 @@ export const updateSecuritySystem = (
       const {name, parameters, values} = update;
       // Notify with webhooks
       controller.emit('notification', {
-        message: `SecuritySystem event name=${name}, parameters=\`${JSON.stringify(
+        message: `SecuritySystem event name=\`${name}\`, parameters=\`${JSON.stringify(
           parameters
         )}\`, values=\`${JSON.stringify(values)}\``
       });
