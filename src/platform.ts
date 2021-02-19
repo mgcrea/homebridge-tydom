@@ -1,17 +1,23 @@
 import type {API as Homebridge, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig} from 'homebridge';
 import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
-import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from './controller';
+import TydomController, {
+  ControllerDevicePayload,
+  ControllerNotificationPayload,
+  ControllerUpdatePayload
+} from './controller';
 import {TydomAccessoryContext} from './typings/tydom';
 import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './utils/accessory';
 import assert from './utils/assert';
 import {chalkNumber} from './utils/chalk';
 import {Categories} from './utils/hap';
+import {triggerWebhook, Webhook} from './utils/webhook';
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
   username: string;
   password: string;
   settings: Record<string, {name?: string; category?: Categories}>;
+  webhooks?: Webhook[];
   includedDevices?: string[];
   includedCategories?: string[];
   excludedDevices?: string[];
@@ -46,6 +52,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     // this.controller.on('connect', () => {});
     this.controller.on('device', this.handleControllerDevice.bind(this));
     this.controller.on('update', this.handleControllerDataUpdate.bind(this));
+    this.controller.on('notification', this.handleControllerNotification.bind(this));
   }
   async didFinishLaunching(): Promise<void> {
     assert(this.controller);
@@ -89,6 +96,21 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       tydomAccessoryUpdate(accessory, this.controller!, updates, type);
     }
+  }
+  handleControllerNotification({level, message, context}: ControllerNotificationPayload): void {
+    const id = this.api.hap.uuid.generate(context.accessoryId);
+    if (!this.accessories.has(id)) {
+      return;
+    }
+    const {webhooks = []} = this.config;
+    webhooks.forEach(async (webhook) => {
+      try {
+        await triggerWebhook(webhook, {level, message});
+      } catch (err) {
+        this.log.error(`${err.name} ${err.message}`);
+        this.log.debug(err.trace);
+      }
+    });
   }
   async createAccessory(
     name: string,

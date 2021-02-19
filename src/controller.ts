@@ -37,6 +37,12 @@ export type ControllerUpdatePayload = {
   context: TydomAccessoryContext;
 };
 
+export type ControllerNotificationPayload = {
+  level: string;
+  message: string;
+  context: TydomAccessoryContext;
+};
+
 const DEFAULT_REFRESH_INTERVAL_SEC = 4 * 60 * 60; // 4 hours
 
 export default class TydomController extends EventEmitter {
@@ -137,6 +143,7 @@ export default class TydomController extends EventEmitter {
       const group = groupId ? configGroups.find(({id}) => id === groupId) : undefined;
       const deviceSettings = settings[deviceId] || {};
       const categoryFromSettings = deviceSettings.category as Categories | undefined;
+      // @TODO resolve endpoint productType
       debug(
         `Found new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
           deviceId

@@ -1,3 +1,4 @@
+import {Webhook} from 'src/utils/webhook';
 import {Categories} from '../utils/hap';
 
 export type TydomAccessoryContext<T extends Record<string, any> = Record<string, any>> = {
