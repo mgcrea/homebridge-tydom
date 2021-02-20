@@ -32,6 +32,8 @@
 
 - Built with [TypeScript](https://www.typescriptlang.org/) for static type checking with exported types along the library.
 
+- Supports Webhooks to trigger non-homekit dependent actions or notifications.
+
 ## Documentation
 
 ### Installation
@@ -132,6 +134,28 @@ You can optionnaly rename zones (default is `Zone 1`, `Zone 2`, etc.),
 }
 ```
 
+#### Webhooks
+
+You can specify webhooks in your `config.json` to receive non homekit-dependent notifications.
+
+For now all `SecuritySystem` events are relayed and we only support [discord](https://ptb.discord.com/developers/docs/resources/webhook).
+
+```json
+{
+  "platforms": [
+    {
+      "webhooks": [
+        {
+          "url": "https://discord.com/api/webhooks/123456/abdcdef",
+          "type": "discord",
+          "level": "debug"
+        }
+      ]
+    }
+  ]
+}
+```
+
 #### Category overrides (eg. Fan)
 
 You can override categories of devices (eg. some light switch used to manage a fan)
@@ -182,15 +206,15 @@ You can also use your local tydom IP (eg `192.168.0.X`) for `hostname`, however:
 ### Configurations
 
 | **Field**          | **Type**            | **Description**             |
-| ------------------ | ------------------- | --------------------------- |
+| ------------------ | ------------------- | --------------------------- | ------------------------------------------ |
 | hostname           | `string`            | Tydom hostname              |
 | username           | `string`            | Tydom username              |
 | password           | `string`            | Tydom password              |
 | settings           | `Record<string, ?>` | Device settings (overrides) |
-| includedDevices    | `Array<string>`     | number>                     | Include only devices with following ids |
-| excludedDevices    | `Array<string>`     | number>                     | Exclude all devices with following ids |
+| includedDevices    | `Array<string>`     | number>                     | Include only devices with following ids    |
+| excludedDevices    | `Array<string>`     | number>                     | Exclude all devices with following ids     |
 | includedCategories | `Array<string>`     | number>                     | Include only categories with following ids |
-| excludedCategories | `Array<string>`     | number>                     | Exclude all categories with following ids |
+| excludedCategories | `Array<string>`     | number>                     | Exclude all categories with following ids  |
 
 - The `settings` field enables you to override the name or homekit category of your Tydom device (check homebridge log for the device ids).
 
