@@ -25,6 +25,9 @@ export const setupTemperatureSensor = (accessory: PlatformAccessory, controller:
 
   service
     .getCharacteristic(CurrentTemperature)
+    .setProps({
+      minValue: -100
+    })
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(CurrentTemperature, service);
       try {
