@@ -16,7 +16,6 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from '../utils/accessory';
-import assert from '../utils/assert';
 import {chalkString} from '../utils/chalk';
 import debug, {
   debugAddSubService,

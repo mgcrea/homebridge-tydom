@@ -139,7 +139,7 @@ export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): Tydom
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const setupAccessoryInformationService = (accessory: PlatformAccessory, _controller: TydomController): void => {
   const {context} = accessory;
-  const {manufacturer, serialNumber, model} = context as TydomAccessoryContext;
+  const {manufacturer = 'Delta Dore', serialNumber = 'N/A', model = 'N/A'} = context as TydomAccessoryContext;
 
   const informationService = accessory.getService(ServiceStatics.AccessoryInformation);
   assert(informationService, `Did not found AccessoryInformation service`);

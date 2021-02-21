@@ -186,8 +186,8 @@ export default class TydomController extends EventEmitter {
           endpointId,
           accessoryId,
           manufacturer: 'Delta Dore',
-          serialNumber: `${deviceId}`,
-          model: 'N/A',
+          serialNumber: `ID${deviceId}`,
+          // model: 'N/A',
           state: {}
         };
         this.emit('device', context);

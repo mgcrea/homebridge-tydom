@@ -1,4 +1,3 @@
-import {Webhook} from 'src/utils/webhook';
 import {Categories} from '../utils/hap';
 
 export type TydomAccessoryContext<T extends Record<string, any> = Record<string, any>> = {
@@ -9,10 +8,10 @@ export type TydomAccessoryContext<T extends Record<string, any> = Record<string,
   deviceId: number;
   endpointId: number;
   accessoryId: string;
-  manufacturer: string;
-  serialNumber: string;
+  manufacturer?: string;
+  serialNumber?: string;
+  model?: string;
   group?: TydomConfigGroup;
-  model: string;
   state: T;
 };
 
