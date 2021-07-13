@@ -90,13 +90,8 @@ const getStateForAlarmData = (alarmData: TydomDeviceSecuritySystemData, zoneAlia
 export const setupSecuritySystem = async (accessory: PlatformAccessory, controller: TydomController): Promise<void> => {
   const {context} = accessory;
   const {client} = controller;
-  const {
-    SecuritySystemTargetState,
-    SecuritySystemCurrentState,
-    StatusTampered,
-    ContactSensorState,
-    On
-  } = Characteristic;
+  const {SecuritySystemTargetState, SecuritySystemCurrentState, StatusTampered, ContactSensorState, On} =
+    Characteristic;
 
   const {deviceId, endpointId, settings} = context as TydomAccessoryContext;
   setupAccessoryInformationService(accessory, controller);
@@ -437,7 +432,7 @@ export const updateSecuritySystem = (
             return;
           }
           case 'ZONE': {
-            const activeZones = getActiveZones((updates as unknown) as TydomDeviceSecuritySystemData);
+            const activeZones = getActiveZones(updates as unknown as TydomDeviceSecuritySystemData);
             const nextValue = getStateForActiveZones(activeZones, aliases);
             debugSetUpdate(SecuritySystemCurrentState, service, nextValue);
             service.updateCharacteristic(SecuritySystemCurrentState, nextValue);
