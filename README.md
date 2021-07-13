@@ -205,12 +205,12 @@ You can also use your local tydom IP (eg `192.168.0.X`) for `hostname`, however:
 
 ### Configurations
 
-| **Field**          | **Type**            | **Description**             |
+| **Field**          | **Type**            | **Description**             |                                            |
 | ------------------ | ------------------- | --------------------------- | ------------------------------------------ |
-| hostname           | `string`            | Tydom hostname              |
-| username           | `string`            | Tydom username              |
-| password           | `string`            | Tydom password              |
-| settings           | `Record<string, ?>` | Device settings (overrides) |
+| hostname           | `string`            | Tydom hostname              |                                            |
+| username           | `string`            | Tydom username              |                                            |
+| password           | `string`            | Tydom password              |                                            |
+| settings           | `Record<string, ?>` | Device settings (overrides) |                                            |
 | includedDevices    | `Array<string>`     | number>                     | Include only devices with following ids    |
 | excludedDevices    | `Array<string>`     | number>                     | Exclude all devices with following ids     |
 | includedCategories | `Array<string>`     | number>                     | Include only categories with following ids |
