@@ -192,7 +192,7 @@ But should support many more similar devices out of the box.
 
 Some other hardware that should work thanks to the community feedback:
 
-- WindowCoverings ([TYXIA 5630](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5630-ref-6351401), [TYXIA 5730](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5730-ref-6351402))
+- WindowCoverings ([TYXIA 5630](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5630-ref-6351401), [TYXIA 5730](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5730-ref-6351402), [TYXIA 5731](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5731-ref-6351412))
 
 It is relatively easy to add new hardware so don't hesitate to create a new issue.
 
