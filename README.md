@@ -68,7 +68,8 @@
       "platform": "Tydom",
       "hostname": "mediation.tydom.com",
       "username": "001A25123456",
-      "password": "YourPassw0rd"
+      "password": "YourPassw0rd",
+      "debug": true
     }
   ]
 }
@@ -238,6 +239,8 @@ You might also want to debug [node-tydom-client](https://github.com/mgcrea/node-
 ```bash
 DEBUG=homebridge-tydom,tydom-client
 ```
+
+Alternatively, you can set `debug` to `true` in the plugin's configuration.
 
 ### Available scripts
 
