@@ -2,14 +2,13 @@ import console from 'console';
 import createDebug from 'debug';
 import chalk from 'chalk';
 import {chalkString, chalkKeyword} from './chalk.js';
-import {Characteristic} from '../utils/hap';
+import {Characteristic} from '../config/hap';
 import type {PlatformAccessory, Service} from 'homebridge';
 
 type IdentifiableAccessoryObject = PlatformAccessory | Service;
 
 export const debug = createDebug('homebridge-tydom');
-
-export default debug;
+export const enableDebug = () => createDebug.enable('homebridge-tydom');
 
 export const dir = (...args: unknown[]): void => {
   console.dir(args.length > 1 ? args : args[0], {colors: true, depth: 10});

@@ -1,15 +1,19 @@
 import type {PlatformAccessory} from 'homebridge';
-import TydomController from '../controller';
-import type {TydomAccessoryContext} from '../typings/tydom';
-import {addAccessoryService, setupAccessoryIdentifyHandler, setupAccessoryInformationService} from '../utils/accessory';
-import {debugSet, debugSetResult} from '../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
   CharacteristicValue,
   Service
-} from '../utils/hap';
+} from '../config/hap';
+import TydomController from '../controller';
+import {
+  addAccessoryService,
+  setupAccessoryIdentifyHandler,
+  setupAccessoryInformationService
+} from '../helpers/accessory';
+import type {TydomAccessoryContext} from '../typings/tydom';
+import {debugSet, debugSetResult} from '../utils/debug';
 
 export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
@@ -49,7 +53,7 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
           service.updateCharacteristic(Characteristic.On, false);
         }, 1000);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .updateValue(false);

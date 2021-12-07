@@ -1,15 +1,15 @@
 import type {PlatformAccessory} from 'homebridge';
+import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../config/hap';
 import TydomController from '../controller';
-import type {TydomAccessoryContext, TydomEndpointData} from '../typings/tydom';
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
-} from '../utils/accessory';
+} from '../helpers/accessory';
+import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
+import type {TydomAccessoryContext, TydomEndpointData} from '../typings/tydom';
 import {debugGet, debugGetResult, debugSetUpdate} from '../utils/debug';
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 
 export const setupTemperatureSensor = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
@@ -36,7 +36,7 @@ export const setupTemperatureSensor = (accessory: PlatformAccessory, controller:
         debugGetResult(CurrentTemperature, service, outTemperature);
         callback(null, outTemperature);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     });
 };

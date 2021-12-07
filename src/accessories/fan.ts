@@ -1,7 +1,7 @@
 import type {PlatformAccessory} from 'homebridge';
 import TydomController from '../controller';
-import {setupAccessoryIdentifyHandler, setupAccessoryInformationService} from '../utils/accessory';
-import {Service} from '../utils/hap';
+import {setupAccessoryIdentifyHandler, setupAccessoryInformationService} from '../helpers/accessory';
+import {Service} from '../config/hap';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
 export const setupFan = (accessory: PlatformAccessory, controller: TydomController): void => {

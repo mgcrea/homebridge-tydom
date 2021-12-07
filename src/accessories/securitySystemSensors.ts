@@ -1,23 +1,23 @@
 import type {PlatformAccessory} from 'homebridge';
 import {get, keyBy} from 'lodash';
+import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../config/hap';
 import locale from '../config/locale';
 import TydomController from '../controller';
-import type {
-  SecuritySystemHistoOpenIssuesCommandResult,
-  SecuritySystemLabelCommandResult,
-  SecuritySystemProduct,
-  TydomAccessoryContext
-} from '../typings/tydom';
 import {
   addAccessoryServiceWithSubtype,
   getAccessoryServiceWithSubtype,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
   TydomAccessoryUpdateType
-} from '../utils/accessory';
+} from '../helpers/accessory';
+import {runTydomDeviceCommand} from '../helpers/tydom';
+import type {
+  SecuritySystemHistoOpenIssuesCommandResult,
+  SecuritySystemLabelCommandResult,
+  SecuritySystemProduct,
+  TydomAccessoryContext
+} from '../typings/tydom';
 import {debugAddSubService, debugGet, debugGetResult, debugSetUpdate} from '../utils/debug';
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../utils/hap';
-import {runTydomDeviceCommand} from '../utils/tydom';
 
 const getOpenedIssues = (commandResults: SecuritySystemHistoOpenIssuesCommandResult[]) =>
   keyBy(
@@ -86,7 +86,7 @@ export const setupSecuritySystemSensors = async (
           debugGetResult(ContactSensorState, contactSensorService, nextValue);
           callback(null, nextValue);
         } catch (err) {
-          callback(err);
+          callback(err as Error);
         }
       });
     contactSensorService.getCharacteristic(Characteristic.StatusActive).setValue(1);

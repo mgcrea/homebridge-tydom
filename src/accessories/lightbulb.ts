@@ -7,7 +7,7 @@ import {
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
-} from '../utils/accessory';
+} from '../helpers/accessory';
 import {chalkNumber, chalkString} from '../utils/chalk';
 import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
 import {
@@ -17,8 +17,8 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from '../utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
+} from '../config/hap';
+import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
 type State = {
@@ -79,7 +79,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
         debugGetResult(On, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
@@ -91,7 +91,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
         debugSetResult(On, service, value);
         callback();
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .getValue();
@@ -106,7 +106,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
         debugGetResult(Brightness, service, level);
         callback(null, level);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
@@ -121,7 +121,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
         debugSetResult(Brightness, service, value);
         callback();
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .getValue();

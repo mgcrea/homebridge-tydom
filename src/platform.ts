@@ -1,22 +1,22 @@
 import type {API as Homebridge, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig} from 'homebridge';
 import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
+import {Categories} from './config/hap';
 import TydomController, {
   ControllerDevicePayload,
   ControllerNotificationPayload,
   ControllerUpdatePayload
 } from './controller';
+import {triggerWebhook, Webhook} from './helpers';
+import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './helpers/accessory';
 import {TydomAccessoryContext} from './typings/tydom';
-import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './utils/accessory';
-import assert from './utils/assert';
-import {chalkNumber} from './utils/chalk';
-import {Categories} from './utils/hap';
-import {triggerWebhook, Webhook} from './utils/webhook';
+import {assert, chalkNumber, enableDebug} from './utils';
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
   username: string;
   password: string;
   settings: Record<string, {name?: string; category?: Categories}>;
+  debug?: boolean;
   webhooks?: Webhook[];
   includedDevices?: string[];
   includedCategories?: string[];
@@ -44,6 +44,10 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       log.warn('Ignoring Tydom platform setup because it is not configured');
       this.disabled = true;
       return;
+    }
+
+    if (config.debug) {
+      enableDebug();
     }
 
     this.controller = new TydomController(log, this.config);
@@ -103,8 +107,10 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       try {
         await triggerWebhook(webhook, {level, message});
       } catch (err) {
-        this.log.error(`${err.name} ${err.message}`);
-        this.log.debug(err.trace);
+        if (err instanceof Error) {
+          this.log.error(`${err.name} ${err.message}`);
+          this.log.debug(`${err.stack}`);
+        }
       }
     });
   }

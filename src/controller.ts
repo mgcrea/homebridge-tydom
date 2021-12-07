@@ -1,11 +1,18 @@
 import chalk from 'chalk';
 import {EventEmitter} from 'events';
-import type {Logging} from 'homebridge';
+import type {Categories, Logging} from 'homebridge';
 import {get} from 'lodash';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomHttpMessage, TydomResponse} from 'tydom-client/lib/utils/tydom';
 import {HOMEBRIDGE_TYDOM_PASSWORD} from './config/env';
 import {TydomPlatformConfig} from './platform';
+import {TydomAccessoryUpdateType} from './helpers';
+import {
+  asyncWait,
+  getEndpointDetailsFromMeta,
+  getEndpointGroupIdFromGroups,
+  resolveEndpointCategory
+} from './helpers/tydom';
 import {
   TydomAccessoryContext,
   TydomAccessoryUpdateContext,
@@ -14,19 +21,7 @@ import {
   TydomGroupsResponse,
   TydomMetaResponse
 } from './typings/tydom';
-import {TydomAccessoryUpdateType} from './utils/accessory';
-import {stringIncludes} from './utils/array';
-import assert from './utils/assert';
-import {chalkJson, chalkNumber, chalkString} from './utils/chalk';
-import debug from './utils/debug';
-import {Categories} from './utils/hap';
-import {decode} from './utils/hash';
-import {
-  asyncWait,
-  getEndpointDetailsFromMeta,
-  getEndpointGroupIdFromGroups,
-  resolveEndpointCategory
-} from './utils/tydom';
+import {assert, chalkJson, chalkNumber, chalkString, debug, decode, stringIncludes} from './utils';
 
 export type ControllerDevicePayload = TydomAccessoryContext;
 
@@ -67,7 +62,7 @@ export default class TydomController extends EventEmitter {
         this.handleMessage(message);
       } catch (err) {
         this.log.error(`Encountered an uncaught error while processing message=${chalkJson(message)}"`);
-        this.log.debug(err.stack || err);
+        this.log.debug(`${err instanceof Error ? err.stack : err}`);
       }
     });
     this.client.on('connect', () => {

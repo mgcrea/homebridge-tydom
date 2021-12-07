@@ -1,22 +1,19 @@
-import {Categories} from '../utils/hap';
+import type {PlatformAccessory} from 'homebridge';
 import {find} from 'lodash';
+import TydomClient from 'tydom-client';
+import {URLSearchParams} from 'url';
+import {Categories} from '../config/hap';
 import {
+  AnyTydomDataValue,
   TydomConfigEndpoint,
   TydomEndpointData,
   TydomEndpointDataResponse,
-  TydomMetaElement,
-  TydomMetaResponse,
-  AnyTydomDataValue,
   TydomGroupsResponse,
-  TydomMetaEndpoint
-} from '../typings/tydom';
-import assert from '../utils/assert';
-import TydomClient from 'tydom-client';
-import debug from './debug';
-import {sha256Sync} from './hash';
-import {URLSearchParams} from 'url';
-import type {PlatformAccessory} from 'homebridge';
-import {chalkNumber, chalkString} from './chalk';
+  TydomMetaElement,
+  TydomMetaEndpoint,
+  TydomMetaResponse
+} from '../typings';
+import {assert, chalkNumber, chalkString, debug, sha256Sync} from '../utils';
 
 type DataOperation = {
   promise: Promise<unknown> | null;

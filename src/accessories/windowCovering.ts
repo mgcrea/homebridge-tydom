@@ -1,17 +1,5 @@
 import type {PlatformAccessory} from 'homebridge';
 import {debounce} from 'lodash';
-import TydomController from '../controller';
-import type {TydomAccessoryContext, TydomDeviceShutterData} from '../typings/tydom';
-import {
-  addAccessoryService,
-  asNumber,
-  getAccessoryService,
-  setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  TydomAccessoryUpdateType
-} from '../utils/accessory';
-import {chalkJson, chalkKeyword, chalkNumber, chalkString} from '../utils/chalk';
-import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
@@ -19,8 +7,20 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from '../utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
+} from '../config/hap';
+import TydomController from '../controller';
+import {
+  addAccessoryService,
+  getAccessoryService,
+  setupAccessoryIdentifyHandler,
+  setupAccessoryInformationService,
+  TydomAccessoryUpdateType
+} from '../helpers/accessory';
+import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
+import type {TydomAccessoryContext, TydomDeviceShutterData} from '../typings/tydom';
+import {asNumber} from '../utils';
+import {chalkJson, chalkKeyword, chalkNumber, chalkString} from '../utils/chalk';
+import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
 
 // const getReciprocalPositionForValue = (position: number): number => {
 //   if (position === 0 || position === 100) {
@@ -79,7 +79,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
         debugGetResult(CurrentPosition, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .getValue();
@@ -116,7 +116,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
         debugGetResult(CurrentPosition, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .getValue();
@@ -132,7 +132,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
         debugGetResult(CurrentPosition, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
@@ -147,7 +147,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
         debugSetResult(TargetPosition, service, value, nextValue);
         callback();
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .getValue();

@@ -1,8 +1,27 @@
 import type {PlatformAccessory} from 'homebridge';
 import {get} from 'lodash';
 import {HOMEBRIDGE_TYDOM_PIN} from '../config/env';
+import {
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicValue,
+  NodeCallback,
+  Service
+} from '../config/hap';
 import locale from '../config/locale';
 import TydomController, {ControllerDevicePayload, ControllerUpdatePayload} from '../controller';
+import {
+  addAccessoryService,
+  addAccessoryServiceWithSubtype,
+  getAccessoryService,
+  getAccessoryServiceWithSubtype,
+  SECURITY_SYSTEM_SENSORS,
+  setupAccessoryIdentifyHandler,
+  setupAccessoryInformationService,
+  TydomAccessoryUpdateType
+} from '../helpers/accessory';
+import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
 import type {
   SecuritySystemAlarmEvent,
   SecuritySystemLabelCommandResult,
@@ -12,21 +31,9 @@ import type {
   TydomDeviceSecuritySystemData,
   TydomDeviceSecuritySystemZoneState
 } from '../typings/tydom';
+import {asNumber, assert, chalkJson, chalkKeyword, decode, sameArrays} from '../utils';
 import {
-  addAccessoryService,
-  addAccessoryServiceWithSubtype,
-  asNumber,
-  getAccessoryService,
-  getAccessoryServiceWithSubtype,
-  SECURITY_SYSTEM_SENSORS,
-  setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  TydomAccessoryUpdateType
-} from '../utils/accessory';
-import {sameArrays} from '../utils/array';
-import assert from '../utils/assert';
-import {chalkJson, chalkKeyword} from '../utils/chalk';
-import debug, {
+  debug,
   debugAddSubService,
   debugGet,
   debugGetResult,
@@ -34,16 +41,6 @@ import debug, {
   debugSetResult,
   debugSetUpdate
 } from '../utils/debug';
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  Service
-} from '../utils/hap';
-import {decode} from '../utils/hash';
-import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
 
 type ZoneAliases = {
   stay?: number[];
@@ -138,7 +135,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         debugGetResult(SecuritySystemCurrentState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .getValue();
@@ -153,7 +150,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         debugGetResult(StatusTampered, service, systAutoProtect);
         callback(null, systAutoProtect);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .getValue();
@@ -168,7 +165,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         debugGetResult(SecuritySystemTargetState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
@@ -231,7 +228,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         debugGetResult(ContactSensorState, systOpenIssueService, systOpenIssue);
         callback(null, systOpenIssue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     });
   systOpenIssueService.getCharacteristic(Characteristic.StatusActive).setValue(true);
@@ -259,7 +256,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
         debugGetResult(ContactSensorState, alarmSOSService, alarmSOS);
         callback(null, alarmSOS);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     });
   alarmSOSService.getCharacteristic(Characteristic.StatusActive).setValue(true);
@@ -305,7 +302,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
           debugGetResult(On, zoneService, nextValue);
           callback(null, nextValue);
         } catch (err) {
-          callback(err);
+          callback(err as Error);
         }
       })
       .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {

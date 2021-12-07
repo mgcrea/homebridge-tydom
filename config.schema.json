@@ -25,6 +25,12 @@
         "required": true,
         "default": ""
       },
+      "debug": {
+        "title": "Enable debug",
+        "type": "boolean",
+        "required": false,
+        "default": true
+      },
       "settings": {
         "description": "Device settings",
         "type": "object",

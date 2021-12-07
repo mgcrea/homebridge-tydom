@@ -15,9 +15,10 @@ import {
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
-} from '../utils/accessory';
+} from '../helpers/accessory';
 import {chalkString} from '../utils/chalk';
-import debug, {
+import {
+  debug,
   debugAddSubService,
   debugGet,
   debugGetResult,
@@ -33,8 +34,8 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service
-} from '../utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from '../utils/tydom';
+} from '../config/hap';
+import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
 
 export const setupThermostat = (accessory: PlatformAccessory, controller: TydomController): void => {
   const {context} = accessory;
@@ -66,7 +67,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         debugGetResult(CurrentHeatingCoolingState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .getValue();
@@ -87,7 +88,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         debugGetResult(TargetHeatingCoolingState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
@@ -108,7 +109,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
           .updateValue(shouldHeat ? CurrentHeatingCoolingState.HEAT : CurrentHeatingCoolingState.OFF);
         callback();
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     });
 
@@ -122,7 +123,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         debugGetResult(CurrentTemperature, service, temperature);
         callback(null, temperature);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .getValue();
@@ -137,7 +138,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         debugGetResult(TargetTemperature, service, setpoint);
         callback(null, setpoint);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
@@ -152,7 +153,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
         debugSetResult(TargetTemperature, service, value);
         callback();
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     });
 
@@ -193,7 +194,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
           debugGetResult(On, absenceModeService, nextValue);
           callback(null, nextValue);
         } catch (err) {
-          callback(err);
+          callback(err as Error);
         }
       })
       .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
@@ -209,7 +210,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
           debugSetResult(On, absenceModeService, value, tydomValue);
           callback();
         } catch (err) {
-          callback(err);
+          callback(err as Error);
         }
       });
   }
@@ -243,7 +244,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
               debugGetResult(On, thermicLevelService, nextValue);
               callback(null, nextValue);
             } catch (err) {
-              callback(err);
+              callback(err as Error);
             }
           })
           .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
@@ -265,7 +266,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
                   service.updateCharacteristic(On, false);
                 });
             } catch (err) {
-              callback(err);
+              callback(err as Error);
             }
           });
         return {value: thermicLevelValue, service: thermicLevelService};

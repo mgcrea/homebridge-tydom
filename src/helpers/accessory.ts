@@ -10,13 +10,10 @@ import {setupThermostat, updateThermostat} from '../accessories/thermostat';
 import {setupWindowCovering, updateWindowCovering} from '../accessories/windowCovering';
 import TydomController from '../controller';
 import {TydomAccessoryContext} from '../typings/tydom';
-import assert from '../utils/assert';
-import debug from '../utils/debug';
-import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics} from '../utils/hap';
+import {assert, debug} from '../utils';
+import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics} from '../config/hap';
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
-
-export const asNumber = (maybeNumber: unknown): number => parseInt(`${maybeNumber}`, 10);
 
 export type ServiceClass = WithUUID<typeof Service>;
 

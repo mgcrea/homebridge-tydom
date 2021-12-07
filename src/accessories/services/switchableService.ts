@@ -1,16 +1,16 @@
 import type {PlatformAccessory, Service} from 'homebridge';
-import TydomController from '../../controller';
-import type {TydomAccessoryContext, TydomEndpointData} from '../../typings/tydom';
-import {addAccessoryService, getAccessoryService, ServiceClass} from '../../utils/accessory';
-import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from '../../utils/debug';
 import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback
-} from '../../utils/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from '../../utils/tydom';
+} from '../../config/hap';
+import TydomController from '../../controller';
+import {addAccessoryService, getAccessoryService, ServiceClass} from '../../helpers/accessory';
+import {getTydomDataPropValue, getTydomDeviceData} from '../../helpers/tydom';
+import type {TydomAccessoryContext, TydomEndpointData} from '../../typings/tydom';
+import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from '../../utils/debug';
 
 export const addAccessorySwitchableService = (
   accessory: PlatformAccessory,
@@ -35,7 +35,7 @@ export const addAccessorySwitchableService = (
         debugGetResult(On, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
@@ -51,7 +51,7 @@ export const addAccessorySwitchableService = (
         debugSetResult(On, service, value, tydomValue);
         callback();
       } catch (err) {
-        callback(err);
+        callback(err as Error);
       }
     });
 
