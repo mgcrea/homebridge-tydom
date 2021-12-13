@@ -66,7 +66,7 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
       });
     },
     250,
-    {leading: true, trailing: false}
+    {leading: true, trailing: true}
   );
 
   service

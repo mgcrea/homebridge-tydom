@@ -65,7 +65,7 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
       });
     },
     15,
-    {leading: true, trailing: false}
+    {leading: true, trailing: true}
   );
 
   service
