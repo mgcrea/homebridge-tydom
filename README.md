@@ -77,7 +77,7 @@
 
 Your username is the MAC Address of your local Tydom hardware, it should be `001A25` + your 6-character home ID that you can find in the mobile app.
 
-For your password, you can also use an environment variable `HOMEBRIDGE_TYDOM_PASSWORD` with the base64 encoded value of your password (might be safer than having it inside your `config.json`).
+For your password, you can also use an environment variable `HOMEBRIDGE_TYDOM_PASSWORD` with the base64 encoded value of your password.
 
 > Example: `HOMEBRIDGE_TYDOM_PASSWORD=Zm9vYmFyYmF6` for a `foobarbaz` password (`echo -n "foobarbaz" | base64`)
 
@@ -85,7 +85,7 @@ For your password, you can also use an environment variable `HOMEBRIDGE_TYDOM_PA
 
 #### SecuritySystem
 
-You can also manage your TYXAL+ security system from HomeKit, but it requires your alarm pin code:
+You can also manage your TYXAL+ security system from HomeKit (but it requires your alarm pin code):
 
 As HomeKit security system has 3 active levels: `stay`, `night`, `away` you can configure which zones are linked to these active levels (`away` is by default every zones).
 
@@ -202,7 +202,7 @@ It is relatively easy to add new hardware so don't hesitate to create a new issu
 You can also use your local tydom IP (eg `192.168.0.X`) for `hostname`, however:
 
 - You must set environment var `NODE_TLS_REJECT_UNAUTHORIZED=0` to interact with the self-signed certificate.
-- Tydom 2.0 current firmware does not seem to support multiple local clients, so you would end up locking you away from the mobile app.
+- Tydom 2.0 firmware can sometimes have trouble dealing multiple local clients, locking you away from the mobile app.
 
 ### Configurations
 
