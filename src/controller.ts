@@ -120,7 +120,7 @@ export default class TydomController extends EventEmitter {
   }
   async scan(): Promise<void> {
     const {hostname} = this.config;
-    debug(`Scaning devices from hostname=${chalkString(hostname)}...`);
+    this.log.info(`Scaning devices from hostname=${chalkString(hostname)}...`);
     const {
       settings = {},
       includedDevices = [],
@@ -138,7 +138,7 @@ export default class TydomController extends EventEmitter {
       const deviceSettings = settings[deviceId] || {};
       const categoryFromSettings = deviceSettings.category as Categories | undefined;
       // @TODO resolve endpoint productType
-      debug(
+      this.log.info(
         `Found new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
           deviceId
         )} and endpointId=${chalkNumber(endpointId)}`
@@ -162,7 +162,7 @@ export default class TydomController extends EventEmitter {
         return;
       }
       if (!this.devices.has(deviceId)) {
-        debug(
+        this.log.info(
           `Adding new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
             deviceId
           )} and endpointId=${chalkNumber(endpointId)}`

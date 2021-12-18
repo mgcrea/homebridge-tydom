@@ -9,7 +9,7 @@ import TydomController, {
 import {triggerWebhook, Webhook} from './helpers';
 import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './helpers/accessory';
 import {TydomAccessoryContext} from './typings/tydom';
-import {assert, chalkNumber, enableDebug} from './utils';
+import {assert, chalkKeyword, chalkNumber, chalkString, enableDebug} from './utils';
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
@@ -73,10 +73,16 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
   }
   async handleControllerDevice(context: ControllerDevicePayload): Promise<void> {
-    const {name, category, accessoryId} = context;
+    const {name, deviceId, category, accessoryId} = context;
     const id = this.api.hap.uuid.generate(accessoryId);
-    this.log.info(`Found new tydom device named="${name}" with id="${id}"`);
-    this.log.debug(`Tydom device="${id}" context="${JSON.stringify(context)}"`);
+    this.log.info(
+      `Found new tydom device named=${chalkString(name)} with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(
+        id
+      )})`
+    );
+    this.log.debug(
+      `Tydom with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(id)}) context="${JSON.stringify(context)}"`
+    );
     // Prevent automatic cleanup
     this.cleanupAccessoriesIds.delete(id);
     if (this.accessories.has(id)) {
