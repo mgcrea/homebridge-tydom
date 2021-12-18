@@ -19,17 +19,13 @@
     "start:node": "NODE_TLS_REJECT_UNAUTHORIZED=0 NODE_PATH=src/ ts-node .",
     "start:watch": "nodemon --ext \"ts,tsx\" --watch \"lib/\" --exec \"yarn start\"",
     "start:prod": "yarn spec:watch",
-    "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
-    "test": "yarn pretty && yarn lint",
-    "spec": "NODE_TLS_REJECT_UNAUTHORIZED=0 CI=true jest --runInBand --colors --passWithNoTests",
-    "spec:watch": "yarn spec --watch",
-    "spec:coverage": "yarn spec --coverage",
-    "lint": "eslint --ext .ts src/",
-    "pretty": "prettier --check '{src,test}/**/*.ts'",
-    "pretty:fix": "prettier --write '{src,test}/**/*.ts'",
-    "typecheck": "tsc --noEmit",
     "build": "tsc --build",
-    "prepare": "yarn build"
+    "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
+    "lint": "eslint src/ stories/",
+    "prettycheck": "prettier --check src/ stories/",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run lint && npm run prettycheck && npm run typecheck",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "chalk": "^4.1.1",

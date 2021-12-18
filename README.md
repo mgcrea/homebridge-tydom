@@ -21,6 +21,23 @@
     <img src="https://codecov.io/gh/mgcrea/homebridge-tydom/branch/master/graph/badge.svg" alt="Homebridge Tydom Code Coverage" />
   </a>
 </p>
+<p align="center">
+  <a href="https://www.npmjs.com/package/homebridge-tydom">
+    <img src="https://img.shields.io/npm/v/homebridge-tydom.svg?style=for-the-badge" alt="npm version" />
+  </a>
+  <!-- <a href="https://www.npmjs.com/package/homebridge-tydom">
+    <img src="https://img.shields.io/npm/dt/homebridge-tydom.svg?style=for-the-badge" alt="npm total downloads" />
+  </a> -->
+  <a href="https://www.npmjs.com/package/homebridge-tydom">
+    <img src="https://img.shields.io/npm/dm/homebridge-tydom.svg?style=for-the-badge" alt="npm monthly downloads" />
+  </a>
+  <a href="https://www.npmjs.com/package/homebridge-tydom">
+    <img src="https://img.shields.io/npm/l/homebridge-tydom.svg?style=for-the-badge" alt="npm license" />
+  </a>
+  <a href="https://github.com/mgcrea/antd-hook-form/actions/workflows/main.yml">
+    <img src="https://img.shields.io/github/workflow/status/mgcrea/antd-hook-form/main?style=for-the-badge" alt="github main workflow" />
+  </a>
+</p>
 
 ---
 
