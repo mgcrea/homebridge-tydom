@@ -4,6 +4,9 @@
   "description": "Homebridge plugin to manage Tydom devices by Delta Dore",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "bin": {
+    "homebridge-tydom": "./lib/bin/cli.js"
+  },
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "repository": "github:mgcrea/homebridge-tydom",
   "license": "MIT",

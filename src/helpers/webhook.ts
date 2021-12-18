@@ -39,10 +39,11 @@ export const asDiscordPayload = ({level, message}: WebhookPayload): DiscordPaylo
 export const triggerWebhook = async (webhook: Webhook, {message, level = 'info'}: WebhookPayload): Promise<void> => {
   const {url, type} = webhook;
   switch (type) {
-    case 'discord':
+    case 'discord': {
       const res = await postJson({url, json: asDiscordPayload({message, level})});
       console.dir({res});
       break;
+    }
     default:
       break;
   }

@@ -167,7 +167,7 @@ export const updateWindowCovering = (
   if (type === 'cdata') {
     updates.forEach((update) => {
       const {values} = update;
-      const {event} = values as {event: any};
+      const {event} = values as {event: unknown};
       debug(`New ${chalkKeyword('WindowCovering')} event=${chalkJson(event)}`);
     });
     return;

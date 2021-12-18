@@ -37,7 +37,7 @@ export const addAccessoryService = (
   accessory: PlatformAccessory,
   service: ServiceClass,
   name: string,
-  removeExisting: boolean = false
+  removeExisting = false
 ): Service => {
   const existingService = accessory.getService(service);
   if (existingService) {
@@ -54,7 +54,7 @@ export const addAccessoryServiceWithSubtype = (
   service: ServiceClass,
   name: string,
   subtype: string,
-  removeExisting: boolean = false
+  removeExisting = false
 ): Service => {
   const existingService = accessory.getServiceById(service, subtype);
   if (existingService) {

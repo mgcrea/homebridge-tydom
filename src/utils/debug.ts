@@ -1,7 +1,7 @@
 import console from 'console';
 import createDebug from 'debug';
 import chalk from 'chalk';
-import {chalkString, chalkKeyword} from './chalk.js';
+import {chalkString, chalkKeyword} from './chalk';
 import {Characteristic} from '../config/hap';
 import type {PlatformAccessory, Service} from 'homebridge';
 

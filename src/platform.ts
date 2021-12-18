@@ -31,7 +31,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   controller?: TydomController;
   api: Homebridge;
   config: TydomPlatformConfig;
-  disabled: boolean = false;
+  disabled = false;
   log: Logging;
 
   constructor(log: Logging, config: PlatformConfig, api: Homebridge) {
