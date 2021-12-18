@@ -21,8 +21,8 @@
     "start:prod": "yarn spec:watch",
     "build": "tsc --build",
     "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
-    "lint": "eslint src/ stories/",
-    "prettycheck": "prettier --check src/ stories/",
+    "lint": "eslint src/",
+    "prettycheck": "prettier --check src/",
     "typecheck": "tsc --noEmit",
     "test": "npm run lint && npm run prettycheck && npm run typecheck",
     "prepare": "npm run build"
