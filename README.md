@@ -12,9 +12,9 @@
   <a href="https://www.npmjs.com/package/homebridge-tydom">
     <img src="https://img.shields.io/npm/v/homebridge-tydom.svg?style=for-the-badge" alt="npm version" />
   </a>
-  <!-- <a href="https://www.npmjs.com/package/homebridge-tydom">
+  <a href="https://www.npmjs.com/package/homebridge-tydom">
     <img src="https://img.shields.io/npm/dt/homebridge-tydom.svg?style=for-the-badge" alt="npm total downloads" />
-  </a> -->
+  </a>
   <a href="https://www.npmjs.com/package/homebridge-tydom">
     <img src="https://img.shields.io/npm/dm/homebridge-tydom.svg?style=for-the-badge" alt="npm monthly downloads" />
   </a>
