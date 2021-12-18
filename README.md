@@ -21,8 +21,8 @@
   <a href="https://www.npmjs.com/package/homebridge-tydom">
     <img src="https://img.shields.io/npm/l/homebridge-tydom.svg?style=for-the-badge" alt="npm license" />
   </a>
-  <a href="https://github.com/mgcrea/antd-hook-form/actions/workflows/main.yml">
-    <img src="https://img.shields.io/github/workflow/status/mgcrea/antd-hook-form/main?style=for-the-badge" alt="github main workflow" />
+  <a href="https://github.com/mgcrea/homebridge-tydom/actions/workflows/main.yml">
+    <img src="https://img.shields.io/github/workflow/status/mgcrea/homebridge-tydom/main?style=for-the-badge" alt="github main workflow" />
   </a>
 </p>
 
