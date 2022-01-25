@@ -11,7 +11,6 @@ const main = async () => {
   switch (action) {
     case 'dump': {
       const stdin = readFileSync(process.stdin.fd);
-      console.dir({stdin});
       const dump = JSON.parse(stdin.toString('utf8'));
       const allDevicesConfig = dump['/configs/file'] as TydomConfigResponse;
       const allDevicesMeta = dump['/devices/meta'] as TydomMetaResponse;
