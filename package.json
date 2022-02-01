@@ -36,7 +36,7 @@
     "fakegato-history": "^0.6.3",
     "lodash": "^4.17.21",
     "source-map-support": "^0.5.21",
-    "tydom-client": "^0.13.2"
+    "tydom-client": "^0.13.3"
   },
   "devDependencies": {
     "@tsconfig/node10": "^1.0.8",
