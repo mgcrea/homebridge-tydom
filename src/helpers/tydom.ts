@@ -135,7 +135,8 @@ const LEGACY_SUPPORTED_CATEGORIES_MAP: Record<string, Categories> = {
   hvac: Categories.THERMOSTAT,
   light: Categories.LIGHTBULB,
   shutter: Categories.WINDOW_COVERING,
-  window: Categories.WINDOW
+  window: Categories.WINDOW,
+  plug: Categories.OUTLET
 };
 
 const ENDPOINTS_SIGNATURES_CATEGORIES: Record<string, Categories> = {
@@ -154,7 +155,8 @@ const ENDPOINTS_SIGNATURES_CATEGORIES: Record<string, Categories> = {
   'shutter:c3fe8e2afa864e1a7a5c6676b4287a7b2f2a886a466baec3df8a1ec4f898ad6c': Categories.WINDOW_COVERING, // @maaxleop
   'window:fb935867933d89b3058f09384f76fd63f3defb18cfb3172f60fa9f4f237f748b': Categories.WINDOW, // @mgcrea (MDO)
   'others:449e2a60377094cde10224cee91d378fb0ae373ae6ceea0ac2cbc1ed011bffa7': Categories.LIGHTBULB, // @diegomarino (TYXIA 4600)
-  'hvac:16804a9994bce28275150db329a9c0b931ef7f20608c1a3d2ff248f58569f0d3': Categories.SENSOR // @D-Roch (TYBOX 2020 Wt)
+  'hvac:16804a9994bce28275150db329a9c0b931ef7f20608c1a3d2ff248f58569f0d3': Categories.SENSOR, // @D-Roch (TYBOX 2020 Wt)
+  'plug:2534c497ff8fb013a88da28d341adff5bc0ba77e1fc8ea8dcb8b8f1c9d62ce19': Categories.SENSOR // @Neo33ASM (Easy Plug)
 };
 
 export const resolveEndpointCategory = ({firstUsage, metadata}: ResolveEndpointCategoryOptions): Categories | null => {

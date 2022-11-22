@@ -12,6 +12,7 @@ import TydomController from '../controller';
 import {TydomAccessoryContext} from '../typings/tydom';
 import {assert, debug} from '../utils';
 import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics} from '../config/hap';
+import {setupOutlet, updateOutlet} from '../accessories/outlet';
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
@@ -73,6 +74,8 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
   switch (category) {
     case Categories.LIGHTBULB:
       return setupLightbulb;
+    case Categories.OUTLET:
+      return setupOutlet;
     case Categories.THERMOSTAT:
       return setupThermostat;
     case Categories.FAN:
@@ -109,6 +112,8 @@ export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): Tydom
   switch (category) {
     case Categories.LIGHTBULB:
       return updateLightbulb;
+    case Categories.OUTLET:
+      return updateOutlet;
     case Categories.THERMOSTAT:
       return updateThermostat;
     case Categories.FAN:
