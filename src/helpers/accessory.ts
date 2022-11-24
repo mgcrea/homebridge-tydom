@@ -1,7 +1,7 @@
 import type {PlatformAccessory, Service, WithUUID} from 'homebridge';
 import {setupContactSensor, updateContactSensor} from '../accessories/contactSensor';
 import {setupFan, updateFan} from '../accessories/fan';
-import {setupGarageDoorOpener} from '../accessories/garageDoorOpener';
+import {setupGarageDoorOpener, updateGarageDoorOpener} from '../accessories/garageDoorOpener';
 import {setupLightbulb, updateLightbulb} from '../accessories/lightbulb';
 import {setupSecuritySystem, updateSecuritySystem} from '../accessories/securitySystem';
 import {setupSecuritySystemSensors, updateSecuritySystemSensors} from '../accessories/securitySystemSensors';
@@ -119,9 +119,7 @@ export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): Tydom
     case Categories.FAN:
       return updateFan;
     case Categories.GARAGE_DOOR_OPENER:
-      return () => {
-        // no-op
-      };
+      return updateGarageDoorOpener;
     case Categories.WINDOW_COVERING:
       return updateWindowCovering;
     case Categories.SECURITY_SYSTEM:
