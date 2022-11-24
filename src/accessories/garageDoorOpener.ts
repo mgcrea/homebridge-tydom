@@ -153,10 +153,6 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
     })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet(TargetDoorState, service, value);
-      if (!value) {
-        callback();
-        return;
-      }
       try {
         debugSetResult(TargetDoorState, service, value);
         const targetDoorState = asNumber(value);
