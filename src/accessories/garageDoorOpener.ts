@@ -119,6 +119,10 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
   };
 
   // Add the actual accessory Service
+  const legacyService = accessory.getService(Service.Switch);
+  if (legacyService) {
+    accessory.removeService(legacyService);
+  }
   const service = addAccessoryService(accessory, Service.GarageDoorOpener, `${accessory.displayName}`, true);
 
   service
