@@ -1,3 +1,4 @@
+import {OutletInUse} from 'hap-nodejs/dist/lib/definitions';
 import {
   CharacteristicEventTypes,
   CharacteristicSetCallback,
@@ -5,13 +6,15 @@ import {
   NodeCallback,
   PlatformAccessory
 } from 'homebridge';
+import {toNumber} from 'lodash';
 import {getTydomDataPropValue, getTydomDeviceData} from 'src/helpers/tydom';
 import {TydomAccessoryContext} from 'src/typings';
-import {debugGet, debugGetResult, debugSet, debugSetResult} from 'src/utils';
+import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from 'src/utils';
 import {Characteristic, Service} from '../config/hap';
 import TydomController from '../controller';
 import {
   addAccessoryService,
+  getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from '../helpers/accessory';
@@ -58,12 +61,48 @@ export const setupOutlet = (accessory: PlatformAccessory<TydomAccessoryContext>,
         callback(err as Error);
       }
     });
+
+  service
+    .getCharacteristic(OutletInUse)
+    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      debugGet(OutletInUse, service);
+      try {
+        const data = await getTydomDeviceData(client, {deviceId, endpointId});
+        const energyInstantTotElecP = getTydomDataPropValue<number>(data, 'energyInstantTotElecP');
+        const nextValue = energyInstantTotElecP > 0;
+        debugGetResult(OutletInUse, service, nextValue);
+        callback(null, nextValue);
+      } catch (err) {
+        callback(err as Error);
+      }
+    });
 };
 
 export const updateOutlet = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
-  controller: TydomController,
+  _controller: TydomController,
   updates: Record<string, unknown>[]
 ): void => {
-  updateAccessorySwitchableService(accessory, controller, updates, Service.Outlet);
+  updates.forEach((update) => {
+    const {name, value} = update;
+    const {On} = Characteristic;
+    switch (name) {
+      case 'level': {
+        const service = getAccessoryService(accessory, Service.Outlet);
+        const nextValue = value === 'ON';
+        debugSetUpdate(On, service, nextValue);
+        service.updateCharacteristic(On, nextValue);
+        return;
+      }
+      case 'energyInstantTotElecP': {
+        const service = getAccessoryService(accessory, Service.Outlet);
+        const nextValue = toNumber(value) > 0;
+        debugSetUpdate(OutletInUse, service, nextValue);
+        service.updateCharacteristic(OutletInUse, nextValue);
+        return;
+      }
+      default:
+        return;
+    }
+  });
 };
