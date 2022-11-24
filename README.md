@@ -213,8 +213,9 @@ You can override categories of devices (eg. some light switch used to manage a f
 }
 ```
 
-> `3` being the `Fan` number.
-> `8` being the `Switch` number.
+> `3` being the `Categories.FAN` number.
+
+You can find the [global list here](https://github.com/homebridge/HAP-NodeJS/blob/v0.11.0/src/lib/Accessory.ts#L87)
 
 ### Supported hardware
 
