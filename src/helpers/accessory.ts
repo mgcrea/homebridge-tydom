@@ -134,7 +134,7 @@ export const getTydomAccessoryDataUpdate = <T extends TydomAccessoryContext<any,
     case Categories.GARAGE_DOOR_OPENER:
       return updateGarageDoorOpener;
     case Categories.SWITCH:
-      return context.settings?.trigger ? updateSwitch : updateTriggerSwitch;
+      return context.settings?.trigger ? updateTriggerSwitch : updateSwitch;
     case Categories.WINDOW_COVERING:
       return updateWindowCovering;
     case Categories.SECURITY_SYSTEM:
