@@ -1,4 +1,3 @@
-import {OutletInUse} from 'hap-nodejs/dist/lib/definitions';
 import {
   CharacteristicEventTypes,
   CharacteristicSetCallback,
@@ -18,12 +17,11 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from '../helpers/accessory';
-import {updateAccessorySwitchableService} from './services/switchableService';
 
 export const setupOutlet = (accessory: PlatformAccessory<TydomAccessoryContext>, controller: TydomController): void => {
   const {context} = accessory;
   const {client} = controller;
-  const {On} = Characteristic;
+  const {On, OutletInUse} = Characteristic;
   const {deviceId, endpointId} = context;
 
   setupAccessoryInformationService(accessory, controller);
