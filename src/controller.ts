@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import {EventEmitter} from 'events';
-import type {Categories, Logging} from 'homebridge';
+import {Categories, Logging} from 'homebridge';
 import {get} from 'lodash';
 import TydomClient, {createClient as createTydomClient} from 'tydom-client';
 import {TydomHttpMessage, TydomResponse} from 'tydom-client/lib/utils/tydom';
@@ -43,7 +43,7 @@ export default class TydomController extends EventEmitter {
   public client: TydomClient;
   public config: TydomPlatformConfig;
   public log: Logging;
-  private devices: Map<number, Categories> = new Map();
+  private devices: Map<string, Categories> = new Map();
   private state: Map<string, unknown> = new Map();
   private refreshInterval?: NodeJS.Timeout;
   constructor(log: Logging, config: TydomPlatformConfig) {
@@ -76,9 +76,12 @@ export default class TydomController extends EventEmitter {
       this.emit('disconnect');
     });
   }
-  getAccessoryId(deviceId: number): string {
+  getUniqueId(deviceId: number, endpointId: number): string {
+    return deviceId === endpointId ? `${deviceId}` : `${deviceId}:${endpointId}`;
+  }
+  getAccessoryId(deviceId: number, endpointId: number): string {
     const {username} = this.config;
-    return `tydom:${username.slice(6)}:accessories:${deviceId}`;
+    return `tydom:${username.slice(6)}:accessories:${this.getUniqueId(deviceId, endpointId)}`;
   }
   async connect(): Promise<void> {
     const {hostname, username} = this.config;
@@ -132,6 +135,7 @@ export default class TydomController extends EventEmitter {
     const {endpoints, groups: configGroups} = config;
     endpoints.forEach((endpoint) => {
       const {id_endpoint: endpointId, id_device: deviceId, name: deviceName, first_usage: firstUsage} = endpoint;
+      const uniqueId = this.getUniqueId(deviceId, endpointId);
       const {metadata} = getEndpointDetailsFromMeta(endpoint, meta);
       const groupId = getEndpointGroupIdFromGroups(endpoint, groups);
       const group = groupId ? configGroups.find(({id}) => id === groupId) : undefined;
@@ -161,16 +165,16 @@ export default class TydomController extends EventEmitter {
       if (excludedCategories.length && stringIncludes(excludedCategories, category)) {
         return;
       }
-      if (!this.devices.has(deviceId)) {
+      if (!this.devices.has(uniqueId)) {
         this.log.info(
           `Adding new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
             deviceId
           )} and endpointId=${chalkNumber(endpointId)}`
         );
-        const accessoryId = this.getAccessoryId(deviceId);
+        const accessoryId = this.getAccessoryId(deviceId, endpointId);
         const nameFromSetting = get(settings, `${deviceId}.name`) as string | undefined;
         const name = nameFromSetting || deviceName;
-        this.devices.set(deviceId, category);
+        this.devices.set(uniqueId, category);
         const context: TydomAccessoryContext = {
           name,
           category,
@@ -214,34 +218,37 @@ export default class TydomController extends EventEmitter {
     }
     (body as TydomDeviceDataUpdateBody).forEach((device) => {
       const {id: deviceId, endpoints} = device;
-      if (!this.devices.has(deviceId)) {
+      for (const endpoint of endpoints) {
+        const {id: endpointId, data, cdata} = endpoint;
+        const updates = type === 'data' ? data : cdata;
+        const uniqueId = this.getUniqueId(deviceId, endpointId);
+        if (!this.devices.has(uniqueId)) {
+          debug(
+            `${chalk.bold.yellow('←PUT')}:${chalk.blue('ignored')} for device id=${chalkString(
+              deviceId
+            )} and endpointId=${chalkNumber(endpointId)}`
+          );
+          return;
+        }
+        const category = this.devices.get(uniqueId) ?? Categories.OTHER;
+        const accessoryId = this.getAccessoryId(deviceId, endpointId);
         debug(
-          `${chalk.bold.yellow('←PUT')}:${chalk.blue('ignored')} for device id=${chalkString(
+          `${chalk.bold.green('←PUT')}:${chalk.blue('update')} for deviceId=${chalkNumber(
             deviceId
-          )}, endpoints:\n${chalkJson(endpoints)}`
+          )} and endpointId=${chalkNumber(endpointId)}, updates:\n${chalkJson(updates)}`
         );
-        return;
+        const context: TydomAccessoryUpdateContext = {
+          category,
+          deviceId,
+          endpointId,
+          accessoryId
+        };
+        this.emit('update', {
+          type,
+          updates,
+          context
+        } as ControllerUpdatePayload);
       }
-      const category = this.devices.get(deviceId) as Categories;
-      const {id: endpointId, data, cdata} = endpoints[0];
-      const updates = type === 'data' ? data : cdata;
-      const accessoryId = this.getAccessoryId(deviceId);
-      debug(
-        `${chalk.bold.green('←PUT')}:${chalk.blue('update')} for device id=${chalkString(
-          deviceId
-        )}, updates:\n${chalkJson(updates)}`
-      );
-      const context: TydomAccessoryUpdateContext = {
-        category,
-        deviceId,
-        endpointId,
-        accessoryId
-      };
-      this.emit('update', {
-        type,
-        updates,
-        context
-      } as ControllerUpdatePayload);
     });
   }
 }

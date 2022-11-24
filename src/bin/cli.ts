@@ -15,10 +15,14 @@ const main = async () => {
       const allDevicesConfig = dump['/configs/file'] as TydomConfigResponse;
       const allDevicesMeta = dump['/devices/meta'] as TydomMetaResponse;
       for (const deviceMeta of allDevicesMeta) {
-        const signature = getEndpointSignatureFromMetadata(deviceMeta.endpoints[0].metadata);
-        const config = allDevicesConfig.endpoints.find((item) => item.id_device === deviceMeta.id);
-        const hash = `${config?.first_usage}:${await sha256(signature)}`;
-        console.dir({id: config?.id_device, name: config?.name, signature, hash});
+        for (const endpointMeta of deviceMeta.endpoints) {
+          const signature = getEndpointSignatureFromMetadata(endpointMeta.metadata);
+          const config = allDevicesConfig.endpoints.find(
+            (item) => item.id_device === deviceMeta.id && item.id_endpoint === endpointMeta.id
+          );
+          const hash = `${config?.first_usage}:${await sha256(signature)}`;
+          console.dir({id: `${deviceMeta.id}.${endpointMeta.id}`, name: config?.name, signature, hash});
+        }
       }
       break;
     }
