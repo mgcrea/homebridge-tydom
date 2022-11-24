@@ -1,25 +1,33 @@
-import type {PlatformAccessory} from 'homebridge';
-import {debounce, find} from 'lodash';
-import TydomController from '../controller';
-import {TydomAccessoryContext, TydomEndpointData} from '../typings/tydom';
+import debug from 'debug';
 import {
-  addAccessoryService,
-  getAccessoryService,
-  setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
-} from '../helpers/accessory';
-import {chalkNumber, chalkString} from '../utils/chalk';
-import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
-import {
-  Characteristic,
+  PlatformAccessory,
   CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
   NodeCallback,
-  Service
-} from '../config/hap';
-import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
+  CharacteristicValue,
+  CharacteristicSetCallback
+} from 'homebridge';
+import {find, debounce} from 'lodash';
+import TydomController from 'src/controller';
+import {
+  setupAccessoryInformationService,
+  setupAccessoryIdentifyHandler,
+  addAccessoryService,
+  getAccessoryService
+} from 'src/helpers';
+import {getTydomDeviceData, getTydomDataPropValue} from 'src/helpers/tydom';
+import {TydomAccessoryContext, TydomEndpointData} from 'src/typings';
+import {
+  debugTydomPut,
+  debugGet,
+  debugGetResult,
+  debugSet,
+  debugSetResult,
+  chalkString,
+  chalkNumber,
+  debugSetUpdate
+} from 'src/utils';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
+import {Characteristic, Service} from 'src/config/hap';
 
 type LightbulbSettings = Record<string, never>;
 
