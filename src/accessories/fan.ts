@@ -3,8 +3,9 @@ import TydomController from '../controller';
 import {setupAccessoryIdentifyHandler, setupAccessoryInformationService} from '../helpers/accessory';
 import {Service} from '../config/hap';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
+import type {TydomAccessoryContext} from 'src/typings';
 
-export const setupFan = (accessory: PlatformAccessory, controller: TydomController): void => {
+export const setupFan = (accessory: PlatformAccessory<TydomAccessoryContext>, controller: TydomController): void => {
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   // Add the actual accessory Service
@@ -12,7 +13,7 @@ export const setupFan = (accessory: PlatformAccessory, controller: TydomControll
 };
 
 export const updateFan = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<TydomAccessoryContext>,
   controller: TydomController,
   updates: Record<string, unknown>[]
 ): void => {

@@ -30,7 +30,7 @@ let contactSensorProducts: SecuritySystemProduct[] = [];
 let histoSearchParams: Record<string, string>;
 
 export const setupSecuritySystemSensors = async (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<TydomAccessoryContext>,
   controller: TydomController
 ): Promise<void> => {
   const {context} = accessory;
@@ -95,7 +95,7 @@ export const setupSecuritySystemSensors = async (
 };
 
 export const updateSecuritySystemSensors = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<TydomAccessoryContext>,
   controller: TydomController,
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType

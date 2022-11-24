@@ -22,7 +22,7 @@
     "start:node": "NODE_TLS_REJECT_UNAUTHORIZED=0 NODE_PATH=src/ ts-node .",
     "start:watch": "nodemon --ext \"ts,tsx\" --watch \"lib/\" --exec \"yarn start\"",
     "start:prod": "yarn spec:watch",
-    "build": "tsc --build",
+    "build": "tsc --build  && tsc-alias --project tsconfig.json",
     "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
     "lint": "eslint src/",
     "prettycheck": "prettier --check src/",
@@ -56,6 +56,7 @@
     "nock": "^13.2.9",
     "prettier": "^2.8.0",
     "ts-node": "^10.9.1",
+    "tsc-alias": "^1.7.1",
     "typescript": "^4.9.3"
   }
 }

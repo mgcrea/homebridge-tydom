@@ -27,7 +27,7 @@ export type TydomPlatformConfig = PlatformConfig & {
 
 export default class TydomPlatform implements DynamicPlatformPlugin {
   cleanupAccessoriesIds: Set<string> = new Set();
-  accessories: Map<string, PlatformAccessory> = new Map();
+  accessories: Map<string, PlatformAccessory<TydomAccessoryContext>> = new Map();
   controller?: TydomController;
   api: Homebridge;
   config: TydomPlatformConfig;
@@ -101,7 +101,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const accessory = this.accessories.get(id)!;
-    const tydomAccessoryUpdate = getTydomAccessoryDataUpdate(accessory);
+    const tydomAccessoryUpdate = getTydomAccessoryDataUpdate(accessory, context);
     if (tydomAccessoryUpdate) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       tydomAccessoryUpdate(accessory, this.controller!, updates, type);
@@ -125,27 +125,30 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     id: string,
     category: Categories,
     context: TydomAccessoryContext
-  ): Promise<PlatformAccessory> {
+  ): Promise<PlatformAccessory<TydomAccessoryContext>> {
     const {platformAccessory: PlatformAccessory} = this.api;
     const {group} = context;
     const accessoryName = category === Categories.WINDOW && group ? group.name || name : name;
-    this.log.info(`Creating accessory named="${accessoryName}" with deviceId="${context.deviceId}"`);
-    const accessory = new PlatformAccessory(accessoryName, id, category);
+    this.log.info(`Creating accessory named="${accessoryName}" with id="${id}", deviceId="${context.deviceId}"`);
+    const accessory = new PlatformAccessory<TydomAccessoryContext>(accessoryName, id, category);
     Object.assign(accessory.context, context);
     await this.updateAccessory(accessory, context);
     return accessory;
   }
-  async updateAccessory(accessory: PlatformAccessory, context: TydomAccessoryContext): Promise<void> {
+  async updateAccessory(
+    accessory: PlatformAccessory<TydomAccessoryContext>,
+    context: TydomAccessoryContext
+  ): Promise<void> {
     const {displayName: name, UUID: id} = accessory;
-    this.log.info(`Updating accessory named="${name}" with deviceId="${context.deviceId}"`);
+    this.log.info(`Updating accessory named="${name}" with id="${id}", deviceId="${context.deviceId}"`);
     Object.assign(accessory.context, context);
-    const tydomAccessorySetup = getTydomAccessorySetup(accessory);
+    const tydomAccessorySetup = getTydomAccessorySetup(accessory, context);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     await tydomAccessorySetup(accessory, this.controller!);
     this.api.updatePlatformAccessories([accessory]);
   }
   // Called by homebridge with existing cached accessories
-  configureAccessory(accessory: PlatformAccessory): void {
+  configureAccessory(accessory: PlatformAccessory<TydomAccessoryContext>): void {
     this.log.debug(`Found cached accessory with id="${accessory.UUID}"`);
     this.accessories.set(accessory.UUID, accessory);
   }

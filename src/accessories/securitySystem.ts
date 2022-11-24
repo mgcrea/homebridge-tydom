@@ -84,17 +84,27 @@ const getStateForAlarmData = (alarmData: TydomDeviceSecuritySystemData, zoneAlia
   return SecuritySystemCurrentState.DISARMED;
 };
 
-export const setupSecuritySystem = async (accessory: PlatformAccessory, controller: TydomController): Promise<void> => {
+type SecuritySystemSettings = {
+  aliases?: ZoneAliases;
+  sensors?: boolean;
+  pin?: string;
+};
+type SecuritySystemContext = TydomAccessoryContext<SecuritySystemSettings>;
+
+export const setupSecuritySystem = async (
+  accessory: PlatformAccessory<SecuritySystemContext>,
+  controller: TydomController
+): Promise<void> => {
   const {context} = accessory;
   const {client} = controller;
   const {SecuritySystemTargetState, SecuritySystemCurrentState, StatusTampered, ContactSensorState, On} =
     Characteristic;
 
-  const {deviceId, endpointId, settings} = context as TydomAccessoryContext;
+  const {deviceId, endpointId, settings} = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
-  const aliases = (settings.aliases || {}) as ZoneAliases;
+  const {aliases = {}, pin: settingsPin} = settings;
 
   // Create separate dedicated sensor extra accessory;
   if (settings.sensors !== false) {
@@ -114,7 +124,7 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
   );
   const {zones} = labelResults[0];
   // Pin code check
-  const pin = HOMEBRIDGE_TYDOM_PIN ? decode(HOMEBRIDGE_TYDOM_PIN) : settings.pin;
+  const pin = HOMEBRIDGE_TYDOM_PIN ? decode(HOMEBRIDGE_TYDOM_PIN) : settingsPin;
   if (!pin) {
     controller.log.warn(
       `Missing pin for device securitySystem, add either {"settings": {"${deviceId}": {"pin": "123456"}}} or HOMEBRIDGE_TYDOM_PIN env var (base64 encoded)`
@@ -324,14 +334,14 @@ export const setupSecuritySystem = async (accessory: PlatformAccessory, controll
 };
 
 export const updateSecuritySystem = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<SecuritySystemContext>,
   controller: TydomController,
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType
 ): void => {
   // Relay to separate dedicated sensor extra accessory;
   const {deviceId, endpointId, accessoryId, settings} = accessory.context;
-  const aliases = (settings.aliases || {}) as ZoneAliases;
+  const {aliases = {}} = settings;
   const {SecuritySystemCurrentState, ContactSensorState, On} = Characteristic;
 
   if (settings.sensors !== false) {

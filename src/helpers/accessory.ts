@@ -1,18 +1,20 @@
 import type {PlatformAccessory, Service, WithUUID} from 'homebridge';
+import {setupSwitch, updateSwitch} from 'src/accessories/switch';
+import {setupTriggerSwitch, updateTriggerSwitch} from 'src/accessories/triggerSwitch';
 import {setupContactSensor, updateContactSensor} from '../accessories/contactSensor';
 import {setupFan, updateFan} from '../accessories/fan';
 import {setupGarageDoorOpener, updateGarageDoorOpener} from '../accessories/garageDoorOpener';
 import {setupLightbulb, updateLightbulb} from '../accessories/lightbulb';
+import {setupOutlet, updateOutlet} from '../accessories/outlet';
 import {setupSecuritySystem, updateSecuritySystem} from '../accessories/securitySystem';
 import {setupSecuritySystemSensors, updateSecuritySystemSensors} from '../accessories/securitySystemSensors';
 import {setupTemperatureSensor, updateTemperatureSensor} from '../accessories/temperatureSensor';
 import {setupThermostat, updateThermostat} from '../accessories/thermostat';
 import {setupWindowCovering, updateWindowCovering} from '../accessories/windowCovering';
+import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics} from '../config/hap';
 import TydomController from '../controller';
 import {TydomAccessoryContext} from '../typings/tydom';
 import {assert, debug} from '../utils';
-import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics} from '../config/hap';
-import {setupOutlet, updateOutlet} from '../accessories/outlet';
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
@@ -67,9 +69,15 @@ export const addAccessoryServiceWithSubtype = (
   return accessory.addService(service, name, subtype);
 };
 
-type TydomAccessorySetup = (accessory: PlatformAccessory, controller: TydomController) => void | Promise<void>;
+type TydomAccessorySetup<T extends TydomAccessoryContext> = (
+  accessory: PlatformAccessory<T>,
+  controller: TydomController
+) => void | Promise<void>;
 
-export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAccessorySetup => {
+export const getTydomAccessorySetup = <T extends TydomAccessoryContext<any, any> = TydomAccessoryContext>(
+  accessory: PlatformAccessory<T>,
+  context: T
+): TydomAccessorySetup<T> => {
   const {category} = accessory;
   switch (category) {
     case Categories.LIGHTBULB:
@@ -82,6 +90,8 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
       return setupFan;
     case Categories.GARAGE_DOOR_OPENER:
       return setupGarageDoorOpener;
+    case Categories.SWITCH:
+      return context.settings?.trigger ? setupSwitch : setupTriggerSwitch;
     case Categories.WINDOW_COVERING:
       return setupWindowCovering;
     case Categories.SECURITY_SYSTEM:
@@ -100,14 +110,17 @@ export const getTydomAccessorySetup = (accessory: PlatformAccessory): TydomAcces
 
 export type TydomAccessoryUpdateType = 'data' | 'cdata';
 
-type TydomAccessoryUpdate = (
-  accessory: PlatformAccessory,
+type TydomAccessoryUpdate<T extends TydomAccessoryContext> = (
+  accessory: PlatformAccessory<T>,
   controller: TydomController,
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType
 ) => void | Promise<void>;
 
-export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): TydomAccessoryUpdate => {
+export const getTydomAccessoryDataUpdate = <T extends TydomAccessoryContext<any, any> = TydomAccessoryContext>(
+  accessory: PlatformAccessory<T>,
+  context: T
+): TydomAccessoryUpdate<T> => {
   const {category} = accessory;
   switch (category) {
     case Categories.LIGHTBULB:
@@ -120,6 +133,8 @@ export const getTydomAccessoryDataUpdate = (accessory: PlatformAccessory): Tydom
       return updateFan;
     case Categories.GARAGE_DOOR_OPENER:
       return updateGarageDoorOpener;
+    case Categories.SWITCH:
+      return context.settings?.trigger ? updateSwitch : updateTriggerSwitch;
     case Categories.WINDOW_COVERING:
       return updateWindowCovering;
     case Categories.SECURITY_SYSTEM:

@@ -29,18 +29,27 @@ import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdat
 //   return Math.max(0, 100 - position); // @NOTE might over-shoot
 // };
 
-type State = {
+type WindowCoveringSettings = {
+  invertDirection?: boolean;
+};
+
+type WindowCoveringState = {
   latestPosition: number;
   pendingUpdatedValues: number[];
   lastUpdatedAt: number;
 };
 
-export const setupWindowCovering = (accessory: PlatformAccessory, controller: TydomController): void => {
+type WindowCoveringContext = TydomAccessoryContext<WindowCoveringSettings, WindowCoveringState>;
+
+export const setupWindowCovering = (
+  accessory: PlatformAccessory<WindowCoveringContext>,
+  controller: TydomController
+): void => {
   const {context} = accessory;
   const {client} = controller;
   const {CurrentPosition, TargetPosition, PositionState, HoldPosition} = Characteristic;
 
-  const {deviceId, endpointId, state} = context as TydomAccessoryContext<State>;
+  const {deviceId, endpointId, state} = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   Object.assign(state, {
@@ -154,13 +163,13 @@ export const setupWindowCovering = (accessory: PlatformAccessory, controller: Ty
 };
 
 export const updateWindowCovering = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<WindowCoveringContext>,
   _controller: TydomController,
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType
 ): void => {
   const {context} = accessory;
-  const {state} = context as TydomAccessoryContext<State>;
+  const {state} = context;
   const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
 
   // Process command updates

@@ -8,15 +8,18 @@ import {
   setupAccessoryInformationService
 } from '../helpers/accessory';
 import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
-import {TydomAccessoryContext, TydomEndpointData} from '../typings/tydom';
+import {TydomAccessoryContext, TydomEndpointData} from 'src/typings';
 import {debugGet, debugGetResult, debugSetUpdate} from '../utils/debug';
 
-export const setupContactSensor = (accessory: PlatformAccessory, controller: TydomController): void => {
+export const setupContactSensor = (
+  accessory: PlatformAccessory<TydomAccessoryContext>,
+  controller: TydomController
+): void => {
   const {context} = accessory;
   const {client} = controller;
   const {ContactSensorState} = Characteristic;
 
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
+  const {deviceId, endpointId} = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -39,7 +42,7 @@ export const setupContactSensor = (accessory: PlatformAccessory, controller: Tyd
 };
 
 export const updateContactSensor = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<TydomAccessoryContext>,
   _controller: TydomController,
   updates: Record<string, unknown>[]
 ): void => {

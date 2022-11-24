@@ -1,40 +1,60 @@
-import type {PlatformAccessory} from 'homebridge';
+import debug from 'debug';
 import {
-  Characteristic,
+  PlatformAccessory,
   CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
   NodeCallback,
-  Service
-} from '../config/hap';
-import TydomController from '../controller';
+  CharacteristicValue,
+  CharacteristicSetCallback
+} from 'homebridge';
+import TydomController from 'src/controller';
 import {
-  addAccessoryService,
-  addAccessoryServiceWithSubtype,
-  setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
+  setupAccessoryIdentifyHandler,
+  addAccessoryService,
   TydomAccessoryUpdateType
-} from '../helpers/accessory';
-import type {TydomAccessoryContext} from '../typings/tydom';
-import {waitFor, asNumber} from '../utils/basic';
-import {chalkJson, chalkKeyword, chalkNumber, chalkString} from '../utils/chalk';
-import {debug, debugAddSubService, debugGet, debugGetResult, debugSet, debugSetResult} from '../utils/debug';
+} from 'src/helpers';
+import {TydomAccessoryContext} from 'src/typings';
+import {
+  chalkString,
+  debugGet,
+  debugGetResult,
+  debugSet,
+  debugSetResult,
+  asNumber,
+  chalkNumber,
+  waitFor,
+  chalkKeyword,
+  chalkJson
+} from 'src/utils';
+import {Characteristic, Service} from 'src/config/hap';
 
-type State = {
+type GarageDoorOpenerSettings = {
+  delay?: number;
+  autoCloseDelay?: number;
+};
+type GarageDoorOpenerState = {
   currentDoorState: number;
   targetDoorState: number;
   lastUpdatedAt: number;
   computedPosition: number;
 };
+type GarageDoorOpenerContext = TydomAccessoryContext<GarageDoorOpenerSettings, GarageDoorOpenerState>;
 
-export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
+const DEFAULT_GARAGE_DOOR_DELAY = 20 * 1000;
+
+export const setupGarageDoorOpener = (
+  accessory: PlatformAccessory<GarageDoorOpenerContext>,
+  controller: TydomController
+): void => {
   const {context} = accessory;
   const {client} = controller;
   const {CurrentDoorState, TargetDoorState} = Characteristic;
 
-  const GARAGE_DOOR_DELAY = 20 * 1000;
-  const {deviceId, endpointId, state} = context as TydomAccessoryContext<State>;
-  const assignState = (update: Partial<State>): void => {
+  const {deviceId, endpointId, state, settings} = context;
+
+  const {delay: garageDoorDelay = DEFAULT_GARAGE_DOOR_DELAY, autoCloseDelay} = settings;
+
+  const assignState = (update: Partial<GarageDoorOpenerState>): void => {
     Object.assign(state, update);
   };
 
@@ -128,10 +148,10 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
         return 0;
       }
       case CurrentDoorState.OPENING: {
-        return Math.min(100, lastComputedPosition + 100 * (elapsed / GARAGE_DOOR_DELAY));
+        return Math.min(100, lastComputedPosition + 100 * (elapsed / garageDoorDelay));
       }
       case CurrentDoorState.CLOSING: {
-        return Math.max(0, lastComputedPosition - 100 * (elapsed / GARAGE_DOOR_DELAY));
+        return Math.max(0, lastComputedPosition - 100 * (elapsed / garageDoorDelay));
       }
     }
     return 0;
@@ -211,18 +231,22 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
         // Finally update pending states
         switch (nextCurrentDoorState) {
           case CurrentDoorState.OPENING: {
-            const delay = ((100 - state.computedPosition) * GARAGE_DOOR_DELAY) / 100;
+            const delay = ((100 - state.computedPosition) * garageDoorDelay) / 100;
             // debug(`delay=${chalkNumber(delay)}`);
             try {
               await waitFor(`${deviceId}.pending`, delay);
               assignCurrentDoorState(CurrentDoorState.OPEN);
+              if (autoCloseDelay) {
+                await waitFor(`${deviceId}.pending`, autoCloseDelay);
+                assignCurrentDoorState(CurrentDoorState.CLOSED);
+              }
             } catch (err) {
               // debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
             }
             break;
           }
           case CurrentDoorState.CLOSING: {
-            const delay = (state.computedPosition * GARAGE_DOOR_DELAY) / 100;
+            const delay = (state.computedPosition * garageDoorDelay) / 100;
             // debug(`delay=${chalkNumber(delay)}`);
             try {
               await waitFor(`${deviceId}.pending`, delay);
@@ -266,7 +290,7 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
 };
 
 export const updateGarageDoorOpener = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<GarageDoorOpenerContext>,
   _controller: TydomController,
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType

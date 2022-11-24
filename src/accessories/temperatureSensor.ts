@@ -11,12 +11,15 @@ import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
 import type {TydomAccessoryContext, TydomEndpointData} from '../typings/tydom';
 import {debugGet, debugGetResult, debugSetUpdate} from '../utils/debug';
 
-export const setupTemperatureSensor = (accessory: PlatformAccessory, controller: TydomController): void => {
+export const setupTemperatureSensor = (
+  accessory: PlatformAccessory<TydomAccessoryContext>,
+  controller: TydomController
+): void => {
   const {context} = accessory;
   const {client} = controller;
   const {CurrentTemperature} = Characteristic;
 
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
+  const {deviceId, endpointId} = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -42,7 +45,7 @@ export const setupTemperatureSensor = (accessory: PlatformAccessory, controller:
 };
 
 export const updateTemperatureSensor = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<TydomAccessoryContext>,
   _controller: TydomController,
   updates: Record<string, unknown>[]
 ): void => {

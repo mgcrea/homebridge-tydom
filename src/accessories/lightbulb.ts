@@ -21,18 +21,22 @@ import {
 import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
-type State = {
+type LightbulbSettings = Record<string, never>;
+
+type LightbulbState = {
   latestBrightness: number;
   pendingUpdatedValues: number[];
   lastUpdatedAt: number;
 };
 
-export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomController): void => {
+type LightbulbContext = TydomAccessoryContext<LightbulbSettings, LightbulbState>;
+
+export const setupLightbulb = (accessory: PlatformAccessory<LightbulbContext>, controller: TydomController): void => {
   const {context} = accessory;
   const {client} = controller;
   const {On, Brightness} = Characteristic;
 
-  const {deviceId, endpointId, metadata, state} = context as TydomAccessoryContext<State>;
+  const {deviceId, endpointId, metadata, state} = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   Object.assign(state, {
@@ -128,12 +132,12 @@ export const setupLightbulb = (accessory: PlatformAccessory, controller: TydomCo
 };
 
 export const updateLightbulb = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<LightbulbContext>,
   controller: TydomController,
   updates: Record<string, unknown>[]
 ): void => {
   const {context} = accessory;
-  const {metadata, state} = context as TydomAccessoryContext<State>;
+  const {metadata, state} = context;
   const {On, Brightness} = Characteristic;
   const levelMeta = find(metadata, {name: 'level'});
   // Not dimmable

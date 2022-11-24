@@ -37,13 +37,16 @@ import {
 } from '../config/hap';
 import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
 
-export const setupThermostat = (accessory: PlatformAccessory, controller: TydomController): void => {
+export const setupThermostat = (
+  accessory: PlatformAccessory<TydomAccessoryContext>,
+  controller: TydomController
+): void => {
   const {context} = accessory;
   const {client} = controller;
   const {TargetHeatingCoolingState, CurrentHeatingCoolingState, TargetTemperature, CurrentTemperature, On} =
     Characteristic;
 
-  const {deviceId, endpointId, metadata} = context as TydomAccessoryContext;
+  const {deviceId, endpointId, metadata} = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -275,7 +278,7 @@ export const setupThermostat = (accessory: PlatformAccessory, controller: TydomC
 };
 
 export const updateThermostat = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<TydomAccessoryContext>,
   _controller: TydomController,
   updates: Record<string, unknown>[]
 ): void => {

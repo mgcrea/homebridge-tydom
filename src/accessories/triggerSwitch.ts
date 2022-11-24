@@ -15,25 +15,31 @@ import {
 import type {TydomAccessoryContext} from '../typings/tydom';
 import {debugSet, debugSetResult} from '../utils/debug';
 
-export const setupBasicGarageDoorOpener = (accessory: PlatformAccessory, controller: TydomController): void => {
+type TriggerSwitchSettings = {
+  delay?: number;
+};
+
+type TriggerSwitchContext = TydomAccessoryContext<TriggerSwitchSettings>;
+
+const TRIGGER_SWITCH_DEFAULT_DELAY = 1000;
+
+export const setupTriggerSwitch = (
+  accessory: PlatformAccessory<TriggerSwitchContext>,
+  controller: TydomController
+): void => {
   const {context} = accessory;
   const {client} = controller;
 
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
+  const {deviceId, endpointId, settings} = context;
+  const {delay = TRIGGER_SWITCH_DEFAULT_DELAY} = settings;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.Switch, `${accessory.displayName}`, true);
-  // State
-  // const state = {
-  //   isOn: false
-  // };
+
   service
     .getCharacteristic(Characteristic.On)
-    // .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-    //   callback(null, state.isOn);
-    // })
     .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
       debugSet(Characteristic.On, service, value);
       if (!value) {
@@ -51,10 +57,18 @@ export const setupBasicGarageDoorOpener = (accessory: PlatformAccessory, control
         callback();
         setTimeout(() => {
           service.updateCharacteristic(Characteristic.On, false);
-        }, 1000);
+        }, delay);
       } catch (err) {
         callback(err as Error);
       }
     })
     .updateValue(false);
+};
+
+export const updateTriggerSwitch = (
+  accessory: PlatformAccessory<TriggerSwitchContext>,
+  controller: TydomController,
+  updates: Record<string, unknown>[]
+): void => {
+  // no-op
 };

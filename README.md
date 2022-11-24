@@ -139,6 +139,38 @@ You can optionnaly rename zones (default is `Zone 1`, `Zone 2`, etc.),
 }
 ```
 
+#### GarageDoorOpener
+
+You can customize the default GarageDoorOpener `delay` (defaults to 20 seconds)
+
+Value is in milliseconds:
+
+```json
+{
+  "platforms": [
+    {
+      "settings": {
+        "1529094720": {"delay": 10000} // 10 seconds
+      }
+    }
+  ]
+}
+```
+
+You can also configure an `autoCloseDelay`
+
+```json
+{
+  "platforms": [
+    {
+      "settings": {
+        "1529094720": {"autoCloseDelay": 300000} // 5 minutes
+      }
+    }
+  ]
+}
+```
+
 #### Webhooks
 
 You can specify webhooks in your `config.json` to receive non homekit-dependent notifications.

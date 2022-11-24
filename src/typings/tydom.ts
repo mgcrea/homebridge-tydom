@@ -1,18 +1,20 @@
 import {Categories} from '../config/hap';
 
-export type TydomAccessoryContext<T extends Record<string, unknown> = Record<string, unknown>> = {
-  name: string;
+type UnknownObject = Record<string, unknown>;
+
+export type TydomAccessoryContext<T extends UnknownObject = UnknownObject, U extends UnknownObject = UnknownObject> = {
+  accessoryId: string;
   category: Categories;
-  metadata: TydomMetaElement[];
-  settings: Record<string, unknown>;
   deviceId: number;
   endpointId: number;
-  accessoryId: string;
-  manufacturer?: string;
-  serialNumber?: string;
-  model?: string;
   group?: TydomConfigGroup;
-  state: T;
+  manufacturer?: string;
+  metadata: TydomMetaElement[];
+  model?: string;
+  name: string;
+  serialNumber?: string;
+  settings: T;
+  state: U;
 };
 
 export type TydomAccessoryUpdateContext = Pick<

@@ -1,10 +1,11 @@
 import type {PlatformAccessory} from 'homebridge';
-import {Service} from '../config/hap';
-import TydomController from '../controller';
-import {setupAccessoryIdentifyHandler, setupAccessoryInformationService} from '../helpers/accessory';
+import {Service} from 'src/config/hap';
+import TydomController from 'src/controller';
+import {setupAccessoryIdentifyHandler, setupAccessoryInformationService} from 'src/helpers';
+import {TydomAccessoryContext} from 'src/typings';
 import {addAccessorySwitchableService, updateAccessorySwitchableService} from './services/switchableService';
 
-export const setupSwitch = (accessory: PlatformAccessory, controller: TydomController): void => {
+export const setupSwitch = (accessory: PlatformAccessory<TydomAccessoryContext>, controller: TydomController): void => {
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   // Add the actual accessory Service
@@ -12,7 +13,7 @@ export const setupSwitch = (accessory: PlatformAccessory, controller: TydomContr
 };
 
 export const updateSwitch = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<TydomAccessoryContext>,
   controller: TydomController,
   updates: Record<string, unknown>[]
 ): void => {

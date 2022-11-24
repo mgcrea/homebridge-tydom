@@ -13,7 +13,7 @@ import type {TydomAccessoryContext, TydomEndpointData} from '../../typings/tydom
 import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from '../../utils/debug';
 
 export const addAccessorySwitchableService = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<TydomAccessoryContext>,
   controller: TydomController,
   serviceClass: ServiceClass
 ): Service => {
@@ -21,7 +21,7 @@ export const addAccessorySwitchableService = (
   const {client} = controller;
   const {On} = Characteristic;
 
-  const {deviceId, endpointId} = context as TydomAccessoryContext;
+  const {deviceId, endpointId} = context;
   const service = addAccessoryService(accessory, serviceClass, `${accessory.displayName}`, true);
 
   service
@@ -59,7 +59,7 @@ export const addAccessorySwitchableService = (
 };
 
 export const updateAccessorySwitchableService = (
-  accessory: PlatformAccessory,
+  accessory: PlatformAccessory<TydomAccessoryContext>,
   _controller: TydomController,
   updates: Record<string, unknown>[],
   ServiceClass: ServiceClass
