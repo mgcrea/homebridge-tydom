@@ -83,7 +83,7 @@ export const updateOutlet = (
 ): void => {
   updates.forEach((update) => {
     const {name, value} = update;
-    const {On} = Characteristic;
+    const {On, OutletInUse} = Characteristic;
     switch (name) {
       case 'level': {
         const service = getAccessoryService(accessory, Service.Outlet);
