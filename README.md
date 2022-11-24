@@ -230,6 +230,18 @@ You can also use the following environment variables (base64 encoded values)
 | HOMEBRIDGE_TYDOM_PASSWORD | Tydom password  |
 | HOMEBRIDGE_TYDOM_PIN      | Tyxal+ pin      |
 
+### Help
+
+If you open a new issue, please provide a dump of your tydom configuration using node-tydom-client:
+
+```sh
+npx tydom-client request /configs/file /devices/data /devices/meta /devices/cmeta --file tydom_output.json --username 001A25XXXXXX --password XXXXXX
+```
+
+Will create the file `tydom_output.json` to upload, you can use [https://gist.github.com](gist.github.com).
+
+An homebridge log with [debug enabled](https://github.com/mgcrea/homebridge-tydom#debug) while using the tydom official app (to trace working requests) can also help a lot.
+
 ### Debug
 
 This library uses [debug](https://www.npmjs.com/package/debug) to provide high verbosity logs, just pass the following environment:
