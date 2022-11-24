@@ -10,14 +10,15 @@ import {
 import TydomController from '../controller';
 import {
   addAccessoryService,
+  addAccessoryServiceWithSubtype,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
   TydomAccessoryUpdateType
 } from '../helpers/accessory';
 import type {TydomAccessoryContext} from '../typings/tydom';
 import {waitFor, asNumber} from '../utils/basic';
-import {chalkJson, chalkKeyword, chalkNumber} from '../utils/chalk';
-import {debug, debugGet, debugGetResult, debugSet, debugSetResult} from '../utils/debug';
+import {chalkJson, chalkKeyword, chalkNumber, chalkString} from '../utils/chalk';
+import {debug, debugAddSubService, debugGet, debugGetResult, debugSet, debugSetResult} from '../utils/debug';
 
 type State = {
   currentDoorState: number;
@@ -31,12 +32,30 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
   const {client} = controller;
   const {CurrentDoorState, TargetDoorState} = Characteristic;
 
-  const GARAGE_DOOR_DELAY = 15 * 1000;
+  const GARAGE_DOOR_DELAY = 20 * 1000;
   const {deviceId, endpointId, state} = context as TydomAccessoryContext<State>;
   const assignState = (update: Partial<State>): void => {
     Object.assign(state, update);
   };
+
+  const getDoorStateLabel = (currentDoorState: number) => {
+    switch (currentDoorState) {
+      case CurrentDoorState.OPEN:
+        return 'OPEN';
+      case CurrentDoorState.CLOSED:
+        return 'CLOSED';
+      case CurrentDoorState.OPENING:
+        return 'OPENING';
+      case CurrentDoorState.CLOSING:
+        return 'CLOSING';
+      case CurrentDoorState.STOPPED:
+        return 'STOPPED';
+    }
+    return 'UNKNOWN';
+  };
+
   const assignCurrentDoorState = (currentDoorState: number) => {
+    debug(`assignCurrentDoorState=${chalkString(getDoorStateLabel(currentDoorState))}`);
     Object.assign(state, {currentDoorState});
     service.updateCharacteristic(CurrentDoorState, currentDoorState);
   };
@@ -55,7 +74,7 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
     currentDoorState: CurrentDoorState.CLOSED,
     targetDoorState: TargetDoorState.CLOSED,
     lastUpdatedAt: 0,
-    computedPosition: 0 // 0 <-> GARAGE_DOOR_DELAY
+    computedPosition: 0 // 0 <-> 100%
   });
 
   const getNextCurrentDoorState = (targetDoorState: number) => {
@@ -63,7 +82,7 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
       case CurrentDoorState.OPEN: {
         switch (targetDoorState) {
           case TargetDoorState.CLOSED:
-            return CurrentDoorState.OPENING;
+            return CurrentDoorState.CLOSING;
           case TargetDoorState.OPEN:
             return CurrentDoorState.OPEN;
         }
@@ -74,7 +93,7 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
           case TargetDoorState.CLOSED:
             return CurrentDoorState.CLOSED;
           case TargetDoorState.OPEN:
-            return CurrentDoorState.CLOSING;
+            return CurrentDoorState.OPENING;
         }
         break;
       }
@@ -97,7 +116,7 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
 
   const computeCurrentPosition = (): number => {
     const {lastUpdatedAt, computedPosition: lastComputedPosition, currentDoorState} = state;
-    const elapsed = lastUpdatedAt - Date.now();
+    const elapsed = Date.now() - lastUpdatedAt;
     switch (currentDoorState) {
       case CurrentDoorState.STOPPED: {
         return lastComputedPosition;
@@ -109,10 +128,10 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
         return 0;
       }
       case CurrentDoorState.OPENING: {
-        return Math.min(100, lastComputedPosition + elapsed / GARAGE_DOOR_DELAY);
+        return Math.min(100, lastComputedPosition + 100 * (elapsed / GARAGE_DOOR_DELAY));
       }
       case CurrentDoorState.CLOSING: {
-        return Math.max(0, lastComputedPosition - elapsed / GARAGE_DOOR_DELAY);
+        return Math.max(0, lastComputedPosition - 100 * (elapsed / GARAGE_DOOR_DELAY));
       }
     }
     return 0;
@@ -161,7 +180,9 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
           lastUpdatedAt: Date.now(),
           computedPosition: computeCurrentPosition()
         });
+        // debug(`computedPosition=${chalkNumber(state.computedPosition)}`);
         let nextCurrentDoorState = getNextCurrentDoorState(targetDoorState);
+        // debug(`nextCurrentDoorState=${chalkString(getDoorStateLabel(nextCurrentDoorState))}`);
         if (nextCurrentDoorState === state.currentDoorState) {
           debug(`nextCurrentDoorState=${chalkNumber(nextCurrentDoorState)} === state.currentDoorState`);
           callback();
@@ -169,38 +190,79 @@ export const setupGarageDoorOpener = (accessory: PlatformAccessory, controller: 
         }
         await toggleGarageDoor();
         assignCurrentDoorState(nextCurrentDoorState);
-        callback();
 
         // Handle Stopped state, if we are stopped, wait one second and trigger again to reverse course
         // eg. Stopped -> Closing if target is Closed
         if (nextCurrentDoorState === CurrentDoorState.STOPPED) {
-          await waitFor(1000);
+          await waitFor('stopping', 1000);
           assignState({
             targetDoorState: targetDoorState,
             lastUpdatedAt: Date.now(),
             computedPosition: computeCurrentPosition()
           });
+          // debug(`computedPosition=${chalkNumber(state.computedPosition)}`);
           nextCurrentDoorState = getNextCurrentDoorState(targetDoorState);
+          // debug(`nextCurrentDoorState=${chalkString(getDoorStateLabel(nextCurrentDoorState))}`);
           await toggleGarageDoor();
           assignCurrentDoorState(nextCurrentDoorState);
         }
+        callback();
 
         // Finally update pending states
         switch (nextCurrentDoorState) {
-          case CurrentDoorState.OPENING:
-            await waitFor((100 - state.computedPosition) * GARAGE_DOOR_DELAY);
-            assignCurrentDoorState(CurrentDoorState.OPEN);
+          case CurrentDoorState.OPENING: {
+            const delay = ((100 - state.computedPosition) * GARAGE_DOOR_DELAY) / 100;
+            // debug(`delay=${chalkNumber(delay)}`);
+            try {
+              await waitFor(`${deviceId}.pending`, delay);
+              assignCurrentDoorState(CurrentDoorState.OPEN);
+            } catch (err) {
+              // debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
+            }
             break;
-          case CurrentDoorState.CLOSING:
-            await waitFor(state.computedPosition * GARAGE_DOOR_DELAY);
-            assignCurrentDoorState(CurrentDoorState.CLOSED);
+          }
+          case CurrentDoorState.CLOSING: {
+            const delay = (state.computedPosition * GARAGE_DOOR_DELAY) / 100;
+            // debug(`delay=${chalkNumber(delay)}`);
+            try {
+              await waitFor(`${deviceId}.pending`, delay);
+              assignCurrentDoorState(CurrentDoorState.CLOSED);
+            } catch (err) {
+              // debug(`Aborted CLOSED update with delay=${chalkNumber(delay)}`);
+            }
             break;
+          }
         }
       } catch (err) {
         callback(err as Error);
       }
     })
     .getValue();
+
+  // const switchService = addAccessoryService(accessory, Service.Switch, `${accessory.displayName} Switch`, true);
+  // debugAddSubService(switchService, accessory);
+  // service.addLinkedService(switchService);
+
+  // switchService
+  //   .getCharacteristic(Characteristic.On)
+  //   .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+  //     debugSet(Characteristic.On, service, value);
+  //     if (!value) {
+  //       callback();
+  //       return;
+  //     }
+  //     try {
+  //       await toggleGarageDoor();
+  //       debugSetResult(Characteristic.On, service, value);
+  //       callback();
+  //       setTimeout(() => {
+  //         service.updateCharacteristic(Characteristic.On, false);
+  //       }, 1000);
+  //     } catch (err) {
+  //       callback(err as Error);
+  //     }
+  //   })
+  //   .updateValue(false);
 };
 
 export const updateGarageDoorOpener = (

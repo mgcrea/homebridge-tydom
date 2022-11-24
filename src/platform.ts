@@ -129,7 +129,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     const {platformAccessory: PlatformAccessory} = this.api;
     const {group} = context;
     const accessoryName = category === Categories.WINDOW && group ? group.name || name : name;
-    this.log.info(`Creating accessory named="${accessoryName}" with id="${id}"`);
+    this.log.info(`Creating accessory named="${accessoryName}" with deviceId="${context.deviceId}"`);
     const accessory = new PlatformAccessory(accessoryName, id, category);
     Object.assign(accessory.context, context);
     await this.updateAccessory(accessory, context);
@@ -137,7 +137,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   }
   async updateAccessory(accessory: PlatformAccessory, context: TydomAccessoryContext): Promise<void> {
     const {displayName: name, UUID: id} = accessory;
-    this.log.info(`Updating accessory named="${name}" with id="${id}"`);
+    this.log.info(`Updating accessory named="${name}" with deviceId="${context.deviceId}"`);
     Object.assign(accessory.context, context);
     const tydomAccessorySetup = getTydomAccessorySetup(accessory);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
