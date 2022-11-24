@@ -91,7 +91,7 @@ export const getTydomAccessorySetup = <T extends TydomAccessoryContext<any, any>
     case Categories.GARAGE_DOOR_OPENER:
       return setupGarageDoorOpener;
     case Categories.SWITCH:
-      return context.settings?.trigger ? setupSwitch : setupTriggerSwitch;
+      return context.settings?.trigger ? setupTriggerSwitch : setupSwitch;
     case Categories.WINDOW_COVERING:
       return setupWindowCovering;
     case Categories.SECURITY_SYSTEM:
