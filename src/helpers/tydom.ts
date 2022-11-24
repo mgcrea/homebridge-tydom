@@ -141,22 +141,23 @@ const LEGACY_SUPPORTED_CATEGORIES_MAP: Record<string, Categories> = {
 
 const ENDPOINTS_SIGNATURES_CATEGORIES: Record<string, Categories> = {
   'alarm:0c6e1d33808fa50a0a921502f80d36430dfaeda5abfed2467f9f2b07821e4842': Categories.SECURITY_SYSTEM, // @maaxleop
-  'alarm:aad768ee0367013a974276117fd5ed4834cc26e4d31acc88d35134731331b0e7': Categories.SECURITY_SYSTEM, // @mgcrea.1521931577 (TYXAL+)
   'alarm:6e33f7ee5e62b58f4e888c91a13fd9b9d868f3751cead5ea1252578ba86523a5': Categories.SECURITY_SYSTEM, // @StephanH27.1521931577 (CTX60) #50
+  'alarm:aad768ee0367013a974276117fd5ed4834cc26e4d31acc88d35134731331b0e7': Categories.SECURITY_SYSTEM, // @mgcrea.1521931577 (TYXAL+)
   'awning:48f43ebab20eba438fa9cc2b6ce44311d3cfb01c5be84bf17599d9c152c348d3': Categories.WINDOW_COVERING, // @baschte_(TYXIA 5731)
   'belmDoor:fb935867933d89b3058f09384f76fd63f3defb18cfb3172f60fa9f4f237f748b': Categories.DOOR, // @mgcrea (MDO)
   'conso:16804a9994bce28275150db329a9c0b931ef7f20608c1a3d2ff248f58569f0d3': Categories.SENSOR, // @maaxleop (STE 2000)
-  'gate:83b0912c6fe14622219522922ea0347dcbf86bf9cfd3346a2eca8eac70ca8260': Categories.GARAGE_DOOR_OPENER, // @mgcrea (TYXIA 4620)
   'garage_door:83b0912c6fe14622219522922ea0347dcbf86bf9cfd3346a2eca8eac70ca8260': Categories.GARAGE_DOOR_OPENER, // @Benzoiiit (TYXIA 4620)
-  'hvac:1bab47d1dd7e898b5dc2e9867b14dfb8bc9272c4cb0b5d1221da962d43a6ffb4': Categories.THERMOSTAT, // @mgcrea (RF4890)
+  'gate:83b0912c6fe14622219522922ea0347dcbf86bf9cfd3346a2eca8eac70ca8260': Categories.GARAGE_DOOR_OPENER, // @mgcrea (TYXIA 4620)
+  'hvac:16804a9994bce28275150db329a9c0b931ef7f20608c1a3d2ff248f58569f0d3': Categories.SENSOR, // @D-Roch (TYBOX 2020 Wt)
   'hvac:17f933bec8ed29f9b2a2cd5280fb5b64806cf8a1c064c83950e350f491d7cb9f': Categories.THERMOSTAT, // @Armen85 (RF6600FP) @FIXME
+  'hvac:1bab47d1dd7e898b5dc2e9867b14dfb8bc9272c4cb0b5d1221da962d43a6ffb4': Categories.THERMOSTAT, // @mgcrea (RF4890)
+  'hvac:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855': Categories.SENSOR, // @tanabay27 (Sonde extérieure)
   'light:449e2a60377094cde10224cee91d378fb0ae373ae6ceea0ac2cbc1ed011bffa7': Categories.LIGHTBULB, // @mgcrea (TYXIA 5610, TYXIA 6610)
   'light:fce45085835f4f2790ea3b17d208b5ace34935444d2535e75ba3f0a2ce86de5f': Categories.LIGHTBULB, // @mgcrea (TYXIA 5650)
-  'shutter:c3fe8e2afa864e1a7a5c6676b4287a7b2f2a886a466baec3df8a1ec4f898ad6c': Categories.WINDOW_COVERING, // @maaxleop
-  'window:fb935867933d89b3058f09384f76fd63f3defb18cfb3172f60fa9f4f237f748b': Categories.WINDOW, // @mgcrea (MDO)
   'others:449e2a60377094cde10224cee91d378fb0ae373ae6ceea0ac2cbc1ed011bffa7': Categories.LIGHTBULB, // @diegomarino (TYXIA 4600)
-  'hvac:16804a9994bce28275150db329a9c0b931ef7f20608c1a3d2ff248f58569f0d3': Categories.SENSOR, // @D-Roch (TYBOX 2020 Wt)
-  'plug:2534c497ff8fb013a88da28d341adff5bc0ba77e1fc8ea8dcb8b8f1c9d62ce19': Categories.OUTLET // @Neo33ASM (Easy Plug)
+  'plug:2534c497ff8fb013a88da28d341adff5bc0ba77e1fc8ea8dcb8b8f1c9d62ce19': Categories.OUTLET, // @Neo33ASM (Easy Plug)
+  'shutter:c3fe8e2afa864e1a7a5c6676b4287a7b2f2a886a466baec3df8a1ec4f898ad6c': Categories.WINDOW_COVERING, // @maaxleop
+  'window:fb935867933d89b3058f09384f76fd63f3defb18cfb3172f60fa9f4f237f748b': Categories.WINDOW // @mgcrea (MDO)
 };
 
 export const resolveEndpointCategory = ({firstUsage, metadata}: ResolveEndpointCategoryOptions): Categories | null => {

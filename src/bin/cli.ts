@@ -18,7 +18,7 @@ const main = async () => {
         const signature = getEndpointSignatureFromMetadata(deviceMeta.endpoints[0].metadata);
         const config = allDevicesConfig.endpoints.find((item) => item.id_device === deviceMeta.id);
         const hash = `${config?.first_usage}:${await sha256(signature)}`;
-        console.dir({name: config?.name, signature, hash});
+        console.dir({id: config?.id_device, name: config?.name, signature, hash});
       }
       break;
     }
