@@ -386,7 +386,7 @@ export const updateSecuritySystem = (
 ): void => {
   // Relay to separate dedicated sensor extra accessory;
   const {deviceId, endpointId, accessoryId, settings} = accessory.context;
-  const {aliases = {}} = settings;
+  const {aliases = {}, legacy: isLegacy = false} = settings;
   const {SecuritySystemCurrentState, ContactSensorState, On} = Characteristic;
 
   if (settings.sensors !== false) {
@@ -509,13 +509,17 @@ export const updateSecuritySystem = (
       case 'zone5State':
       case 'zone6State':
       case 'zone7State':
-      case 'zone8State': {
+      case 'zone8State':
+      case 'part1State':
+      case 'part2State':
+      case 'part3State':
+      case 'part4State': {
         const zoneState = value as TydomDeviceSecuritySystemZoneState;
         if (zoneState === 'UNUSED') {
           return;
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const zoneIndex = parseInt(name.match(/zone(\d+)State/)![1], 10) - 1; // @NOTE Adjust for productId starting at 0
+        const zoneIndex = parseInt(name.match(isLegacy ? /part(\d+)State/ : /zone(\d+)State/)![1], 10) - 1; // @NOTE Adjust for productId starting at 0
         const service = getAccessoryServiceWithSubtype(accessory, Service.Switch, `zone_${zoneIndex}`);
         const nextValue = zoneState === 'ON';
         debugSetUpdate(On, service, nextValue);
