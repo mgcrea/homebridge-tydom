@@ -169,12 +169,14 @@ export type SecuritySystemProduct = {
   number?: number;
 };
 
+export type SecuritySystemLabelCommandResultZone = {
+  id: number;
+  nameStd?: string;
+  nameCustom?: string;
+};
+
 export type SecuritySystemLabelCommandResult = {
-  zones: {
-    id: number;
-    nameStd?: string;
-    nameCustom?: string;
-  }[];
+  zones: SecuritySystemLabelCommandResultZone[];
   products: SecuritySystemProduct[];
 };
 

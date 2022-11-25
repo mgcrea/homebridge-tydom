@@ -4,13 +4,14 @@ import {TydomConfigResponse, TydomMetaResponse} from '../typings';
 import {getEndpointSignatureFromMetadata} from '../helpers/tydom';
 import {sha256, sha256Sync} from '../utils';
 
-const [action = 'help', ..._args] = process.argv.slice(2);
+const [action = 'help', ...args] = process.argv.slice(2);
+const [filename] = args;
 
-console.dir({action});
+console.dir({action, args});
 const main = async () => {
   switch (action) {
     case 'dump': {
-      const stdin = readFileSync(process.stdin.fd);
+      const stdin = readFileSync(filename || process.stdin.fd);
       const dump = JSON.parse(stdin.toString('utf8'));
       const allDevicesConfig = dump['/configs/file'] as TydomConfigResponse;
       const allDevicesMeta = dump['/devices/meta'] as TydomMetaResponse;
@@ -27,7 +28,7 @@ const main = async () => {
       break;
     }
     case 'hash': {
-      const stdin = readFileSync(process.stdin.fd);
+      const stdin = readFileSync(filename || process.stdin.fd);
       const meta = JSON.parse(stdin.toString('utf8'));
       const metaSignature = getEndpointSignatureFromMetadata(meta);
       const hash = sha256Sync(metaSignature);

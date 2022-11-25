@@ -121,11 +121,6 @@ export const getEndpointSignatureFromMetadata = (metadata: TydomMetaElement[]): 
     .sort()
     .join('|');
 
-type ResolveEndpointCategoryOptions = {
-  firstUsage: string;
-  metadata: TydomMetaElement[];
-};
-
 const LEGACY_SUPPORTED_CATEGORIES_MAP: Record<string, Categories> = {
   alarm: Categories.SECURITY_SYSTEM,
   awning: Categories.WINDOW_COVERING,
@@ -139,9 +134,12 @@ const LEGACY_SUPPORTED_CATEGORIES_MAP: Record<string, Categories> = {
   plug: Categories.OUTLET
 };
 
-const ENDPOINTS_SIGNATURES_CATEGORIES: Record<string, Categories> = {
+const ENDPOINTS_SIGNATURES_CATEGORIES: Record<string, Categories | [Categories, Record<string, unknown>]> = {
   'alarm:0c6e1d33808fa50a0a921502f80d36430dfaeda5abfed2467f9f2b07821e4842': Categories.SECURITY_SYSTEM, // @maaxleop
-  'alarm:6e33f7ee5e62b58f4e888c91a13fd9b9d868f3751cead5ea1252578ba86523a5': Categories.SECURITY_SYSTEM, // @StephanH27.1521931577 (CTX60) #50
+  'alarm:6e33f7ee5e62b58f4e888c91a13fd9b9d868f3751cead5ea1252578ba86523a5': [
+    Categories.SECURITY_SYSTEM,
+    {legacy: true}
+  ], // @StephanH27.1521931577 (CTX60) #50
   'alarm:aad768ee0367013a974276117fd5ed4834cc26e4d31acc88d35134731331b0e7': Categories.SECURITY_SYSTEM, // @mgcrea.1521931577 (TYXAL+)
   'awning:48f43ebab20eba438fa9cc2b6ce44311d3cfb01c5be84bf17599d9c152c348d3': Categories.WINDOW_COVERING, // @baschte_(TYXIA 5731)
   'belmDoor:fb935867933d89b3058f09384f76fd63f3defb18cfb3172f60fa9f4f237f748b': Categories.DOOR, // @mgcrea (MDO)
@@ -159,13 +157,30 @@ const ENDPOINTS_SIGNATURES_CATEGORIES: Record<string, Categories> = {
   'window:fb935867933d89b3058f09384f76fd63f3defb18cfb3172f60fa9f4f237f748b': Categories.WINDOW // @mgcrea (MDO)
 };
 
-export const resolveEndpointCategory = ({firstUsage, metadata}: ResolveEndpointCategoryOptions): Categories | null => {
+type ResolveEndpointCategoryOptions = {
+  firstUsage: string;
+  metadata: TydomMetaElement[];
+  settings: Record<string, unknown>;
+};
+
+export const resolveEndpointCategory = ({
+  firstUsage,
+  metadata,
+  settings
+}: ResolveEndpointCategoryOptions): Categories | null => {
   // Compute device signature
   const metaSignature = getEndpointSignatureFromMetadata(metadata);
   const hash = `${firstUsage}:${sha256Sync(metaSignature)}`;
   // dir({metaSignature, hash});
-  if (ENDPOINTS_SIGNATURES_CATEGORIES[hash]) {
-    return ENDPOINTS_SIGNATURES_CATEGORIES[hash];
+  const category = ENDPOINTS_SIGNATURES_CATEGORIES[hash];
+  if (category) {
+    // Support settings override
+    if (Array.isArray(category)) {
+      const [_category, overrides] = category;
+      Object.assign(settings, overrides);
+      return _category;
+    }
+    return category;
   }
   debug(`Unknown hash=${hash} with firstUsage="${firstUsage}"`);
   // Fallback on legacy resolution

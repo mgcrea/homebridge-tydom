@@ -25,6 +25,7 @@ import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
 import type {
   SecuritySystemAlarmEvent,
   SecuritySystemLabelCommandResult,
+  SecuritySystemLabelCommandResultZone,
   TydomAccessoryContext,
   TydomAccessoryUpdateContext,
   TydomDeviceSecuritySystemAlarmMode,
@@ -47,14 +48,16 @@ type ZoneAliases = {
   night?: number[];
 };
 
-const getActiveZones = (alarmData: TydomDeviceSecuritySystemData): number[] =>
-  alarmData.reduce<number[]>((soFar, {name, value}) => {
-    const matches = name.match(/zone([1-8])State/i);
+const getActiveZones = (alarmData: TydomDeviceSecuritySystemData, settings: SecuritySystemSettings): number[] => {
+  const {legacy} = settings;
+  return alarmData.reduce<number[]>((soFar, {name, value}) => {
+    const matches = name.match(!legacy ? /zone([1-8])State/i : /part([1-4])State/i);
     if (matches && value === 'ON') {
       soFar.push(asNumber(matches[1]));
     }
     return soFar;
   }, []);
+};
 
 const getStateForActiveZones = (activeZones: number[], zoneAliases: ZoneAliases): number => {
   const {SecuritySystemCurrentState} = Characteristic;
@@ -67,7 +70,11 @@ const getStateForActiveZones = (activeZones: number[], zoneAliases: ZoneAliases)
   return SecuritySystemCurrentState.DISARMED;
 };
 
-const getStateForAlarmData = (alarmData: TydomDeviceSecuritySystemData, zoneAliases: ZoneAliases): number => {
+const getStateForAlarmData = (
+  alarmData: TydomDeviceSecuritySystemData,
+  zoneAliases: ZoneAliases,
+  settings: SecuritySystemSettings
+): number => {
   const {SecuritySystemCurrentState} = Characteristic;
   const alarmMode = getTydomDataPropValue<TydomDeviceSecuritySystemAlarmMode>(alarmData, 'alarmMode');
   const alarmState = getTydomDataPropValue<TydomDeviceSecuritySystemAlarmMode>(alarmData, 'alarmState');
@@ -77,14 +84,15 @@ const getStateForAlarmData = (alarmData: TydomDeviceSecuritySystemData, zoneAlia
   if (alarmMode === 'ON') {
     return SecuritySystemCurrentState.AWAY_ARM;
   }
-  if (alarmMode === 'ZONE') {
-    const activeZones = getActiveZones(alarmData);
+  if (['ZONE', 'PART'].includes(alarmMode)) {
+    const activeZones = getActiveZones(alarmData, settings);
     return getStateForActiveZones(activeZones, zoneAliases);
   }
   return SecuritySystemCurrentState.DISARMED;
 };
 
 type SecuritySystemSettings = {
+  legacy?: boolean;
   aliases?: ZoneAliases;
   sensors?: boolean;
   pin?: string;
@@ -96,7 +104,7 @@ export const setupSecuritySystem = async (
   controller: TydomController
 ): Promise<void> => {
   const {context} = accessory;
-  const {client} = controller;
+  const {client, log} = controller;
   const {SecuritySystemTargetState, SecuritySystemCurrentState, StatusTampered, ContactSensorState, On} =
     Characteristic;
 
@@ -104,7 +112,7 @@ export const setupSecuritySystem = async (
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
-  const {aliases = {}, pin: settingsPin} = settings;
+  const {aliases = {}, pin: settingsPin, legacy: isLegacy = false} = settings;
 
   // Create separate dedicated sensor extra accessory;
   if (settings.sensors !== false) {
@@ -118,15 +126,34 @@ export const setupSecuritySystem = async (
     controller.emit('device', extraDevice);
   }
 
+  let zones: SecuritySystemLabelCommandResultZone[] = [];
   const initialData = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
-  const labelResults = await client.command<SecuritySystemLabelCommandResult>(
-    `/devices/${deviceId}/endpoints/${endpointId}/cdata?name=label`
-  );
-  const {zones} = labelResults[0];
+
+  if (!isLegacy) {
+    try {
+      const labelResults = await client.command<SecuritySystemLabelCommandResult>(
+        `/devices/${deviceId}/endpoints/${endpointId}/cdata?name=label`
+      );
+      zones = labelResults[0].zones;
+    } catch (err) {
+      log.warn(`Failed to query labels for security system`);
+      zones = [];
+    }
+  } else {
+    log.warn(`Setting up legacy zones`);
+    // @NOTE could filter "UNUSED" zones from initialData
+    zones = [
+      {id: 1, nameCustom: 'Zone 1'},
+      {id: 2, nameCustom: 'Zone 2'},
+      {id: 3, nameCustom: 'Zone 3'},
+      {id: 4, nameCustom: 'Zone 4'}
+    ];
+  }
+
   // Pin code check
   const pin = HOMEBRIDGE_TYDOM_PIN ? decode(HOMEBRIDGE_TYDOM_PIN) : settingsPin;
   if (!pin) {
-    controller.log.warn(
+    log.warn(
       `Missing pin for device securitySystem, add either {"settings": {"${deviceId}": {"pin": "123456"}}} or HOMEBRIDGE_TYDOM_PIN env var (base64 encoded)`
     );
   }
@@ -141,7 +168,7 @@ export const setupSecuritySystem = async (
       debugGet(SecuritySystemCurrentState, service);
       try {
         const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
-        const nextValue = getStateForAlarmData(data, aliases);
+        const nextValue = getStateForAlarmData(data, aliases, settings);
         debugGetResult(SecuritySystemCurrentState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
@@ -171,7 +198,7 @@ export const setupSecuritySystem = async (
       debugGet(SecuritySystemTargetState, service);
       try {
         const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
-        const nextValue = getStateForAlarmData(data, aliases);
+        const nextValue = getStateForAlarmData(data, aliases, settings);
         debugGetResult(SecuritySystemTargetState, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
@@ -191,10 +218,19 @@ export const setupSecuritySystem = async (
       // Global ON/OFF
       if ([SecuritySystemTargetState.AWAY_ARM, SecuritySystemTargetState.DISARM].includes(value as number)) {
         const tydomValue = value === SecuritySystemTargetState.DISARM ? 'OFF' : 'ON';
-        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=alarmCmd`, {
-          value: tydomValue,
-          pwd: pin
-        });
+        if (!isLegacy) {
+          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=alarmCmd`, {
+            value: tydomValue,
+            pwd: pin
+          });
+        } else {
+          for (const zone in [1, 2, 3, 4]) {
+            await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=partCmd`, {
+              value: tydomValue,
+              part: zone
+            });
+          }
+        }
         debugSetResult(SecuritySystemTargetState, service, value, tydomValue);
         callback();
         return;
@@ -204,11 +240,20 @@ export const setupSecuritySystem = async (
         const tydomValue = value === SecuritySystemTargetState.DISARM ? 'OFF' : 'ON';
         const targetZones = value === SecuritySystemTargetState.STAY_ARM ? aliases.stay : aliases.night;
         if (Array.isArray(targetZones) && targetZones.length > 0) {
-          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
-            value: tydomValue,
-            pwd: pin,
-            zones: targetZones
-          });
+          if (!isLegacy) {
+            await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
+              value: tydomValue,
+              pwd: pin,
+              zones: targetZones
+            });
+          } else {
+            for (const zone in targetZones) {
+              await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=partCmd`, {
+                value: tydomValue,
+                part: zone
+              });
+            }
+          }
         }
         debugSetResult(SecuritySystemTargetState, service, value, tydomValue);
         callback();
@@ -438,8 +483,9 @@ export const updateSecuritySystem = (
             service.updateCharacteristic(SecuritySystemCurrentState, nextValue);
             return;
           }
+          case 'PART':
           case 'ZONE': {
-            const activeZones = getActiveZones(updates as unknown as TydomDeviceSecuritySystemData);
+            const activeZones = getActiveZones(updates as unknown as TydomDeviceSecuritySystemData, settings);
             const nextValue = getStateForActiveZones(activeZones, aliases);
             debugSetUpdate(SecuritySystemCurrentState, service, nextValue);
             service.updateCharacteristic(SecuritySystemCurrentState, nextValue);

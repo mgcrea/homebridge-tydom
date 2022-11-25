@@ -153,7 +153,8 @@ export default class TydomController extends EventEmitter {
       if (excludedDevices.length && stringIncludes(excludedDevices, deviceId)) {
         return;
       }
-      const category = categoryFromSettings || resolveEndpointCategory({firstUsage, metadata});
+      const category =
+        categoryFromSettings || resolveEndpointCategory({firstUsage, metadata, settings: deviceSettings});
       if (!category) {
         this.log.warn(`Unsupported firstUsage="${firstUsage}" for endpoint with deviceId="${deviceId}"`);
         debug({endpoint});
