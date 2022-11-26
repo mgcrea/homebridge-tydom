@@ -335,7 +335,8 @@ export const setupSecuritySystem = async (
 
   // Setup zones switches
   for (let zoneIndex = 1; zoneIndex < 9; zoneIndex++) {
-    const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(initialData, `zone${zoneIndex}State`);
+    const zoneProp = `${isLegacy ? 'part' : 'zone'}${zoneIndex}State`;
+    const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(initialData, zoneProp);
     if (zoneState === 'UNUSED') {
       continue;
     }
@@ -352,7 +353,7 @@ export const setupSecuritySystem = async (
         debugGet(On, zoneService);
         try {
           const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
-          const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(data, `zone${zoneIndex}State`);
+          const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(data, zoneProp);
           const nextValue = zoneState === 'ON';
           debugGetResult(On, zoneService, nextValue);
           callback(null, nextValue);
