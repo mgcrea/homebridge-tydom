@@ -334,7 +334,8 @@ export const setupSecuritySystem = async (
   preAlarmService.getCharacteristic(Characteristic.StatusFault).setValue(false);
 
   // Setup zones switches
-  for (let zoneIndex = 1; zoneIndex < 9; zoneIndex++) {
+  const zonesCount = isLegacy ? 4 : 8;
+  for (let zoneIndex = 1; zoneIndex <= zonesCount; zoneIndex++) {
     const zoneProp = `${isLegacy ? 'part' : 'zone'}${zoneIndex}State`;
     const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(initialData, zoneProp);
     if (zoneState === 'UNUSED') {
