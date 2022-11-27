@@ -129,6 +129,23 @@ export const setupSecuritySystem = async (
   let zones: SecuritySystemLabelCommandResultZone[] = [];
   const initialData = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {deviceId, endpointId});
 
+  const setTydomZones = async (zones: number[], value: 'ON' | 'OFF') => {
+    if (!isLegacy) {
+      return await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
+        value,
+        pwd: pin,
+        zones
+      });
+    } else {
+      for (const zone in zones) {
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=partCmd`, {
+          value,
+          part: zone
+        });
+      }
+    }
+  };
+
   if (!isLegacy) {
     try {
       const labelResults = await client.command<SecuritySystemLabelCommandResult>(
@@ -237,23 +254,10 @@ export const setupSecuritySystem = async (
       }
       // Zones ON/OFF
       if ([SecuritySystemTargetState.STAY_ARM, SecuritySystemTargetState.NIGHT_ARM].includes(value as number)) {
-        const tydomValue = value === SecuritySystemTargetState.DISARM ? 'OFF' : 'ON';
         const targetZones = value === SecuritySystemTargetState.STAY_ARM ? aliases.stay : aliases.night;
+        const tydomValue = value === SecuritySystemTargetState.DISARM ? 'OFF' : 'ON';
         if (Array.isArray(targetZones) && targetZones.length > 0) {
-          if (!isLegacy) {
-            await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
-              value: tydomValue,
-              pwd: pin,
-              zones: targetZones
-            });
-          } else {
-            for (const zone in targetZones) {
-              await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=partCmd`, {
-                value: tydomValue,
-                part: zone
-              });
-            }
-          }
+          await setTydomZones(targetZones, tydomValue);
         }
         debugSetResult(SecuritySystemTargetState, service, value, tydomValue);
         callback();
@@ -368,12 +372,9 @@ export const setupSecuritySystem = async (
           callback();
           return;
         }
+        const targetZones = [zoneIndex];
         const tydomValue = value ? 'ON' : 'OFF';
-        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
-          value: tydomValue,
-          pwd: pin,
-          zones: [zoneIndex]
-        });
+        await setTydomZones(targetZones, tydomValue);
         debugSetResult(On, zoneService, value, tydomValue);
         callback();
       });
