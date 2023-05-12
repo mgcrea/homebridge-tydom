@@ -155,6 +155,11 @@ export type TydomDeviceSecuritySystemData = [
   TydomDataElement<'irv4State', 'AVAILABLE' | 'UNAVAILABLE' | 'LOCKED'>
 ];
 
+export type TydomDeviceSmokeDetectorData = [
+  TydomDataElement<'techSmokeDefect', boolean>,
+  TydomDataElement<'battDefect', boolean>
+];
+
 export type TydomDeviceDataUpdateBody = {
   id: number;
   endpoints: {id: number; error: number; data: Record<string, unknown>[]; cdata: Record<string, unknown>[]}[];

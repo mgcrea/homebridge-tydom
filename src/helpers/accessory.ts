@@ -15,6 +15,7 @@ import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStati
 import TydomController from '../controller';
 import {TydomAccessoryContext} from '../typings/tydom';
 import {assert, debug} from '../utils';
+import {setupSmokeDetector, updateSmokeDetector} from 'src/accessories/smokeDetector';
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
@@ -97,7 +98,7 @@ export const getTydomAccessorySetup = <T extends TydomAccessoryContext<any, any>
     case Categories.SECURITY_SYSTEM:
       return setupSecuritySystem;
     case Categories.SENSOR:
-      return setupTemperatureSensor;
+      return context.settings?.smokeDetector ? setupSmokeDetector : setupTemperatureSensor;
     case Categories.WINDOW:
     case Categories.DOOR:
       return setupContactSensor;
@@ -140,7 +141,7 @@ export const getTydomAccessoryDataUpdate = <T extends TydomAccessoryContext<any,
     case Categories.SECURITY_SYSTEM:
       return updateSecuritySystem;
     case Categories.SENSOR:
-      return updateTemperatureSensor;
+      return context.settings?.smokeDetector ? updateSmokeDetector : updateTemperatureSensor;
     case Categories.WINDOW:
     case Categories.DOOR:
       return updateContactSensor;
