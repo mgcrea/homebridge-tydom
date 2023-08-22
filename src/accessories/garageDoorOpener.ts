@@ -295,7 +295,7 @@ export const updateGarageDoorOpener = (
   updates: Record<string, unknown>[],
   type: TydomAccessoryUpdateType
 ): void => {
-  const {context} = accessory;
+  const {context: _context} = accessory;
   // const {state} = context as TydomAccessoryContext<State>;
 
   // Process command updates
@@ -309,7 +309,7 @@ export const updateGarageDoorOpener = (
   }
 
   updates.forEach((update) => {
-    const {name, value} = update;
+    const {name, value: _value} = update;
     switch (name) {
       default:
         return;

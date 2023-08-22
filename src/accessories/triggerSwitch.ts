@@ -66,9 +66,9 @@ export const setupTriggerSwitch = (
 };
 
 export const updateTriggerSwitch = (
-  accessory: PlatformAccessory<TriggerSwitchContext>,
-  controller: TydomController,
-  updates: Record<string, unknown>[]
+  _accessory: PlatformAccessory<TriggerSwitchContext>,
+  _controller: TydomController,
+  _updates: Record<string, unknown>[]
 ): void => {
   // no-op
 };
