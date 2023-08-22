@@ -22,6 +22,7 @@ import {
   TydomMetaResponse
 } from './typings/tydom';
 import {assert, chalkJson, chalkNumber, chalkString, debug, decode, stringIncludes} from './utils';
+import {stringifyError} from './utils/error';
 
 export type ControllerDevicePayload = TydomAccessoryContext;
 
@@ -61,8 +62,9 @@ export default class TydomController extends EventEmitter {
       try {
         this.handleMessage(message);
       } catch (err) {
-        this.log.error(`Encountered an uncaught error while processing message=${chalkJson(message)}"`);
-        this.log.debug(`${err instanceof Error ? err.stack : err}`);
+        this.log.error(
+          `Encountered an uncaught error=${stringifyError(err)} while processing message=${chalkJson(message)}"`
+        );
       }
     });
     this.client.on('connect', () => {
