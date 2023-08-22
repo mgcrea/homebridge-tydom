@@ -155,6 +155,13 @@ export default class TydomController extends EventEmitter {
       if (excludedDevices.length && stringIncludes(excludedDevices, deviceId)) {
         return;
       }
+      if (categoryFromSettings) {
+        this.log.info(
+          `Using overriden category=${chalkNumber(categoryFromSettings)} from settings for deviceId=${chalkNumber(
+            deviceId
+          )} and endpointId=${chalkNumber(endpointId)}`
+        );
+      }
       const category =
         categoryFromSettings || resolveEndpointCategory({firstUsage, metadata, settings: deviceSettings});
       if (!category) {
