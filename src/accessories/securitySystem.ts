@@ -160,10 +160,10 @@ export const setupSecuritySystem = async (
     log.warn(`Setting up legacy zones`);
     // @NOTE could filter "UNUSED" zones from initialData
     zones = [
-      {id: 1, nameCustom: 'Zone 1'},
-      {id: 2, nameCustom: 'Zone 2'},
-      {id: 3, nameCustom: 'Zone 3'},
-      {id: 4, nameCustom: 'Zone 4'}
+      {id: 0, nameCustom: 'Zone 1'},
+      {id: 1, nameCustom: 'Zone 2'},
+      {id: 2, nameCustom: 'Zone 3'},
+      {id: 3, nameCustom: 'Zone 4'}
     ];
   }
 
