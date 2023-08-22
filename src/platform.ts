@@ -129,7 +129,11 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     const {platformAccessory: PlatformAccessory} = this.api;
     const {group} = context;
     const accessoryName = category === Categories.WINDOW && group ? group.name || name : name;
-    this.log.info(`Creating accessory named="${accessoryName}" with id="${id}", deviceId="${context.deviceId}"`);
+    this.log.info(
+      `Creating accessory named="${chalkString(accessoryName)}", deviceId="${chalkNumber(
+        context.deviceId
+      )} (id=${chalkKeyword(id)})"`
+    );
     const accessory = new PlatformAccessory<TydomAccessoryContext>(accessoryName, id, category);
     Object.assign(accessory.context, context);
     await this.updateAccessory(accessory, context);
@@ -139,8 +143,12 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     accessory: PlatformAccessory<TydomAccessoryContext>,
     context: TydomAccessoryContext
   ): Promise<void> {
-    const {displayName: name, UUID: id} = accessory;
-    this.log.info(`Updating accessory named="${name}" with id="${id}", deviceId="${context.deviceId}"`);
+    const {displayName: accessoryName, UUID: id} = accessory;
+    this.log.info(
+      `Updating accessory named="${chalkString(accessoryName)}", deviceId="${chalkNumber(
+        context.deviceId
+      )} (id=${chalkKeyword(id)})"`
+    );
     Object.assign(accessory.context, context);
     const tydomAccessorySetup = getTydomAccessorySetup(accessory, context);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
