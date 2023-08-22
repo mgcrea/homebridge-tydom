@@ -83,12 +83,17 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.log.debug(
       `Tydom with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(id)}) context="${JSON.stringify(context)}"`
     );
+    const hasNewCategory = this.accessories.get(id)?.category !== category;
     // Prevent automatic cleanup
     this.cleanupAccessoriesIds.delete(id);
     if (this.accessories.has(id)) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await this.updateAccessory(this.accessories.get(id)!, context);
-      return;
+      if (!hasNewCategory) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        await this.updateAccessory(this.accessories.get(id)!, context);
+        return;
+      } else {
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [this.accessories.get(id)!]);
+      }
     }
     const accessory = await this.createAccessory(name, id, category, context);
     this.accessories.set(id, accessory);
