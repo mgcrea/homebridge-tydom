@@ -9,7 +9,7 @@ import TydomController, {
 import {triggerWebhook, Webhook} from './helpers';
 import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './helpers/accessory';
 import {TydomAccessoryContext} from './typings/tydom';
-import {assert, chalkKeyword, chalkNumber, chalkString, enableDebug} from './utils';
+import {assert, chalkKeyword, chalkNumber, chalkString, debug, enableDebug} from './utils';
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
@@ -84,6 +84,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       `Tydom with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(id)}) context="${JSON.stringify(context)}"`
     );
     const hasNewCategory = this.accessories.get(id)?.category !== category;
+    debug(`[${deviceId}] ${this.accessories.get(id)?.category} vs ${category}`);
     // Prevent automatic cleanup
     this.cleanupAccessoriesIds.delete(id);
     if (this.accessories.has(id)) {
@@ -92,6 +93,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
         await this.updateAccessory(this.accessories.get(id)!, context);
         return;
       } else {
+        this.log.warn(`Deleting accessory with new category with id=${chalkNumber(accessoryId)}`);
         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [this.accessories.get(id)!]);
       }
     }
@@ -135,7 +137,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     const {group} = context;
     const accessoryName = category === Categories.WINDOW && group ? group.name || name : name;
     this.log.info(
-      `Creating accessory named="${chalkString(accessoryName)}", deviceId="${chalkNumber(
+      `Creating accessory named=${chalkString(accessoryName)}, deviceId="${chalkNumber(
         context.deviceId
       )} (id=${chalkKeyword(id)})"`
     );
@@ -150,7 +152,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   ): Promise<void> {
     const {displayName: accessoryName, UUID: id} = accessory;
     this.log.info(
-      `Updating accessory named="${chalkString(accessoryName)}", deviceId="${chalkNumber(
+      `Updating accessory named=${chalkString(accessoryName)}, deviceId=${chalkNumber(
         context.deviceId
       )} (id=${chalkKeyword(id)})"`
     );
