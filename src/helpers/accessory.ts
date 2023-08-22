@@ -32,7 +32,7 @@ export const getAccessoryServiceWithSubtype = (
   ServiceClass: ServiceClass,
   subtype: string
 ): Service => {
-  const service = accessory.getServiceByUUIDAndSubType(ServiceClass, subtype);
+  const service = accessory.getServiceById(ServiceClass, subtype);
   assert(service, `Unexpected missing service "${ServiceClass.name}" with subtype="${subtype}" in accessory`);
   return service;
 };
@@ -50,6 +50,7 @@ export const addAccessoryService = (
     }
     accessory.removeService(existingService);
   }
+  // @ts-expect-error legacy HAP API
   return accessory.addService(service, name);
 };
 
@@ -75,6 +76,7 @@ type TydomAccessorySetup<T extends TydomAccessoryContext> = (
   controller: TydomController
 ) => void | Promise<void>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getTydomAccessorySetup = <T extends TydomAccessoryContext<any, any> = TydomAccessoryContext>(
   accessory: PlatformAccessory<T>,
   context: T
@@ -118,6 +120,7 @@ type TydomAccessoryUpdate<T extends TydomAccessoryContext> = (
   type: TydomAccessoryUpdateType
 ) => void | Promise<void>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getTydomAccessoryDataUpdate = <T extends TydomAccessoryContext<any, any> = TydomAccessoryContext>(
   accessory: PlatformAccessory<T>,
   context: T
