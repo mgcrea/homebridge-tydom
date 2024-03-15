@@ -16,7 +16,7 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService
 } from '../helpers/accessory';
-import {chalkString} from '../utils/chalk';
+import {chalkString} from '../utils/color';
 import {
   debug,
   debugAddSubService,

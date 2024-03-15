@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import {EventEmitter} from 'events';
 import {Categories, Logging} from 'homebridge';
 import {get} from 'lodash';
@@ -23,6 +22,7 @@ import {
 } from './typings/tydom';
 import {assert, chalkJson, chalkNumber, chalkString, debug, decode, stringIncludes} from './utils';
 import {stringifyError} from './utils/error';
+import {blue, bold, green, yellow} from 'kolorist';
 
 export type ControllerDevicePayload = TydomAccessoryContext;
 
@@ -234,7 +234,7 @@ export default class TydomController extends EventEmitter {
         const uniqueId = this.getUniqueId(deviceId, endpointId);
         if (!this.devices.has(uniqueId)) {
           debug(
-            `${chalk.bold.yellow('←PUT')}:${chalk.blue('ignored')} for device id=${chalkString(
+            `${bold(yellow('←PUT'))}:${blue('ignored')} for device id=${chalkString(
               deviceId
             )} and endpointId=${chalkNumber(endpointId)}`
           );
@@ -243,9 +243,9 @@ export default class TydomController extends EventEmitter {
         const category = this.devices.get(uniqueId) ?? Categories.OTHER;
         const accessoryId = this.getAccessoryId(deviceId, endpointId);
         debug(
-          `${chalk.bold.green('←PUT')}:${chalk.blue('update')} for deviceId=${chalkNumber(
-            deviceId
-          )} and endpointId=${chalkNumber(endpointId)}, updates:\n${chalkJson(updates)}`
+          `${bold(green('←PUT'))}:${blue('update')} for deviceId=${chalkNumber(deviceId)} and endpointId=${chalkNumber(
+            endpointId
+          )}, updates:\n${chalkJson(updates)}`
         );
         const context: TydomAccessoryUpdateContext = {
           category,
