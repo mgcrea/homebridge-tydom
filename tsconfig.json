@@ -1,9 +1,7 @@
 {
-  "extends": "@tsconfig/node10/tsconfig.json",
+  "extends": ["@tsconfig/node-lts/tsconfig.json"],
   "compilerOptions": {
-    "declaration": true,
     "outDir": "./lib",
-    "rootDir": "./src",
     "baseUrl": "./",
     "paths": {
       "src/*": ["./src/*"]

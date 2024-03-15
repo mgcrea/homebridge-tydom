@@ -19,7 +19,7 @@ import {
 import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
 import type {TydomAccessoryContext, TydomDeviceShutterData} from '../typings/tydom';
 import {asNumber} from '../utils';
-import {chalkJson, chalkKeyword, chalkNumber, chalkString} from '../utils/chalk';
+import {chalkJson, chalkKeyword, chalkNumber, chalkString} from '../utils/color';
 import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
 
 // const getReciprocalPositionForValue = (position: number): number => {

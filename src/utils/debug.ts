@@ -1,9 +1,8 @@
-import console from 'console';
 import createDebug from 'debug';
-import chalk from 'chalk';
-import {chalkString, chalkKeyword} from './chalk';
-import {Characteristic} from '../config/hap';
 import type {PlatformAccessory, Service} from 'homebridge';
+import {blue} from 'kolorist';
+import {Characteristic} from '../config/hap';
+import {chalkGet, chalkUpd, chalkKeyword, chalkString, chalkSet, chalkVal} from './color';
 
 type IdentifiableAccessoryObject = PlatformAccessory | Service;
 
@@ -19,9 +18,9 @@ export const debugGet = (
   {displayName: name, UUID: id}: IdentifiableAccessoryObject
 ): void => {
   debug(
-    `${chalk.bold.green('→GET')}:${chalk.blue(characteristic.name)} for accessory named=${chalkString(
-      name
-    )} with id=${chalkString(id)} ...`
+    `${chalkGet('→GET')}:${blue(characteristic.name)} for accessory named=${chalkString(name)} with id=${chalkString(
+      id
+    )} ...`
   );
 };
 
@@ -31,9 +30,9 @@ export const debugGetResult = (
   value: unknown
 ): void => {
   debug(
-    `${chalk.bold.green('←GET')}:${chalk.blue(characteristic.name)} value=${chalk.yellow(
-      value
-    )} for accessory named=${chalkString(name)} with id=${chalkString(id)} ...`
+    `${chalkGet('←GET')}:${blue(characteristic.name)} value=${chalkVal(value)} for accessory named=${chalkString(
+      name
+    )} with id=${chalkString(id)} ...`
   );
 };
 
@@ -43,9 +42,9 @@ export const debugSetUpdate = (
   value: unknown
 ): void => {
   debug(
-    `${chalk.bold.yellow('←UPD')}:${chalk.blue(characteristic.name)} value=${chalk.yellow(
-      value
-    )} for accessory named=${chalkString(name)} with id=${chalkString(id)}`
+    `${chalkUpd('←UPD')}:${blue(characteristic.name)} value=${chalkVal(value)} for accessory named=${chalkString(
+      name
+    )} with id=${chalkString(id)}`
   );
 };
 
@@ -55,9 +54,9 @@ export const debugSet = (
   value: unknown
 ): void => {
   debug(
-    `${chalk.bold.red('→SET')}:${chalk.blue(characteristic.name)} value=${chalk.yellow(
-      value
-    )} for accessory named=${chalkString(name)} with id=${chalkString(id)} ...`
+    `${chalkSet('→SET')}:${blue(characteristic.name)} value=${chalkVal(value)} for accessory named=${chalkString(
+      name
+    )} with id=${chalkString(id)} ...`
   );
 };
 
@@ -68,8 +67,8 @@ export const debugSetResult = (
   tydomValue?: unknown
 ): void => {
   debug(
-    `${chalk.bold.red('←SET')}:${chalk.blue(characteristic.name)} value=${chalk.yellow(value)}${
-      tydomValue !== undefined ? ` (tydomValue=${chalk.yellow(tydomValue)})` : ''
+    `${chalkSet('←SET')}:${blue(characteristic.name)} value=${chalkVal(value)}${
+      tydomValue !== undefined ? ` (tydomValue=${chalkVal(tydomValue)})` : ''
     } for accessory named=${chalkString(name)} with id=${chalkString(id)}`
   );
 };
@@ -80,7 +79,7 @@ export const debugTydomPut = (
   value: unknown
 ): void => {
   debug(
-    `${chalk.bold.red('→PUT')}:${chalk.blue(property)} value=${chalk.yellow(value)} for accessory named=${chalkString(
+    `${chalkSet('→PUT')}:${blue(property)} value=${chalkVal(value)} for accessory named=${chalkString(
       name
     )} with id=${chalkString(id)}`
   );
