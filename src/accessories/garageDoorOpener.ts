@@ -238,7 +238,8 @@ export const setupGarageDoorOpener = (
               assignCurrentDoorState(CurrentDoorState.OPEN);
               if (autoCloseDelay) {
                 await waitFor(`${deviceId}.pending`, autoCloseDelay);
-                assignCurrentDoorState(CurrentDoorState.CLOSED);
+                const targetDoorState = service.getCharacteristic(Characteristic.TargetDoorState);
+                targetDoorState.setValue(Characteristic.TargetDoorState.CLOSED);
               }
             } catch (err) {
               // debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
