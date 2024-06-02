@@ -31,6 +31,7 @@ import {Characteristic, Service} from 'src/config/hap';
 type GarageDoorOpenerSettings = {
   delay?: number;
   autoCloseDelay?: number;
+  virtual?: boolean;
 };
 type GarageDoorOpenerState = {
   currentDoorState: number;
@@ -52,7 +53,7 @@ export const setupGarageDoorOpener = (
 
   const {deviceId, endpointId, state, settings} = context;
 
-  const {delay: garageDoorDelay = DEFAULT_GARAGE_DOOR_DELAY, autoCloseDelay} = settings;
+  const {delay: garageDoorDelay = DEFAULT_GARAGE_DOOR_DELAY, autoCloseDelay, virtual = true} = settings;
 
   const assignState = (update: Partial<GarageDoorOpenerState>): void => {
     Object.assign(state, update);
@@ -208,7 +209,7 @@ export const setupGarageDoorOpener = (
           callback();
           return;
         }
-        if (targetDoorState == TargetDoorState.OPEN) {
+        if (targetDoorState == TargetDoorState.OPEN || (targetDoorState == TargetDoorState.CLOSED && !virtual)) {
           await toggleGarageDoor();
         }
         assignCurrentDoorState(nextCurrentDoorState);
@@ -252,7 +253,7 @@ export const setupGarageDoorOpener = (
             const delay = (state.computedPosition * garageDoorDelay) / 100;
             // debug(`delay=${chalkNumber(delay)}`);
             try {
-              await waitFor(`${deviceId}.pending`, autoCloseDelay ? 1 * 1000 : delay);
+              await waitFor(`${deviceId}.pending`, autoCloseDelay && virtual ? 1 * 1000 : delay);
               assignCurrentDoorState(CurrentDoorState.CLOSED);
             } catch (err) {
               // debug(`Aborted CLOSED update with delay=${chalkNumber(delay)}`);
