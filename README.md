@@ -159,14 +159,17 @@ Value is in milliseconds:
 }
 ```
 
-You can also configure an `autoCloseDelay`
+You can also configure an `autoCloseDelay` and `autoCloseVirtual` to physically or virtually close the garage door.
 
 ```json
 {
   "platforms": [
     {
       "settings": {
-        "1529094720": {"autoCloseDelay": 300000} // 5 minutes
+        "1529094720": {
+          "autoCloseDelay": 300000, // 5 minutes
+          "autoCloseVirtual": true
+        }
       }
     }
   ]
