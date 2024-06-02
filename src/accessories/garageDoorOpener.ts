@@ -31,6 +31,7 @@ import {Characteristic, Service} from 'src/config/hap';
 type GarageDoorOpenerSettings = {
   delay?: number;
   autoCloseDelay?: number;
+  autoCloseVirtual?: boolean;
 };
 type GarageDoorOpenerState = {
   currentDoorState: number;
@@ -52,7 +53,7 @@ export const setupGarageDoorOpener = (
 
   const {deviceId, endpointId, state, settings} = context;
 
-  const {delay: garageDoorDelay = DEFAULT_GARAGE_DOOR_DELAY, autoCloseDelay} = settings;
+  const {delay: garageDoorDelay = DEFAULT_GARAGE_DOOR_DELAY, autoCloseDelay, autoCloseVirtual} = settings;
 
   const assignState = (update: Partial<GarageDoorOpenerState>): void => {
     Object.assign(state, update);
@@ -208,7 +209,9 @@ export const setupGarageDoorOpener = (
           callback();
           return;
         }
-        await toggleGarageDoor();
+        if (targetDoorState == TargetDoorState.OPEN || (targetDoorState == TargetDoorState.CLOSED && !autoCloseVirtual)) {
+          await toggleGarageDoor();
+        }
         assignCurrentDoorState(nextCurrentDoorState);
 
         // Handle Stopped state, if we are stopped, wait one second and trigger again to reverse course
@@ -238,7 +241,8 @@ export const setupGarageDoorOpener = (
               assignCurrentDoorState(CurrentDoorState.OPEN);
               if (autoCloseDelay) {
                 await waitFor(`${deviceId}.pending`, autoCloseDelay);
-                assignCurrentDoorState(CurrentDoorState.CLOSED);
+                const targetDoorState = service.getCharacteristic(Characteristic.TargetDoorState);
+                targetDoorState.setValue(Characteristic.TargetDoorState.CLOSED);
               }
             } catch (err) {
               // debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
@@ -246,7 +250,7 @@ export const setupGarageDoorOpener = (
             break;
           }
           case CurrentDoorState.CLOSING: {
-            const delay = (state.computedPosition * garageDoorDelay) / 100;
+            const delay = autoCloseDelay && autoCloseVirtual ? 1 * 1000 : (state.computedPosition * garageDoorDelay) / 100;
             // debug(`delay=${chalkNumber(delay)}`);
             try {
               await waitFor(`${deviceId}.pending`, delay);
