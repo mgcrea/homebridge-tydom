@@ -250,7 +250,7 @@ export const setupGarageDoorOpener = (
             const delay = (state.computedPosition * garageDoorDelay) / 100;
             // debug(`delay=${chalkNumber(delay)}`);
             try {
-              await waitFor(`${deviceId}.pending`, delay);
+              await waitFor(`${deviceId}.pending`, autoCloseDelay ? 1 * 1000 : delay);
               assignCurrentDoorState(CurrentDoorState.CLOSED);
             } catch (err) {
               // debug(`Aborted CLOSED update with delay=${chalkNumber(delay)}`);
