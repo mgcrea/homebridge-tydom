@@ -208,7 +208,9 @@ export const setupGarageDoorOpener = (
           callback();
           return;
         }
-        await toggleGarageDoor();
+        if (targetDoorState == TargetDoorState.OPEN) {
+          await toggleGarageDoor();
+        }
         assignCurrentDoorState(nextCurrentDoorState);
 
         // Handle Stopped state, if we are stopped, wait one second and trigger again to reverse course
