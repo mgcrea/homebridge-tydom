@@ -105,6 +105,8 @@ export type TydomDeviceThermostatData = [
   TydomDataElement<'boostOn', boolean>
 ];
 
+export type TydomDeviceGarageDoorData = [TydomDataElement<'level', number>];
+
 export type TydomDeviceShutterData = [
   TydomDataElement<'battDefect', boolean>,
   TydomDataElement<'intrusion', boolean>,
