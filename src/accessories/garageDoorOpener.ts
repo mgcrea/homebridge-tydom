@@ -70,7 +70,10 @@ export const setupGarageDoorOpener = (
   const {client} = controller;
   const {CurrentDoorState, TargetDoorState} = Characteristic;
 
-  const {deviceId, endpointId, state, settings} = context;
+  const {deviceId, endpointId, state, settings, metadata} = context;
+
+  const levelCmdValues = metadata.find((m) => m.name === 'levelCmd')?.enum_values;
+  const IS_TOGGLE_ONLY = levelCmdValues?.length === 1 && levelCmdValues[0] === 'TOGGLE';
 
   const {delay: garageDoorDelay = DEFAULT_GARAGE_DOOR_DELAY, autoCloseDelay} = settings;
 
@@ -134,7 +137,7 @@ export const setupGarageDoorOpener = (
   };
 
   const toggleGarageDoor = async (targetDoorState: number) => {
-    const cmdValue = getLevelCmdForCurrentDoorState(targetDoorState);
+    const cmdValue = IS_TOGGLE_ONLY ? 'TOGGLE' : getLevelCmdForCurrentDoorState(targetDoorState);
     debug(`sending levelCmd=${cmdValue} for GarageDoor with deviceId:${deviceId}`);
     await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
       {
@@ -225,6 +228,12 @@ export const setupGarageDoorOpener = (
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(CurrentDoorState, service);
       try {
+        if (IS_TOGGLE_ONLY) {
+          const currentDoorState = state.currentDoorState;
+          debugGetResult(CurrentDoorState, service, currentDoorState);
+          callback(null, currentDoorState);
+          return;
+        }
         const currentDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
         debugGetResult(CurrentDoorState, service, currentDoorState);
         assignState({
@@ -245,6 +254,12 @@ export const setupGarageDoorOpener = (
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(TargetDoorState, service);
       try {
+        if (IS_TOGGLE_ONLY) {
+          const targetDoorState = state.currentDoorState;
+          debugGetResult(TargetDoorState, service, targetDoorState);
+          callback(null, targetDoorState);
+          return;
+        }
         const targetDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
         debugGetResult(TargetDoorState, service, targetDoorState);
         assignState({
