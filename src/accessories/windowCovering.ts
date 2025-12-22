@@ -1,26 +1,34 @@
-import type {PlatformAccessory} from 'homebridge';
-import {debounce} from 'lodash';
+import type { PlatformAccessory } from "homebridge";
+import { debounce } from "lodash";
 import {
   Characteristic,
   CharacteristicEventTypes,
   CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback,
-  Service
-} from '../config/hap';
-import TydomController from '../controller';
+  Service,
+} from "../config/hap";
+import TydomController from "../controller";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-  TydomAccessoryUpdateType
-} from '../helpers/accessory';
-import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
-import type {TydomAccessoryContext, TydomDeviceShutterData} from '../typings/tydom';
-import {asNumber} from '../utils';
-import {chalkJson, chalkKeyword, chalkNumber, chalkString} from '../utils/color';
-import {debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate, debugTydomPut} from '../utils/debug';
+  TydomAccessoryUpdateType,
+} from "../helpers/accessory";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom";
+import type { TydomAccessoryContext, TydomDeviceShutterData } from "../typings/tydom";
+import { asNumber } from "../utils";
+import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "../utils/color";
+import {
+  debug,
+  debugGet,
+  debugGetResult,
+  debugSet,
+  debugSetResult,
+  debugSetUpdate,
+  debugTydomPut,
+} from "../utils/debug";
 
 // const getReciprocalPositionForValue = (position: number): number => {
 //   if (position === 0 || position === 100) {
@@ -43,19 +51,19 @@ type WindowCoveringContext = TydomAccessoryContext<WindowCoveringSettings, Windo
 
 export const setupWindowCovering = (
   accessory: PlatformAccessory<WindowCoveringContext>,
-  controller: TydomController
+  controller: TydomController,
 ): void => {
-  const {context} = accessory;
-  const {client} = controller;
-  const {CurrentPosition, TargetPosition, PositionState, HoldPosition} = Characteristic;
+  const { context } = accessory;
+  const { client } = controller;
+  const { CurrentPosition, TargetPosition, PositionState, HoldPosition } = Characteristic;
 
-  const {deviceId, endpointId, state} = context;
+  const { deviceId, endpointId, state } = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   Object.assign(state, {
     latestPosition: 100,
     pendingUpdatedValues: [],
-    lastUpdatedAt: 0
+    lastUpdatedAt: 0,
   });
 
   // Add the actual accessory Service
@@ -63,19 +71,19 @@ export const setupWindowCovering = (
 
   const debouncedSetPosition = debounce(
     async (value: number) => {
-      debugTydomPut('position', accessory, value);
+      debugTydomPut("position", accessory, value);
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
         {
-          name: 'position',
-          value
-        }
+          name: "position",
+          value,
+        },
       ]);
       Object.assign(state, {
-        pendingUpdatedValues: state.pendingUpdatedValues.concat([value])
+        pendingUpdatedValues: state.pendingUpdatedValues.concat([value]),
       });
     },
     250,
-    {leading: true, trailing: true}
+    { leading: true, trailing: true },
   );
 
   service
@@ -90,53 +98,53 @@ export const setupWindowCovering = (
       } catch (err) {
         callback(err as Error);
       }
-    })
-    .getValue();
+    });
 
   service
     .getCharacteristic(HoldPosition)
-    .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debugSet(HoldPosition, service, value);
-      if (!value) {
-        // @NOTE asked to not hold position
-        return;
-      }
-      const nextValue = 'STOP';
-      debugTydomPut('positionCmd', accessory, nextValue);
-      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: 'positionCmd',
-          value: nextValue
+    .on(
+      CharacteristicEventTypes.SET,
+      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+        debugSet(HoldPosition, service, value);
+        if (!value) {
+          // @NOTE asked to not hold position
+          return;
         }
-      ]);
-      debugSetResult(HoldPosition, service, value, nextValue);
-      callback();
-    })
-    .getValue();
+        const nextValue = "STOP";
+        debugTydomPut("positionCmd", accessory, nextValue);
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+          {
+            name: "positionCmd",
+            value: nextValue,
+          },
+        ]);
+        debugSetResult(HoldPosition, service, value, nextValue);
+        callback();
+      },
+    );
 
   service
     .getCharacteristic(CurrentPosition)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(CurrentPosition, service);
       try {
-        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
-        const position = getTydomDataPropValue<number>(data, 'position') || 0;
+        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, { deviceId, endpointId });
+        const position = getTydomDataPropValue<number>(data, "position") || 0;
         const nextValue = asNumber(position);
         debugGetResult(CurrentPosition, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
         callback(err as Error);
       }
-    })
-    .getValue();
+    });
 
   service
     .getCharacteristic(TargetPosition)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(TargetPosition, service);
       try {
-        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {deviceId, endpointId});
-        const position = getTydomDataPropValue<number>(data, 'position') || 0;
+        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, { deviceId, endpointId });
+        const position = getTydomDataPropValue<number>(data, "position") || 0;
         const nextValue = asNumber(position);
         debugGetResult(CurrentPosition, service, nextValue);
         callback(null, nextValue);
@@ -144,59 +152,61 @@ export const setupWindowCovering = (
         callback(err as Error);
       }
     })
-    .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debugSet(TargetPosition, service, value);
-      try {
-        const nextValue = value as number;
-        Object.assign(state, {
-          latestPosition: nextValue,
-          lastUpdatedAt: Date.now()
-        });
-        await debouncedSetPosition(nextValue);
-        debugSetResult(TargetPosition, service, value, nextValue);
-        callback();
-      } catch (err) {
-        callback(err as Error);
-      }
-    })
-    .getValue();
+    .on(
+      CharacteristicEventTypes.SET,
+      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+        debugSet(TargetPosition, service, value);
+        try {
+          const nextValue = value as number;
+          Object.assign(state, {
+            latestPosition: nextValue,
+            lastUpdatedAt: Date.now(),
+          });
+          await debouncedSetPosition(nextValue);
+          debugSetResult(TargetPosition, service, value, nextValue);
+          callback();
+        } catch (err) {
+          callback(err as Error);
+        }
+      },
+    );
 };
 
 export const updateWindowCovering = (
   accessory: PlatformAccessory<WindowCoveringContext>,
   _controller: TydomController,
   updates: Record<string, unknown>[],
-  type: TydomAccessoryUpdateType
+  type: TydomAccessoryUpdateType,
 ): void => {
-  const {context} = accessory;
-  const {state} = context;
-  const {CurrentPosition, TargetPosition, ObstructionDetected} = Characteristic;
+  const { context } = accessory;
+  const { state } = context;
+  const { CurrentPosition, TargetPosition, ObstructionDetected } = Characteristic;
 
   // Process command updates
-  if (type === 'cdata') {
+  if (type === "cdata") {
     updates.forEach((update) => {
-      const {values} = update;
-      const {event} = values as {event: unknown};
-      debug(`New ${chalkKeyword('WindowCovering')} event=${chalkJson(event)}`);
+      const { values } = update;
+      const { event } = values as { event: unknown };
+      debug(`New ${chalkKeyword("WindowCovering")} event=${chalkJson(event)}`);
     });
     return;
   }
 
   updates.forEach((update) => {
-    const {name, value} = update;
+    const { name, value } = update;
     switch (name) {
-      case 'position': {
+      case "position": {
         const service = getAccessoryService(accessory, Service.WindowCovering);
         const position = asNumber(value as number);
         if (position === null) {
-          debug(`Encountered a ${chalkString('position')} update with a null value!`);
+          debug(`Encountered a ${chalkString("position")} update with a null value!`);
           return;
         }
         debugSetUpdate(CurrentPosition, service, position);
         service.updateCharacteristic(CurrentPosition, position);
         // @NOTE ignore pending updates
         if (state.pendingUpdatedValues.includes(position)) {
-          debug(`Ignoring a pending ${chalkString('position')} update with value=${chalkNumber(position)} !`);
+          debug(`Ignoring a pending ${chalkString("position")} update with value=${chalkNumber(position)} !`);
           state.pendingUpdatedValues = [];
           return;
         }
@@ -204,7 +214,7 @@ export const updateWindowCovering = (
         service.updateCharacteristic(TargetPosition, position);
         return;
       }
-      case 'obstacleDefect': {
+      case "obstacleDefect": {
         const service = getAccessoryService(accessory, Service.WindowCovering);
         debugSetUpdate(ObstructionDetected, service, value);
         service.updateCharacteristic(ObstructionDetected, value as boolean);

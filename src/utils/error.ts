@@ -3,7 +3,7 @@ const errorReplacer = (key: string, value: unknown) => {
     return {
       name: value.name,
       message: value.message,
-      stack: value.stack
+      stack: value.stack,
     };
   }
   return `${value}`;

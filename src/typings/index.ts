@@ -1,1 +1,1 @@
-export * from './tydom';
+export * from "./tydom";

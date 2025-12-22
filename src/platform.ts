@@ -1,21 +1,27 @@
-import type {API as Homebridge, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig} from 'homebridge';
-import {PLATFORM_NAME, PLUGIN_NAME} from './config/env';
-import {Categories} from './config/hap';
+import type {
+  DynamicPlatformPlugin,
+  API as Homebridge,
+  Logging,
+  PlatformAccessory,
+  PlatformConfig,
+} from "homebridge";
+import { PLATFORM_NAME, PLUGIN_NAME } from "./config/env";
+import { Categories } from "./config/hap";
 import TydomController, {
   ControllerDevicePayload,
   ControllerNotificationPayload,
-  ControllerUpdatePayload
-} from './controller';
-import {triggerWebhook, Webhook} from './helpers';
-import {getTydomAccessoryDataUpdate, getTydomAccessorySetup} from './helpers/accessory';
-import {TydomAccessoryContext} from './typings/tydom';
-import {assert, chalkKeyword, chalkNumber, chalkString, debug, enableDebug} from './utils';
+  ControllerUpdatePayload,
+} from "./controller";
+import { triggerWebhook, Webhook } from "./helpers";
+import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "./helpers/accessory";
+import { TydomAccessoryContext } from "./typings/tydom";
+import { assert, chalkKeyword, chalkNumber, chalkString, debug, enableDebug } from "./utils";
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
   username: string;
   password: string;
-  settings: Record<string, {name?: string; category?: Categories}>;
+  settings: Record<string, { name?: string; category?: Categories }>;
   debug?: boolean;
   webhooks?: Webhook[];
   includedDevices?: string[];
@@ -41,7 +47,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.api = api;
 
     if (!config) {
-      log.warn('Ignoring Tydom platform setup because it is not configured');
+      log.warn("Ignoring Tydom platform setup because it is not configured");
       this.disabled = true;
       return;
     }
@@ -52,11 +58,11 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
 
     this.controller = new TydomController(log, this.config);
     // Prevent configureAccessory getting called after node ready
-    this.api.on('didFinishLaunching', () => setTimeout(() => this.didFinishLaunching(), 16));
+    this.api.on("didFinishLaunching", () => setTimeout(() => this.didFinishLaunching(), 16));
     // this.controller.on('connect', () => {});
-    this.controller.on('device', this.handleControllerDevice.bind(this));
-    this.controller.on('update', this.handleControllerDataUpdate.bind(this));
-    this.controller.on('notification', this.handleControllerNotification.bind(this));
+    this.controller.on("device", this.handleControllerDevice.bind(this));
+    this.controller.on("update", this.handleControllerDataUpdate.bind(this));
+    this.controller.on("notification", this.handleControllerNotification.bind(this));
   }
   async didFinishLaunching(): Promise<void> {
     assert(this.controller);
@@ -67,21 +73,20 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const accessory = this.accessories.get(accessoryId)!;
       this.log.warn(`Deleting missing accessory with id=${chalkNumber(accessoryId)}`);
-      // accessory.updateReachability(false);
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
     });
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
   }
   async handleControllerDevice(context: ControllerDevicePayload): Promise<void> {
-    const {name, deviceId, category, accessoryId} = context;
+    const { name, deviceId, category, accessoryId } = context;
     const id = this.api.hap.uuid.generate(accessoryId);
     this.log.info(
       `Found new tydom device named=${chalkString(name)} with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(
-        id
-      )})`
+        id,
+      )})`,
     );
     this.log.debug(
-      `Tydom with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(id)}) context="${JSON.stringify(context)}"`
+      `Tydom with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(id)}) context="${JSON.stringify(context)}"`,
     );
     const hasNewCategory = this.accessories.get(id)?.category !== category;
     debug(`[${deviceId}] ${this.accessories.get(id)?.category} vs ${category}`);
@@ -101,7 +106,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.accessories.set(id, accessory);
     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
   }
-  handleControllerDataUpdate({type, updates, context}: ControllerUpdatePayload): void {
+  handleControllerDataUpdate({ type, updates, context }: ControllerUpdatePayload): void {
     const id = this.api.hap.uuid.generate(context.accessoryId);
     if (!this.accessories.has(id)) {
       return;
@@ -114,11 +119,11 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       tydomAccessoryUpdate(accessory, this.controller!, updates, type);
     }
   }
-  handleControllerNotification({level, message}: ControllerNotificationPayload): void {
-    const {webhooks = []} = this.config;
+  handleControllerNotification({ level, message }: ControllerNotificationPayload): void {
+    const { webhooks = [] } = this.config;
     webhooks.forEach(async (webhook) => {
       try {
-        await triggerWebhook(webhook, {level, message});
+        await triggerWebhook(webhook, { level, message });
       } catch (err) {
         if (err instanceof Error) {
           this.log.error(`${err.name} ${err.message}`);
@@ -131,15 +136,15 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     name: string,
     id: string,
     category: Categories,
-    context: TydomAccessoryContext
+    context: TydomAccessoryContext,
   ): Promise<PlatformAccessory<TydomAccessoryContext>> {
-    const {platformAccessory: PlatformAccessory} = this.api;
-    const {group} = context;
+    const { platformAccessory: PlatformAccessory } = this.api;
+    const { group } = context;
     const accessoryName = category === Categories.WINDOW && group ? group.name || name : name;
     this.log.info(
       `Creating accessory named=${chalkString(accessoryName)}, deviceId="${chalkNumber(
-        context.deviceId
-      )} (id=${chalkKeyword(id)})"`
+        context.deviceId,
+      )} (id=${chalkKeyword(id)})"`,
     );
     const accessory = new PlatformAccessory<TydomAccessoryContext>(accessoryName, id, category);
     Object.assign(accessory.context, context);
@@ -148,13 +153,13 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   }
   async updateAccessory(
     accessory: PlatformAccessory<TydomAccessoryContext>,
-    context: TydomAccessoryContext
+    context: TydomAccessoryContext,
   ): Promise<void> {
-    const {displayName: accessoryName, UUID: id} = accessory;
+    const { displayName: accessoryName, UUID: id } = accessory;
     this.log.info(
       `Updating accessory named=${chalkString(accessoryName)}, deviceId=${chalkNumber(
-        context.deviceId
-      )} (id=${chalkKeyword(id)})"`
+        context.deviceId,
+      )} (id=${chalkKeyword(id)})"`,
     );
     Object.assign(accessory.context, context);
     const tydomAccessorySetup = getTydomAccessorySetup(accessory, context);

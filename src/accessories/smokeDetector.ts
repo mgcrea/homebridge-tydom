@@ -1,26 +1,32 @@
-import type {PlatformAccessory} from 'homebridge';
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../config/hap';
-import TydomController from '../controller';
+import type { PlatformAccessory } from "homebridge";
+import { Formats } from "homebridge";
+import {
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicValue,
+  NodeCallback,
+  Service,
+} from "../config/hap";
+import TydomController from "../controller";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
-} from '../helpers/accessory';
-import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
-import type {TydomAccessoryContext, TydomDeviceSmokeDetectorData} from '../typings/tydom';
-import {debugGet, debugGetResult, debugSetUpdate} from '../utils/debug';
-import {Formats} from 'homebridge';
+  setupAccessoryInformationService,
+} from "../helpers/accessory";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom";
+import type { TydomAccessoryContext, TydomDeviceSmokeDetectorData } from "../typings/tydom";
+import { debugGet, debugGetResult, debugSetUpdate } from "../utils/debug";
 
 export const setupSmokeDetector = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
-  controller: TydomController
+  controller: TydomController,
 ): void => {
-  const {context} = accessory;
-  const {client} = controller;
-  const {SmokeDetected, StatusLowBattery} = Characteristic;
+  const { context } = accessory;
+  const { client } = controller;
+  const { SmokeDetected, StatusLowBattery } = Characteristic;
 
-  const {deviceId, endpointId} = context;
+  const { deviceId, endpointId } = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -30,13 +36,13 @@ export const setupSmokeDetector = (
   service
     .getCharacteristic(SmokeDetected)
     .setProps({
-      format: Formats.BOOL
+      format: Formats.BOOL,
     })
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(SmokeDetected, service);
       try {
-        const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, {deviceId, endpointId});
-        const smokeDefect = getTydomDataPropValue<boolean>(data, 'techSmokeDefect');
+        const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, { deviceId, endpointId });
+        const smokeDefect = getTydomDataPropValue<boolean>(data, "techSmokeDefect");
         debugGetResult(SmokeDetected, service, smokeDefect);
         callback(null, smokeDefect);
       } catch (err) {
@@ -49,10 +55,13 @@ export const setupSmokeDetector = (
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(StatusLowBattery, service);
       try {
-        const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, {deviceId, endpointId});
-        const battDefect = getTydomDataPropValue<boolean>(data, 'battDefect');
+        const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, { deviceId, endpointId });
+        const battDefect = getTydomDataPropValue<boolean>(data, "battDefect");
         debugGetResult(StatusLowBattery, service, battDefect);
-        callback(null, battDefect ? StatusLowBattery.BATTERY_LEVEL_LOW : StatusLowBattery.BATTERY_LEVEL_NORMAL);
+        callback(
+          null,
+          battDefect ? StatusLowBattery.BATTERY_LEVEL_LOW : StatusLowBattery.BATTERY_LEVEL_NORMAL,
+        );
       } catch (err) {
         callback(err as Error);
       }
@@ -62,19 +71,19 @@ export const setupSmokeDetector = (
 export const updateSmokeDetector = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
   _controller: TydomController,
-  updates: Record<string, unknown>[]
+  updates: Record<string, unknown>[],
 ): void => {
   updates.forEach((update) => {
-    const {name, value} = update;
-    const {SmokeDetected, StatusLowBattery} = Characteristic;
+    const { name, value } = update;
+    const { SmokeDetected, StatusLowBattery } = Characteristic;
     switch (name) {
-      case 'techSmokeDefect': {
+      case "techSmokeDefect": {
         const service = getAccessoryService(accessory, Service.SmokeSensor);
         debugSetUpdate(SmokeDetected, service, value);
         service.updateCharacteristic(SmokeDetected, value as boolean);
         return;
       }
-      case 'battDefect': {
+      case "battDefect": {
         const service = getAccessoryService(accessory, Service.SmokeSensor);
         debugSetUpdate(StatusLowBattery, service, value);
         service.updateCharacteristic(StatusLowBattery, value as number);

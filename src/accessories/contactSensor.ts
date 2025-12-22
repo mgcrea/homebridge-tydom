@@ -1,25 +1,31 @@
-import type {PlatformAccessory} from 'homebridge';
-import {Characteristic, CharacteristicEventTypes, CharacteristicValue, NodeCallback, Service} from '../config/hap';
-import TydomController from '../controller';
+import type { PlatformAccessory } from "homebridge";
+import { TydomAccessoryContext, TydomEndpointData } from "src/typings";
+import {
+  Characteristic,
+  CharacteristicEventTypes,
+  CharacteristicValue,
+  NodeCallback,
+  Service,
+} from "../config/hap";
+import TydomController from "../controller";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
-} from '../helpers/accessory';
-import {getTydomDataPropValue, getTydomDeviceData} from '../helpers/tydom';
-import {TydomAccessoryContext, TydomEndpointData} from 'src/typings';
-import {debugGet, debugGetResult, debugSetUpdate} from '../utils/debug';
+  setupAccessoryInformationService,
+} from "../helpers/accessory";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom";
+import { debugGet, debugGetResult, debugSetUpdate } from "../utils/debug";
 
 export const setupContactSensor = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
-  controller: TydomController
+  controller: TydomController,
 ): void => {
-  const {context} = accessory;
-  const {client} = controller;
-  const {ContactSensorState} = Characteristic;
+  const { context } = accessory;
+  const { client } = controller;
+  const { ContactSensorState } = Characteristic;
 
-  const {deviceId, endpointId} = context;
+  const { deviceId, endpointId } = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
@@ -31,8 +37,8 @@ export const setupContactSensor = (
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(ContactSensorState, service);
       try {
-        const data = await getTydomDeviceData<TydomEndpointData>(client, {deviceId, endpointId});
-        const intrusionDetect = getTydomDataPropValue<boolean>(data, 'intrusionDetect');
+        const data = await getTydomDeviceData<TydomEndpointData>(client, { deviceId, endpointId });
+        const intrusionDetect = getTydomDataPropValue<boolean>(data, "intrusionDetect");
         debugGetResult(ContactSensorState, service, intrusionDetect);
         callback(null, intrusionDetect);
       } catch (err) {
@@ -44,13 +50,13 @@ export const setupContactSensor = (
 export const updateContactSensor = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
   _controller: TydomController,
-  updates: Record<string, unknown>[]
+  updates: Record<string, unknown>[],
 ): void => {
   updates.forEach((update) => {
-    const {name, value} = update;
-    const {ContactSensorState} = Characteristic;
+    const { name, value } = update;
+    const { ContactSensorState } = Characteristic;
     switch (name) {
-      case 'intrusionDetect': {
+      case "intrusionDetect": {
         const service = getAccessoryService(accessory, Service.ContactSensor);
         debugSetUpdate(ContactSensorState, service, value);
         service.updateCharacteristic(ContactSensorState, value as boolean);

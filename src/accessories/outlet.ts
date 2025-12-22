@@ -3,26 +3,29 @@ import {
   CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback,
-  PlatformAccessory
-} from 'homebridge';
-import {toNumber} from 'lodash';
-import {getTydomDataPropValue, getTydomDeviceData} from 'src/helpers/tydom';
-import {TydomAccessoryContext} from 'src/typings';
-import {debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate} from 'src/utils';
-import {Characteristic, Service} from '../config/hap';
-import TydomController from '../controller';
+  PlatformAccessory,
+} from "homebridge";
+import { toNumber } from "lodash";
+import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
+import { TydomAccessoryContext } from "src/typings";
+import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils";
+import { Characteristic, Service } from "../config/hap";
+import TydomController from "../controller";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
-} from '../helpers/accessory';
+  setupAccessoryInformationService,
+} from "../helpers/accessory";
 
-export const setupOutlet = (accessory: PlatformAccessory<TydomAccessoryContext>, controller: TydomController): void => {
-  const {context} = accessory;
-  const {client} = controller;
-  const {On, OutletInUse} = Characteristic;
-  const {deviceId, endpointId} = context;
+export const setupOutlet = (
+  accessory: PlatformAccessory<TydomAccessoryContext>,
+  controller: TydomController,
+): void => {
+  const { context } = accessory;
+  const { client } = controller;
+  const { On, OutletInUse } = Characteristic;
+  const { deviceId, endpointId } = context;
 
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
@@ -34,39 +37,42 @@ export const setupOutlet = (accessory: PlatformAccessory<TydomAccessoryContext>,
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(On, service);
       try {
-        const data = await getTydomDeviceData(client, {deviceId, endpointId});
-        const plugCmd = getTydomDataPropValue<string>(data, 'plugCmd');
-        const nextValue = plugCmd === 'ON';
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
+        const plugCmd = getTydomDataPropValue<string>(data, "plugCmd");
+        const nextValue = plugCmd === "ON";
         debugGetResult(On, service, nextValue);
         callback(null, nextValue);
       } catch (err) {
         callback(err as Error);
       }
     })
-    .on(CharacteristicEventTypes.SET, async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-      debugSet(On, service, value);
-      try {
-        const tydomValue = value ? 'ON' : 'OFF';
-        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-          {
-            name: 'plugCmd',
-            value: tydomValue
-          }
-        ]);
-        debugSetResult(On, service, value, tydomValue);
-        callback();
-      } catch (err) {
-        callback(err as Error);
-      }
-    });
+    .on(
+      CharacteristicEventTypes.SET,
+      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+        debugSet(On, service, value);
+        try {
+          const tydomValue = value ? "ON" : "OFF";
+          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+            {
+              name: "plugCmd",
+              value: tydomValue,
+            },
+          ]);
+          debugSetResult(On, service, value, tydomValue);
+          callback();
+        } catch (err) {
+          callback(err as Error);
+        }
+      },
+    );
 
   service
     .getCharacteristic(OutletInUse)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(OutletInUse, service);
       try {
-        const data = await getTydomDeviceData(client, {deviceId, endpointId});
-        const energyInstantTotElecP = getTydomDataPropValue<number>(data, 'energyInstantTotElecP');
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
+        const energyInstantTotElecP = getTydomDataPropValue<number>(data, "energyInstantTotElecP");
         const nextValue = energyInstantTotElecP > 0;
         debugGetResult(OutletInUse, service, nextValue);
         callback(null, nextValue);
@@ -79,20 +85,20 @@ export const setupOutlet = (accessory: PlatformAccessory<TydomAccessoryContext>,
 export const updateOutlet = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
   _controller: TydomController,
-  updates: Record<string, unknown>[]
+  updates: Record<string, unknown>[],
 ): void => {
   updates.forEach((update) => {
-    const {name, value} = update;
-    const {On, OutletInUse} = Characteristic;
+    const { name, value } = update;
+    const { On, OutletInUse } = Characteristic;
     switch (name) {
-      case 'level': {
+      case "level": {
         const service = getAccessoryService(accessory, Service.Outlet);
-        const nextValue = value === 'ON';
+        const nextValue = value === "ON";
         debugSetUpdate(On, service, nextValue);
         service.updateCharacteristic(On, nextValue);
         return;
       }
-      case 'energyInstantTotElecP': {
+      case "energyInstantTotElecP": {
         const service = getAccessoryService(accessory, Service.Outlet);
         const nextValue = toNumber(value) > 0;
         debugSetUpdate(OutletInUse, service, nextValue);

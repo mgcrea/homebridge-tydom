@@ -1,4 +1,4 @@
-import {postJson} from '../utils/request';
+import { postJson } from "../utils/request";
 
 export type Webhook = {
   url: string;
@@ -21,27 +21,30 @@ type DiscordPayload = {
   allowed_mentions?: boolean; //	allowed mention object	allowed mentions for the message	false
 };
 
-export const asDiscordPayload = ({level, message}: WebhookPayload): DiscordPayload => {
-  let prefix = '';
+export const asDiscordPayload = ({ level, message }: WebhookPayload): DiscordPayload => {
+  let prefix = "";
   switch (level) {
-    case 'warn':
-      prefix = ':warning: ';
+    case "warn":
+      prefix = ":warning: ";
       break;
     default:
-      prefix = ':question: ';
+      prefix = ":question: ";
       break;
   }
   return {
-    content: `${prefix}${message}`
+    content: `${prefix}${message}`,
   };
 };
 
-export const triggerWebhook = async (webhook: Webhook, {message, level = 'info'}: WebhookPayload): Promise<void> => {
-  const {url, type} = webhook;
+export const triggerWebhook = async (
+  webhook: Webhook,
+  { message, level = "info" }: WebhookPayload,
+): Promise<void> => {
+  const { url, type } = webhook;
   switch (type) {
-    case 'discord': {
-      const res = await postJson({url, json: asDiscordPayload({message, level})});
-      console.dir({res});
+    case "discord": {
+      const res = await postJson({ url, json: asDiscordPayload({ message, level }) });
+      console.dir({ res });
       break;
     }
     default:

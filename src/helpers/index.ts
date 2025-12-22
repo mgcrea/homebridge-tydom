@@ -1,2 +1,2 @@
-export * from './accessory';
-export * from './webhook';
+export * from "./accessory";
+export * from "./webhook";

@@ -1,21 +1,21 @@
-import type {PlatformAccessory, Service, WithUUID} from 'homebridge';
-import {setupSwitch, updateSwitch} from 'src/accessories/switch';
-import {setupTriggerSwitch, updateTriggerSwitch} from 'src/accessories/triggerSwitch';
-import {setupContactSensor, updateContactSensor} from '../accessories/contactSensor';
-import {setupFan, updateFan} from '../accessories/fan';
-import {setupGarageDoorOpener, updateGarageDoorOpener} from '../accessories/garageDoorOpener';
-import {setupLightbulb, updateLightbulb} from '../accessories/lightbulb';
-import {setupOutlet, updateOutlet} from '../accessories/outlet';
-import {setupSecuritySystem, updateSecuritySystem} from '../accessories/securitySystem';
-import {setupSecuritySystemSensors, updateSecuritySystemSensors} from '../accessories/securitySystemSensors';
-import {setupTemperatureSensor, updateTemperatureSensor} from '../accessories/temperatureSensor';
-import {setupThermostat, updateThermostat} from '../accessories/thermostat';
-import {setupWindowCovering, updateWindowCovering} from '../accessories/windowCovering';
-import {AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics} from '../config/hap';
-import TydomController from '../controller';
-import {TydomAccessoryContext} from '../typings/tydom';
-import {assert, debug} from '../utils';
-import {setupSmokeDetector, updateSmokeDetector} from 'src/accessories/smokeDetector';
+import type { PlatformAccessory, Service, WithUUID } from "homebridge";
+import { setupSmokeDetector, updateSmokeDetector } from "src/accessories/smokeDetector";
+import { setupSwitch, updateSwitch } from "src/accessories/switch";
+import { setupTriggerSwitch, updateTriggerSwitch } from "src/accessories/triggerSwitch";
+import { setupContactSensor, updateContactSensor } from "../accessories/contactSensor";
+import { setupFan, updateFan } from "../accessories/fan";
+import { setupGarageDoorOpener, updateGarageDoorOpener } from "../accessories/garageDoorOpener";
+import { setupLightbulb, updateLightbulb } from "../accessories/lightbulb";
+import { setupOutlet, updateOutlet } from "../accessories/outlet";
+import { setupSecuritySystem, updateSecuritySystem } from "../accessories/securitySystem";
+import { setupSecuritySystemSensors, updateSecuritySystemSensors } from "../accessories/securitySystemSensors";
+import { setupTemperatureSensor, updateTemperatureSensor } from "../accessories/temperatureSensor";
+import { setupThermostat, updateThermostat } from "../accessories/thermostat";
+import { setupWindowCovering, updateWindowCovering } from "../accessories/windowCovering";
+import { AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics } from "../config/hap";
+import TydomController from "../controller";
+import { TydomAccessoryContext } from "../typings/tydom";
+import { assert, debug } from "../utils";
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
@@ -30,7 +30,7 @@ export const getAccessoryService = (accessory: PlatformAccessory, ServiceClass: 
 export const getAccessoryServiceWithSubtype = (
   accessory: PlatformAccessory,
   ServiceClass: ServiceClass,
-  subtype: string
+  subtype: string,
 ): Service => {
   const service = accessory.getServiceById(ServiceClass, subtype);
   assert(service, `Unexpected missing service "${ServiceClass.name}" with subtype="${subtype}" in accessory`);
@@ -41,7 +41,7 @@ export const addAccessoryService = (
   accessory: PlatformAccessory,
   service: ServiceClass,
   name: string,
-  removeExisting = false
+  removeExisting = false,
 ): Service => {
   const existingService = accessory.getService(service);
   if (existingService) {
@@ -59,7 +59,7 @@ export const addAccessoryServiceWithSubtype = (
   service: ServiceClass,
   name: string,
   subtype: string,
-  removeExisting = false
+  removeExisting = false,
 ): Service => {
   const existingService = accessory.getServiceById(service, subtype);
   if (existingService) {
@@ -73,15 +73,15 @@ export const addAccessoryServiceWithSubtype = (
 
 type TydomAccessorySetup<T extends TydomAccessoryContext> = (
   accessory: PlatformAccessory<T>,
-  controller: TydomController
+  controller: TydomController,
 ) => void | Promise<void>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getTydomAccessorySetup = <T extends TydomAccessoryContext<any, any> = TydomAccessoryContext>(
   accessory: PlatformAccessory<T>,
-  context: T
+  context: T,
 ): TydomAccessorySetup<T> => {
-  const {category} = accessory;
+  const { category } = accessory;
   switch (category) {
     case Categories.LIGHTBULB:
       return setupLightbulb;
@@ -111,21 +111,21 @@ export const getTydomAccessorySetup = <T extends TydomAccessoryContext<any, any>
   }
 };
 
-export type TydomAccessoryUpdateType = 'data' | 'cdata';
+export type TydomAccessoryUpdateType = "data" | "cdata";
 
 type TydomAccessoryUpdate<T extends TydomAccessoryContext> = (
   accessory: PlatformAccessory<T>,
   controller: TydomController,
   updates: Record<string, unknown>[],
-  type: TydomAccessoryUpdateType
+  type: TydomAccessoryUpdateType,
 ) => void | Promise<void>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getTydomAccessoryDataUpdate = <T extends TydomAccessoryContext<any, any> = TydomAccessoryContext>(
   accessory: PlatformAccessory<T>,
-  context: T
+  context: T,
 ): TydomAccessoryUpdate<T> => {
-  const {category} = accessory;
+  const { category } = accessory;
   switch (category) {
     case Categories.LIGHTBULB:
       return updateLightbulb;
@@ -156,9 +156,16 @@ export const getTydomAccessoryDataUpdate = <T extends TydomAccessoryContext<any,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const setupAccessoryInformationService = (accessory: PlatformAccessory, _controller: TydomController): void => {
-  const {context} = accessory;
-  const {manufacturer = 'Delta Dore', serialNumber = 'N/A', model = 'N/A'} = context as TydomAccessoryContext;
+export const setupAccessoryInformationService = (
+  accessory: PlatformAccessory,
+  _controller: TydomController,
+): void => {
+  const { context } = accessory;
+  const {
+    manufacturer = "Delta Dore",
+    serialNumber = "N/A",
+    model = "N/A",
+  } = context as TydomAccessoryContext;
 
   const informationService = accessory.getService(ServiceStatics.AccessoryInformation);
   assert(informationService, `Did not found AccessoryInformation service`);
@@ -169,8 +176,11 @@ export const setupAccessoryInformationService = (accessory: PlatformAccessory, _
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const setupAccessoryIdentifyHandler = (accessory: PlatformAccessory, _controller: TydomController): void => {
-  const {displayName: name, UUID: id} = accessory;
+export const setupAccessoryIdentifyHandler = (
+  accessory: PlatformAccessory,
+  _controller: TydomController,
+): void => {
+  const { displayName: name, UUID: id } = accessory;
   // listen for the "identify" event for this Accessory
   accessory.on(AccessoryEventTypes.IDENTIFY, (/* paired: boolean, callback: VoidCallback */) => {
     // debug({id, type: 'AccessoryEventTypes.IDENTIFY', paired});
@@ -180,8 +190,8 @@ export const setupAccessoryIdentifyHandler = (accessory: PlatformAccessory, _con
 };
 
 export const assignTydomContext = (
-  prev: PlatformAccessory['context'],
-  next: TydomAccessoryContext
+  prev: PlatformAccessory["context"],
+  next: TydomAccessoryContext,
 ): prev is TydomAccessoryContext => {
   Object.assign(prev, next);
   return true;
