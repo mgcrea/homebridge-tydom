@@ -30,6 +30,8 @@
 
 [Homebridge](https://homebridge.io/) plugin to easily manage [Tydom hardware](https://www.deltadore.fr/domotique/pilotage-maison-connectee) by [Delta Dore](https://www.deltadore.fr/) from [Apple HomeKit](https://www.apple.com/ios/home/).
 
+- Compatible with [Homebridge](https://homebridge.io/) v1.6+ and v2.0.
+
 - Rely on [node-tydom-client](https://github.com/mgcrea/node-tydom-client) to communicate with an existing [Tydom bridge](https://www.deltadore.fr/domotique/pilotage-maison-connectee/box-domotique/tydom-2-0-ref-6414118) (required).
 
 - Properly propagates external events into [Apple HomeKit](https://www.apple.com/ios/home/).
@@ -51,7 +53,7 @@
   "private": true,
   "description": "This file keeps track of which plugins should be installed.",
   "dependencies": {
-    "homebridge-tydom": "^0.23.9"
+    "homebridge-tydom": "^0.25.1"
   }
 }
 ```
@@ -296,17 +298,14 @@ Alternatively, you can set `debug` to `true` in the plugin's configuration.
 
 ### Available scripts
 
-| **Script**    | **Description**              |
-| ------------- | ---------------------------- |
-| start         | alias to `spec:watch`        |
-| test          | Run all tests                |
-| spec          | Run unit tests               |
-| spec:coverage | Run unit tests with coverage |
-| spec:watch    | Watch unit tests             |
-| lint          | Run eslint static tests      |
-| pretty        | Run prettier static tests    |
-| build         | Compile the library          |
-| build:watch   | Watch compilation            |
+| **Script** | **Description**                |
+| ---------- | ------------------------------ |
+| start      | Start homebridge in debug mode |
+| lint       | Run eslint static tests        |
+| format     | Run prettier formatting        |
+| check      | Run TypeScript type checking   |
+| test       | Run lint, format, and check    |
+| build      | Compile the library with tsup  |
 
 ## Authors
 
