@@ -17,6 +17,7 @@ data/
 .build/
 build/
 lib/
+dist/
 tmp/
 
 # logs
