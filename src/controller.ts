@@ -2,17 +2,15 @@ import { EventEmitter } from "events";
 import { Categories, Logging } from "homebridge";
 import { blue, bold, green, yellow } from "kolorist";
 import { get } from "lodash";
-import TydomClient, { createClient as createTydomClient } from "tydom-client";
-import { TydomHttpMessage, TydomResponse } from "tydom-client/lib/utils/tydom";
-import { HOMEBRIDGE_TYDOM_PASSWORD } from "./config/env";
-import { TydomAccessoryUpdateType } from "./helpers";
+import { HOMEBRIDGE_TYDOM_PASSWORD } from "src/config/env";
+import { TydomAccessoryUpdateType } from "src/helpers";
 import {
   asyncWait,
   getEndpointDetailsFromMeta,
   getEndpointGroupIdFromGroups,
   resolveEndpointCategory,
-} from "./helpers/tydom";
-import { TydomPlatformConfig } from "./platform";
+} from "src/helpers/tydom";
+import { TydomPlatformConfig } from "src/platform";
 import {
   TydomAccessoryContext,
   TydomAccessoryUpdateContext,
@@ -20,9 +18,14 @@ import {
   TydomDeviceDataUpdateBody,
   TydomGroupsResponse,
   TydomMetaResponse,
-} from "./typings/tydom";
-import { assert, chalkJson, chalkNumber, chalkString, debug, decode, stringIncludes } from "./utils";
-import { stringifyError } from "./utils/error";
+} from "src/typings/tydom";
+import { assert, chalkJson, chalkNumber, chalkString, debug, decode, stringIncludes } from "src/utils";
+import { stringifyError } from "src/utils/error";
+import TydomClient, {
+  createClient as createTydomClient,
+  type TydomHttpMessage,
+  type TydomResponse,
+} from "tydom-client";
 
 export type ControllerDevicePayload = TydomAccessoryContext;
 
@@ -44,8 +47,8 @@ export default class TydomController extends EventEmitter {
   public client: TydomClient;
   public config: TydomPlatformConfig;
   public log: Logging;
-  private devices: Map<string, Categories> = new Map();
-  private state: Map<string, unknown> = new Map();
+  private devices = new Map<string, Categories>();
+  private state = new Map<string, unknown>();
   private refreshInterval?: NodeJS.Timeout;
   constructor(log: Logging, config: TydomPlatformConfig) {
     super();
@@ -60,12 +63,12 @@ export default class TydomController extends EventEmitter {
       `Creating tydom client with username=${chalkString(username)} and hostname=${chalkString(hostname)}`,
     );
     this.client = createTydomClient({ username, password, hostname, followUpDebounce: 500 });
-    this.client.on("message", (message) => {
+    this.client.on("message", (message: TydomHttpMessage) => {
       try {
         this.handleMessage(message);
       } catch (err) {
         this.log.error(
-          `Encountered an uncaught error=${stringifyError(err)} while processing message=${chalkJson(message)}"`,
+          `Encountered an uncaught error=${stringifyError(err as Error)} while processing message=${chalkJson(message)}"`,
         );
       }
     });
@@ -133,7 +136,7 @@ export default class TydomController extends EventEmitter {
     const { hostname } = this.config;
     this.log.info(`Scaning devices from hostname=${chalkString(hostname)}...`);
     const {
-      settings = {},
+      settings,
       includedDevices = [],
       excludedDevices = [],
       includedCategories = [],
@@ -153,7 +156,7 @@ export default class TydomController extends EventEmitter {
       const groupId = getEndpointGroupIdFromGroups(endpoint, groups);
       const group = groupId ? configGroups.find(({ id }) => id === groupId) : undefined;
       const deviceSettings = settings[deviceId] || {};
-      const categoryFromSettings = deviceSettings.category as Categories | undefined;
+      const categoryFromSettings = deviceSettings.category;
       // @TODO resolve endpoint productType
       this.log.info(
         `Found new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
@@ -174,7 +177,7 @@ export default class TydomController extends EventEmitter {
         );
       }
       const category =
-        categoryFromSettings || resolveEndpointCategory({ firstUsage, metadata, settings: deviceSettings });
+        categoryFromSettings ?? resolveEndpointCategory({ firstUsage, metadata, settings: deviceSettings });
       if (!category) {
         this.log.warn(`Unsupported firstUsage="${firstUsage}" for endpoint with deviceId="${deviceId}"`);
         debug({ endpoint });
@@ -194,7 +197,7 @@ export default class TydomController extends EventEmitter {
         );
         const accessoryId = this.getAccessoryId(deviceId, endpointId);
         const nameFromSetting = get(settings, `${deviceId}.name`) as string | undefined;
-        const name = nameFromSetting || deviceName;
+        const name = nameFromSetting ?? deviceName;
         this.devices.set(uniqueId, category);
         const context: TydomAccessoryContext = {
           name,
@@ -214,9 +217,9 @@ export default class TydomController extends EventEmitter {
       }
     });
   }
-  async refresh(): Promise<unknown> {
+  async refresh(): Promise<void> {
     debug(`Refreshing Tydom controller ...`);
-    return await this.client.post("/refresh/all");
+    await this.client.post("/refresh/all");
   }
   handleMessage(message: TydomHttpMessage): void {
     const { uri, method, body } = message;
