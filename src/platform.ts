@@ -5,17 +5,17 @@ import type {
   PlatformAccessory,
   PlatformConfig,
 } from "homebridge";
-import { PLATFORM_NAME, PLUGIN_NAME } from "./config/env";
-import { Categories } from "./config/hap";
+import { PLATFORM_NAME, PLUGIN_NAME } from "src/config/env";
+import { Categories } from "src/config/hap";
 import TydomController, {
   ControllerDevicePayload,
   ControllerNotificationPayload,
   ControllerUpdatePayload,
-} from "./controller";
-import { triggerWebhook, Webhook } from "./helpers";
-import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "./helpers/accessory";
-import { TydomAccessoryContext } from "./typings/tydom";
-import { assert, chalkKeyword, chalkNumber, chalkString, debug, enableDebug } from "./utils";
+} from "src/controller";
+import { triggerWebhook, Webhook } from "src/helpers";
+import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "src/helpers/accessory";
+import { TydomAccessoryContext } from "src/typings/tydom";
+import { assert, chalkKeyword, chalkNumber, chalkString, debug, enableDebug } from "src/utils";
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
@@ -32,8 +32,8 @@ export type TydomPlatformConfig = PlatformConfig & {
 };
 
 export default class TydomPlatform implements DynamicPlatformPlugin {
-  cleanupAccessoriesIds: Set<string> = new Set();
-  accessories: Map<string, PlatformAccessory<TydomAccessoryContext>> = new Map();
+  cleanupAccessoriesIds = new Set<string>();
+  accessories = new Map<string, PlatformAccessory<TydomAccessoryContext>>();
   controller?: TydomController;
   api: Homebridge;
   config: TydomPlatformConfig;
@@ -46,6 +46,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.log = log;
     this.api = api;
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!config) {
       log.warn("Ignoring Tydom platform setup because it is not configured");
       this.disabled = true;
@@ -70,8 +71,8 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     await this.controller.connect();
     await this.controller.scan();
     this.cleanupAccessoriesIds.forEach((accessoryId) => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const accessory = this.accessories.get(accessoryId)!;
+      const accessory = this.accessories.get(accessoryId);
+      if (!accessory) return;
       this.log.warn(`Deleting missing accessory with id=${chalkNumber(accessoryId)}`);
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
     });
@@ -88,18 +89,18 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.log.debug(
       `Tydom with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(id)}) context="${JSON.stringify(context)}"`,
     );
-    const hasNewCategory = this.accessories.get(id)?.category !== category;
-    debug(`[${deviceId}] ${this.accessories.get(id)?.category} vs ${category}`);
+    const existingAccessory = this.accessories.get(id);
+    const hasNewCategory = existingAccessory?.category !== category;
+    debug(`[${deviceId}] ${existingAccessory?.category} vs ${category}`);
     // Prevent automatic cleanup
     this.cleanupAccessoriesIds.delete(id);
-    if (this.accessories.has(id)) {
+    if (existingAccessory) {
       if (!hasNewCategory) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        await this.updateAccessory(this.accessories.get(id)!, context);
+        await this.updateAccessory(existingAccessory, context);
         return;
       } else {
         this.log.warn(`Deleting accessory with new category with id=${chalkNumber(accessoryId)}`);
-        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [this.accessories.get(id)!]);
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
       }
     }
     const accessory = await this.createAccessory(name, id, category, context);
@@ -108,28 +109,22 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   }
   handleControllerDataUpdate({ type, updates, context }: ControllerUpdatePayload): void {
     const id = this.api.hap.uuid.generate(context.accessoryId);
-    if (!this.accessories.has(id)) {
-      return;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const accessory = this.accessories.get(id)!;
+    const accessory = this.accessories.get(id);
+    if (!accessory || !this.controller) return;
     const tydomAccessoryUpdate = getTydomAccessoryDataUpdate(accessory, context);
     if (tydomAccessoryUpdate) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      tydomAccessoryUpdate(accessory, this.controller!, updates, type);
+      void tydomAccessoryUpdate(accessory, this.controller, updates, type);
     }
   }
   handleControllerNotification({ level, message }: ControllerNotificationPayload): void {
     const { webhooks = [] } = this.config;
-    webhooks.forEach(async (webhook) => {
-      try {
-        await triggerWebhook(webhook, { level, message });
-      } catch (err) {
+    webhooks.forEach((webhook) => {
+      void triggerWebhook(webhook, { level, message }).catch((err: unknown) => {
         if (err instanceof Error) {
           this.log.error(`${err.name} ${err.message}`);
           this.log.debug(`${err.stack}`);
         }
-      }
+      });
     });
   }
   async createAccessory(
@@ -163,8 +158,8 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     );
     Object.assign(accessory.context, context);
     const tydomAccessorySetup = getTydomAccessorySetup(accessory, context);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    await tydomAccessorySetup(accessory, this.controller!);
+    assert(this.controller);
+    await tydomAccessorySetup(accessory, this.controller);
     this.api.updatePlatformAccessories([accessory]);
   }
   // Called by homebridge with existing cached accessories
