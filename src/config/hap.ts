@@ -1,12 +1,6 @@
 import type { HAP, API as Homebridge } from "homebridge";
-export { AccessoryEventTypes, Categories, CharacteristicEventTypes } from "homebridge";
-export type {
-  CharacteristicProps,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  VoidCallback,
-} from "homebridge";
+export { AccessoryEventTypes, Categories } from "homebridge";
+export type { CharacteristicProps, VoidCallback } from "homebridge";
 
 export let Characteristic: HAP["Characteristic"];
 export let Service: HAP["Service"];
