@@ -1,4 +1,4 @@
-import { postJson } from "../utils/request";
+import { postJson } from "src/utils/request";
 
 export type Webhook = {
   url: string;
@@ -43,8 +43,7 @@ export const triggerWebhook = async (
   const { url, type } = webhook;
   switch (type) {
     case "discord": {
-      const res = await postJson({ url, json: asDiscordPayload({ message, level }) });
-      console.dir({ res });
+      await postJson({ url, json: asDiscordPayload({ message, level }) });
       break;
     }
     default:
