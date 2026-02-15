@@ -14,7 +14,7 @@
     "homebridge-plugin"
   ],
   "engines": {
-    "node": "^18.20.4 || ^20.15.1 || ^22",
+    "node": "^18.20.4 || ^20.15.1 || ^22 || ^24",
     "homebridge": "^1.6.0 || ^2.0.0"
   },
   "scripts": {
@@ -25,6 +25,7 @@
     "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
     "lint": "eslint src/",
     "format": "prettier --write src/ test/",
+    "format:check": "prettier --check src/ test/",
     "check": "tsc --noEmit",
     "test": "npm run lint && npm run format && npm run check",
     "build": "tsup",
@@ -34,29 +35,29 @@
     "debug": "^4.4.3",
     "fakegato-history": "^0.6.7",
     "kolorist": "^1.8.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "source-map-support": "^0.5.21",
-    "tydom-client": "^0.13.4"
+    "tydom-client": "^0.14.2"
   },
   "devDependencies": {
     "@mgcrea/eslint-config-node": "^0.14.1",
-    "@tsconfig/node20": "^20.1.8",
+    "@tsconfig/node20": "^20.1.9",
     "@types/debug": "^4.1.12",
     "@types/jest": "^30.0.0",
-    "@types/lodash": "^4.17.21",
-    "@types/node": "^25.0.3",
+    "@types/lodash": "^4.17.23",
+    "@types/node": "^25.2.3",
     "@types/node-persist": "^3.1.8",
     "@types/ws": "^8.18.1",
     "eslint": "^9.39.2",
-    "homebridge": "^1.11.1",
+    "homebridge": "^1.11.2",
     "jest": "^30.2.0",
-    "nock": "^14.0.10",
-    "prettier": "^3.7.4",
+    "nock": "^14.0.11",
+    "prettier": "^3.8.1",
     "prettier-plugin-organize-imports": "^4.3.0",
     "tsc-alias": "^1.8.16",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@10.26.0+sha512.3b3f6c725ebe712506c0ab1ad4133cf86b1f4b687effce62a9b38b4d72e3954242e643190fc51fa1642949c735f403debd44f5cb0edd657abe63a8b6a7e1e402"
+  "packageManager": "pnpm@10.29.3"
 }
