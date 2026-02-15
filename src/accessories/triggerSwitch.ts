@@ -5,15 +5,15 @@ import {
   CharacteristicSetCallback,
   CharacteristicValue,
   Service,
-} from "../config/hap";
-import TydomController from "../controller";
+} from "src/config/hap";
+import TydomController from "src/controller";
 import {
   addAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "../helpers/accessory";
-import type { TydomAccessoryContext } from "../typings/tydom";
-import { debugSet, debugSetResult } from "../utils/debug";
+} from "src/helpers/accessory";
+import type { TydomAccessoryContext } from "src/typings/tydom";
+import { debugSet, debugSetResult } from "src/utils/debug";
 
 type TriggerSwitchSettings = {
   delay?: number;
@@ -36,7 +36,7 @@ export const setupTriggerSwitch = (
   setupAccessoryIdentifyHandler(accessory, controller);
 
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.Switch, `${accessory.displayName}`, true);
+  const service = addAccessoryService(accessory, Service.Switch, accessory.displayName, true);
 
   service
     .getCharacteristic(Characteristic.On)

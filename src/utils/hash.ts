@@ -10,7 +10,7 @@ export const sha256 = (data: crypto.BinaryLike): Promise<string> => {
       shasum.update(data);
       resolve(shasum.digest("hex"));
     } catch (err) {
-      reject(err);
+      reject(err instanceof Error ? err : new Error(String(err)));
     }
   });
 };

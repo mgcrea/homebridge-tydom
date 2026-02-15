@@ -1,21 +1,24 @@
 import type { PlatformAccessory, Service, WithUUID } from "homebridge";
+import { setupContactSensor, updateContactSensor } from "src/accessories/contactSensor";
+import { setupFan, updateFan } from "src/accessories/fan";
+import { setupGarageDoorOpener, updateGarageDoorOpener } from "src/accessories/garageDoorOpener";
+import { setupLightbulb, updateLightbulb } from "src/accessories/lightbulb";
+import { setupOutlet, updateOutlet } from "src/accessories/outlet";
+import { setupSecuritySystem, updateSecuritySystem } from "src/accessories/securitySystem";
+import {
+  setupSecuritySystemSensors,
+  updateSecuritySystemSensors,
+} from "src/accessories/securitySystemSensors";
 import { setupSmokeDetector, updateSmokeDetector } from "src/accessories/smokeDetector";
 import { setupSwitch, updateSwitch } from "src/accessories/switch";
+import { setupTemperatureSensor, updateTemperatureSensor } from "src/accessories/temperatureSensor";
+import { setupThermostat, updateThermostat } from "src/accessories/thermostat";
 import { setupTriggerSwitch, updateTriggerSwitch } from "src/accessories/triggerSwitch";
-import { setupContactSensor, updateContactSensor } from "../accessories/contactSensor";
-import { setupFan, updateFan } from "../accessories/fan";
-import { setupGarageDoorOpener, updateGarageDoorOpener } from "../accessories/garageDoorOpener";
-import { setupLightbulb, updateLightbulb } from "../accessories/lightbulb";
-import { setupOutlet, updateOutlet } from "../accessories/outlet";
-import { setupSecuritySystem, updateSecuritySystem } from "../accessories/securitySystem";
-import { setupSecuritySystemSensors, updateSecuritySystemSensors } from "../accessories/securitySystemSensors";
-import { setupTemperatureSensor, updateTemperatureSensor } from "../accessories/temperatureSensor";
-import { setupThermostat, updateThermostat } from "../accessories/thermostat";
-import { setupWindowCovering, updateWindowCovering } from "../accessories/windowCovering";
-import { AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics } from "../config/hap";
-import TydomController from "../controller";
-import { TydomAccessoryContext } from "../typings/tydom";
-import { assert, debug } from "../utils";
+import { setupWindowCovering, updateWindowCovering } from "src/accessories/windowCovering";
+import { AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics } from "src/config/hap";
+import TydomController from "src/controller";
+import { TydomAccessoryContext } from "src/typings/tydom";
+import { assert, debug } from "src/utils";
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
@@ -82,6 +85,11 @@ export const getTydomAccessorySetup = <T extends TydomAccessoryContext<any, any>
   context: T,
 ): TydomAccessorySetup<T> => {
   const { category } = accessory;
+  const settings = context.settings as Record<string, unknown>;
+  // Custom category for security system sensors
+  if (category === (SECURITY_SYSTEM_SENSORS as Categories)) {
+    return setupSecuritySystemSensors;
+  }
   switch (category) {
     case Categories.LIGHTBULB:
       return setupLightbulb;
@@ -94,18 +102,16 @@ export const getTydomAccessorySetup = <T extends TydomAccessoryContext<any, any>
     case Categories.GARAGE_DOOR_OPENER:
       return setupGarageDoorOpener;
     case Categories.SWITCH:
-      return context.settings?.trigger ? setupTriggerSwitch : setupSwitch;
+      return settings.trigger ? setupTriggerSwitch : setupSwitch;
     case Categories.WINDOW_COVERING:
       return setupWindowCovering;
     case Categories.SECURITY_SYSTEM:
       return setupSecuritySystem;
     case Categories.SENSOR:
-      return context.settings?.smokeDetector ? setupSmokeDetector : setupTemperatureSensor;
+      return settings.smokeDetector ? setupSmokeDetector : setupTemperatureSensor;
     case Categories.WINDOW:
     case Categories.DOOR:
       return setupContactSensor;
-    case SECURITY_SYSTEM_SENSORS:
-      return setupSecuritySystemSensors;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
   }
@@ -126,6 +132,11 @@ export const getTydomAccessoryDataUpdate = <T extends TydomAccessoryContext<any,
   context: T,
 ): TydomAccessoryUpdate<T> => {
   const { category } = accessory;
+  const settings = context.settings as Record<string, unknown>;
+  // Custom category for security system sensors
+  if (category === (SECURITY_SYSTEM_SENSORS as Categories)) {
+    return updateSecuritySystemSensors;
+  }
   switch (category) {
     case Categories.LIGHTBULB:
       return updateLightbulb;
@@ -138,24 +149,21 @@ export const getTydomAccessoryDataUpdate = <T extends TydomAccessoryContext<any,
     case Categories.GARAGE_DOOR_OPENER:
       return updateGarageDoorOpener;
     case Categories.SWITCH:
-      return context.settings?.trigger ? updateTriggerSwitch : updateSwitch;
+      return settings.trigger ? updateTriggerSwitch : updateSwitch;
     case Categories.WINDOW_COVERING:
       return updateWindowCovering;
     case Categories.SECURITY_SYSTEM:
       return updateSecuritySystem;
     case Categories.SENSOR:
-      return context.settings?.smokeDetector ? updateSmokeDetector : updateTemperatureSensor;
+      return settings.smokeDetector ? updateSmokeDetector : updateTemperatureSensor;
     case Categories.WINDOW:
     case Categories.DOOR:
       return updateContactSensor;
-    case SECURITY_SYSTEM_SENSORS:
-      return updateSecuritySystemSensors;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const setupAccessoryInformationService = (
   accessory: PlatformAccessory,
   _controller: TydomController,
@@ -175,7 +183,6 @@ export const setupAccessoryInformationService = (
     .setCharacteristic(Characteristic.Model, model);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const setupAccessoryIdentifyHandler = (
   accessory: PlatformAccessory,
   _controller: TydomController,

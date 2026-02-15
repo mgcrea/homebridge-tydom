@@ -7,19 +7,19 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service,
-} from "../config/hap";
-import TydomController from "../controller";
+} from "src/config/hap";
+import TydomController from "src/controller";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
   TydomAccessoryUpdateType,
-} from "../helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom";
-import type { TydomAccessoryContext, TydomDeviceShutterData } from "../typings/tydom";
-import { asNumber } from "../utils";
-import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "../utils/color";
+} from "src/helpers/accessory";
+import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
+import type { TydomAccessoryContext, TydomDeviceShutterData } from "src/typings/tydom";
+import { asNumber } from "src/utils";
+import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "src/utils/color";
 import {
   debug,
   debugGet,
@@ -28,7 +28,7 @@ import {
   debugSetResult,
   debugSetUpdate,
   debugTydomPut,
-} from "../utils/debug";
+} from "src/utils/debug";
 
 // const getReciprocalPositionForValue = (position: number): number => {
 //   if (position === 0 || position === 100) {
@@ -67,7 +67,7 @@ export const setupWindowCovering = (
   });
 
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.WindowCovering, `${accessory.displayName}`, true);
+  const service = addAccessoryService(accessory, Service.WindowCovering, accessory.displayName, true);
 
   const debouncedSetPosition = debounce(
     async (value: number) => {
@@ -88,16 +88,12 @@ export const setupWindowCovering = (
 
   service
     .getCharacteristic(PositionState)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(PositionState, service);
-      try {
-        // @NOTE Tydom does not track the current position
-        const nextValue = PositionState.STOPPED;
-        debugGetResult(CurrentPosition, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+      // @NOTE Tydom does not track the current position
+      const nextValue = PositionState.STOPPED;
+      debugGetResult(CurrentPosition, service, nextValue);
+      callback(null, nextValue);
     });
 
   service

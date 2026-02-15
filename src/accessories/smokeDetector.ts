@@ -6,17 +6,17 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service,
-} from "../config/hap";
-import TydomController from "../controller";
+} from "src/config/hap";
+import TydomController from "src/controller";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "../helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom";
-import type { TydomAccessoryContext, TydomDeviceSmokeDetectorData } from "../typings/tydom";
-import { debugGet, debugGetResult, debugSetUpdate } from "../utils/debug";
+} from "src/helpers/accessory";
+import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
+import type { TydomAccessoryContext, TydomDeviceSmokeDetectorData } from "src/typings/tydom";
+import { debugGet, debugGetResult, debugSetUpdate } from "src/utils/debug";
 
 export const setupSmokeDetector = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -31,7 +31,7 @@ export const setupSmokeDetector = (
   setupAccessoryIdentifyHandler(accessory, controller);
 
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.SmokeSensor, `${accessory.displayName}`, true);
+  const service = addAccessoryService(accessory, Service.SmokeSensor, accessory.displayName, true);
 
   service
     .getCharacteristic(SmokeDetected)

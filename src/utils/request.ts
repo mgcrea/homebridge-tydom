@@ -11,7 +11,7 @@ export const postJson = async <T>(
   options: PostJsonOptions,
 ): Promise<Pick<IncomingMessage, "statusCode" | "statusMessage" | "headers"> & { body: T }> => {
   const { url, json, ...otherOptions } = options;
-  const { headers = {} } = otherOptions;
+  const { headers: customHeaders = {} } = otherOptions;
   const { hostname, port, protocol, pathname } = new URL(url);
   const data = JSON.stringify(json);
   const requestOptions: RequestOptions = {
@@ -23,13 +23,13 @@ export const postJson = async <T>(
     headers: {
       "Content-Type": "application/json",
       "Content-Length": data.length,
-      ...headers,
+      ...(customHeaders as Record<string, string>),
     },
   };
   return new Promise((resolve, reject) => {
     const req = request(requestOptions, (res) => {
       const chunks: Buffer[] = [];
-      res.on("data", (chunk) => {
+      res.on("data", (chunk: Buffer) => {
         chunks.push(chunk);
       });
       res.on("end", () => {
@@ -37,7 +37,7 @@ export const postJson = async <T>(
           statusCode: res.statusCode,
           statusMessage: res.statusMessage,
           headers: res.headers,
-          body: chunks.length ? JSON.parse(Buffer.concat(chunks).toString()) : undefined,
+          body: chunks.length ? (JSON.parse(Buffer.concat(chunks).toString()) as T) : (undefined as T),
         });
       });
     });

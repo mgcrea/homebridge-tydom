@@ -5,12 +5,12 @@ import {
   CharacteristicSetCallback,
   CharacteristicValue,
   NodeCallback,
-} from "../../config/hap";
-import TydomController from "../../controller";
-import { addAccessoryService, getAccessoryService, ServiceClass } from "../../helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "../../helpers/tydom";
-import type { TydomAccessoryContext, TydomEndpointData } from "../../typings/tydom";
-import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "../../utils/debug";
+} from "src/config/hap";
+import TydomController from "src/controller";
+import { addAccessoryService, getAccessoryService, ServiceClass } from "src/helpers/accessory";
+import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
+import type { TydomAccessoryContext } from "src/typings/tydom";
+import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils/debug";
 
 export const addAccessorySwitchableService = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -22,14 +22,14 @@ export const addAccessorySwitchableService = (
   const { On } = Characteristic;
 
   const { deviceId, endpointId } = context;
-  const service = addAccessoryService(accessory, serviceClass, `${accessory.displayName}`, true);
+  const service = addAccessoryService(accessory, serviceClass, accessory.displayName, true);
 
   service
     .getCharacteristic(On)
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(On, service);
       try {
-        const data = (await getTydomDeviceData(client, { deviceId, endpointId })) as TydomEndpointData;
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
         const level = getTydomDataPropValue<number>(data, "level");
         const nextValue = level === 100;
         debugGetResult(On, service, nextValue);

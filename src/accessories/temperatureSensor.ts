@@ -5,17 +5,17 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service,
-} from "../config/hap";
-import TydomController from "../controller";
+} from "src/config/hap";
+import TydomController from "src/controller";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "../helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom";
-import type { TydomAccessoryContext, TydomEndpointData } from "../typings/tydom";
-import { debugGet, debugGetResult, debugSetUpdate } from "../utils/debug";
+} from "src/helpers/accessory";
+import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
+import type { TydomAccessoryContext } from "src/typings/tydom";
+import { debugGet, debugGetResult, debugSetUpdate } from "src/utils/debug";
 
 export const setupTemperatureSensor = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -30,7 +30,7 @@ export const setupTemperatureSensor = (
   setupAccessoryIdentifyHandler(accessory, controller);
 
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.TemperatureSensor, `${accessory.displayName}`, true);
+  const service = addAccessoryService(accessory, Service.TemperatureSensor, accessory.displayName, true);
 
   service
     .getCharacteristic(CurrentTemperature)
@@ -40,7 +40,7 @@ export const setupTemperatureSensor = (
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(CurrentTemperature, service);
       try {
-        const data = await getTydomDeviceData<TydomEndpointData>(client, { deviceId, endpointId });
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
         const outTemperature = getTydomDataPropValue<number>(data, "outTemperature");
         debugGetResult(CurrentTemperature, service, outTemperature);
         callback(null, outTemperature);

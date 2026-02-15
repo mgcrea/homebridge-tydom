@@ -1,20 +1,25 @@
 #! /usr/bin/env node
 import { readFileSync } from "fs";
-import { getEndpointSignatureFromMetadata } from "../helpers/tydom";
-import { TydomConfigResponse, TydomMetaResponse } from "../typings";
-import { sha256, sha256Sync } from "../utils";
+import { getEndpointSignatureFromMetadata } from "src/helpers/tydom";
+import type { TydomConfigResponse, TydomMetaElement, TydomMetaResponse } from "src/typings";
+import { sha256, sha256Sync } from "src/utils";
 
-const [action = "help", ...args] = process.argv.slice(2);
+const [action, ...args] = process.argv.slice(2);
 const [filename] = args;
+
+type DumpFormat = {
+  "/configs/file": TydomConfigResponse;
+  "/devices/meta": TydomMetaResponse;
+};
 
 console.dir({ action, args });
 const main = async () => {
   switch (action) {
     case "dump": {
       const stdin = readFileSync(filename || process.stdin.fd);
-      const dump = JSON.parse(stdin.toString("utf8"));
-      const allDevicesConfig = dump["/configs/file"] as TydomConfigResponse;
-      const allDevicesMeta = dump["/devices/meta"] as TydomMetaResponse;
+      const dump = JSON.parse(stdin.toString("utf8")) as DumpFormat;
+      const allDevicesConfig = dump["/configs/file"];
+      const allDevicesMeta = dump["/devices/meta"];
       for (const deviceMeta of allDevicesMeta) {
         for (const endpointMeta of deviceMeta.endpoints) {
           const signature = getEndpointSignatureFromMetadata(endpointMeta.metadata);
@@ -29,7 +34,7 @@ const main = async () => {
     }
     case "hash": {
       const stdin = readFileSync(filename || process.stdin.fd);
-      const meta = JSON.parse(stdin.toString("utf8"));
+      const meta = JSON.parse(stdin.toString("utf8")) as TydomMetaElement[];
       const metaSignature = getEndpointSignatureFromMetadata(meta);
       const hash = sha256Sync(metaSignature);
       console.dir({ metaSignature, hash });
@@ -41,4 +46,4 @@ const main = async () => {
   process.exit(0);
 };
 
-main();
+void main();

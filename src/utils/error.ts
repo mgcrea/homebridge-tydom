@@ -9,4 +9,4 @@ const errorReplacer = (key: string, value: unknown) => {
   return `${value}`;
 };
 
-export const stringifyError = (err: Error | unknown) => JSON.stringify(err, errorReplacer);
+export const stringifyError = (err: Error) => JSON.stringify(err, errorReplacer);

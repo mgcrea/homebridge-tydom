@@ -15,7 +15,9 @@ import {
   setupAccessoryInformationService,
   TydomAccessoryUpdateType,
 } from "src/helpers";
+import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import { TydomAccessoryContext } from "src/typings";
+import type { TydomDeviceGarageDoorData } from "src/typings/tydom";
 import {
   asNumber,
   chalkJson,
@@ -29,8 +31,6 @@ import {
   waitFor,
 } from "src/utils";
 import TydomClient from "tydom-client";
-import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom";
-import type { TydomDeviceGarageDoorData } from "../typings/tydom";
 
 type GarageDoorOpenerSettings = {
   delay?: number;
@@ -224,7 +224,7 @@ export const setupGarageDoorOpener = (
   if (legacyService) {
     accessory.removeService(legacyService);
   }
-  const service = addAccessoryService(accessory, Service.GarageDoorOpener, `${accessory.displayName}`, true);
+  const service = addAccessoryService(accessory, Service.GarageDoorOpener, accessory.displayName, true);
 
   service
     .getCharacteristic(CurrentDoorState)
@@ -396,10 +396,12 @@ export const updateGarageDoorOpener = (
     return;
   }
 
-  updates.forEach(async (update) => {
+  updates.forEach((update) => {
     const { name, value: value } = update;
     const service = getAccessoryService(accessory, Service.GarageDoorOpener);
-    debug(`New ${chalkKeyword("GarageDoorOpener")} update received from Tydom, name=${name} / value=${value}`);
+    debug(
+      `New ${chalkKeyword("GarageDoorOpener")} update received from Tydom, name=${String(name)} / value=${String(value)}`,
+    );
     switch (name) {
       case "level": {
         // Updates are to be processed only in case external remote triggered the event

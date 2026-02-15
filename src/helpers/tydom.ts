@@ -1,8 +1,6 @@
 import type { PlatformAccessory } from "homebridge";
 import { find } from "lodash";
-import TydomClient from "tydom-client";
-import { URLSearchParams } from "url";
-import { Categories } from "../config/hap";
+import { Categories } from "src/config/hap";
 import {
   AnyTydomDataValue,
   TydomConfigEndpoint,
@@ -12,8 +10,10 @@ import {
   TydomMetaElement,
   TydomMetaEndpoint,
   TydomMetaResponse,
-} from "../typings";
-import { assert, chalkNumber, chalkString, debug, sha256Sync } from "../utils";
+} from "src/typings";
+import { assert, chalkNumber, chalkString, debug, sha256Sync } from "src/utils";
+import TydomClient from "tydom-client";
+import { URLSearchParams } from "url";
 
 type DataOperation = {
   promise: Promise<unknown> | null;
@@ -70,7 +70,7 @@ export const runTydomDeviceCommand = async <T extends Record<string, unknown> = 
 ): Promise<T[]> => {
   const now = Date.now();
   const uri = `/devices/${deviceId}/endpoints/${endpointId}/cdata?name=${name}${
-    searchParams ? `&${new URLSearchParams(searchParams)}` : ""
+    searchParams ? `&${new URLSearchParams(searchParams).toString()}` : ""
   }`;
   if (cacheMap.has(uri)) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

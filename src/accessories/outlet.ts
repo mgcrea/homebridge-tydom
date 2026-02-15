@@ -6,17 +6,17 @@ import {
   PlatformAccessory,
 } from "homebridge";
 import { toNumber } from "lodash";
-import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import { TydomAccessoryContext } from "src/typings";
-import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils";
-import { Characteristic, Service } from "../config/hap";
-import TydomController from "../controller";
+import { Characteristic, Service } from "src/config/hap";
+import TydomController from "src/controller";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "../helpers/accessory";
+} from "src/helpers/accessory";
+import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
+import { TydomAccessoryContext } from "src/typings";
+import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils";
 
 export const setupOutlet = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -30,7 +30,7 @@ export const setupOutlet = (
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.Outlet, `${accessory.displayName}`, true);
+  const service = addAccessoryService(accessory, Service.Outlet, accessory.displayName, true);
 
   service
     .getCharacteristic(On)

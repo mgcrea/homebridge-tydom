@@ -1,4 +1,4 @@
-import { Categories } from "../config/hap";
+import { Categories } from "src/config/hap";
 
 type UnknownObject = Record<string, unknown>;
 
@@ -48,7 +48,7 @@ export type TydomConfigResponse = {
 };
 
 export type TydomGroupsResponse = {
-  groups: Array<{ id: number; devices: Array<{ id: number; endpoints: Array<{ id: number }> }> }>;
+  groups: { id: number; devices: { id: number; endpoints: { id: number }[] }[] }[];
 };
 
 export type TydomMetaElement = {
@@ -68,10 +68,10 @@ export type TydomMetaEndpoint = {
   metadata: TydomMetaElement[];
 };
 
-export type TydomMetaResponse = Array<{
+export type TydomMetaResponse = {
   id: number;
   endpoints: TydomMetaEndpoint[];
-}>;
+}[];
 
 export type AnyTydomDataValue = string | number | boolean;
 
@@ -220,6 +220,6 @@ export type SecuritySystemAlarmEvent = {
     | "alarmIntrusion"
     | "passageEnMaintenance";
   date: string;
-  zones: Array<{ id: number; nameStd: string }>;
+  zones: { id: number; nameStd: string }[];
   product?: SecuritySystemProduct;
 };

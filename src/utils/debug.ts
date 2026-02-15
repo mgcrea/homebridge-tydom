@@ -1,13 +1,15 @@
 import createDebug from "debug";
 import type { PlatformAccessory, Service } from "homebridge";
 import { blue } from "kolorist";
-import { Characteristic } from "../config/hap";
+import { Characteristic } from "src/config/hap";
 import { chalkGet, chalkKeyword, chalkSet, chalkString, chalkUpd, chalkVal } from "./color";
 
 type IdentifiableAccessoryObject = PlatformAccessory | Service;
 
 export const debug = createDebug("homebridge-tydom");
-export const enableDebug = () => createDebug.enable("homebridge-tydom");
+export const enableDebug = () => {
+  createDebug.enable("homebridge-tydom");
+};
 
 export const dir = (...args: unknown[]): void => {
   console.dir(args.length > 1 ? args : args[0], { colors: true, depth: 10 });

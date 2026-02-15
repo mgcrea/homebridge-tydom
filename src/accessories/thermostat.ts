@@ -8,25 +8,25 @@ import {
   CharacteristicValue,
   NodeCallback,
   Service,
-} from "../config/hap";
-import locale from "../config/locale";
-import TydomController from "../controller";
+} from "src/config/hap";
+import locale from "src/config/locale";
+import TydomController from "src/controller";
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "../helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom";
+} from "src/helpers/accessory";
+import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type {
   TydomAccessoryContext,
   TydomDeviceThermostatAuthorization,
   TydomDeviceThermostatData,
   TydomDeviceThermostatHvacMode,
   TydomDeviceThermostatThermicLevel,
-} from "../typings/tydom";
-import { chalkString } from "../utils/color";
+} from "src/typings/tydom";
+import { chalkString } from "src/utils/color";
 import {
   debug,
   debugAddSubService,
@@ -35,7 +35,7 @@ import {
   debugSet,
   debugSetResult,
   debugSetUpdate,
-} from "../utils/debug";
+} from "src/utils/debug";
 
 export const setupThermostat = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -51,7 +51,7 @@ export const setupThermostat = (
   setupAccessoryIdentifyHandler(accessory, controller);
 
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.Thermostat, `${accessory.displayName}`, true);
+  const service = addAccessoryService(accessory, Service.Thermostat, accessory.displayName, true);
 
   service
     .getCharacteristic(CurrentHeatingCoolingState)
@@ -175,12 +175,12 @@ export const setupThermostat = (
     );
     return;
   }
-  const thermicLevelValues = thermicLevelData.enum_values as string[];
+  const thermicLevelValues = thermicLevelData.enum_values!;
 
   // Only absence (aka. anti-frost) mode
   if (thermicLevelValues.length === 1) {
     const absenceModeId = `hvacMode_absence`;
-    const absenceModeName = get(locale, "HVAC_INFO_ABSENCE", "N/A") as string;
+    const absenceModeName = get(locale, "HVAC_INFO_ABSENCE", "N/A");
     const absenceModeService = addAccessoryServiceWithSubtype(
       accessory,
       Service.Switch,
@@ -333,7 +333,7 @@ export const updateThermostat = (
         service.updateCharacteristic(TargetHeatingCoolingState, CurrentHeatingCoolingState.OFF);
         if (hvacMode === "ANTI_FROST") {
           const subtype = "hvacMode_absence";
-          const service = accessory.getServiceByUUIDAndSubType(Service.Switch, subtype);
+          const service = accessory.getServiceById(Service.Switch, subtype);
           if (service) {
             debugSetUpdate(On, service, true);
             service.updateCharacteristic(On, true);
@@ -348,10 +348,7 @@ export const updateThermostat = (
           debug(`Encountered a ${chalkString("thermicLevel")} update with a null value!`);
           return;
         }
-        const service = accessory.getServiceByUUIDAndSubType(
-          Service.Switch,
-          `thermicLevel_${thermicLevel.toLowerCase()}`,
-        );
+        const service = accessory.getServiceById(Service.Switch, `thermicLevel_${thermicLevel.toLowerCase()}`);
         if (service) {
           debugSetUpdate(On, service, true);
           service.updateCharacteristic(On, true);

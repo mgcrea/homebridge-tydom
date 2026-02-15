@@ -16,7 +16,7 @@ import {
   setupAccessoryInformationService,
 } from "src/helpers";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import { TydomAccessoryContext, TydomEndpointData } from "src/typings";
+import { TydomAccessoryContext } from "src/typings";
 import {
   chalkNumber,
   chalkString,
@@ -65,7 +65,7 @@ export const setupLightbulb = (
   }
 
   // Dimmable
-  const service = addAccessoryService(accessory, Service.Lightbulb, `${accessory.displayName}`, true);
+  const service = addAccessoryService(accessory, Service.Lightbulb, accessory.displayName, true);
   const debouncedSetLevel = debounce(
     async (value: number) => {
       debugTydomPut("level", accessory, value);
@@ -88,7 +88,7 @@ export const setupLightbulb = (
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(On, service);
       try {
-        const data = (await getTydomDeviceData(client, { deviceId, endpointId })) as TydomEndpointData;
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
         const level = getTydomDataPropValue<number>(data, "level");
         const nextValue = level > 0;
         debugGetResult(On, service, nextValue);
@@ -118,7 +118,7 @@ export const setupLightbulb = (
     .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
       debugGet(Brightness, service);
       try {
-        const data = await getTydomDeviceData<TydomEndpointData>(client, { deviceId, endpointId });
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
         const level = getTydomDataPropValue<number>(data, "level");
         debugGetResult(Brightness, service, level);
         callback(null, level);
