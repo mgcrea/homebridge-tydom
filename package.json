@@ -37,7 +37,7 @@
     "kolorist": "^1.8.0",
     "lodash": "^4.17.23",
     "source-map-support": "^0.5.21",
-    "tydom-client": "^0.14.2"
+    "tydom-client": "^0.15.0"
   },
   "devDependencies": {
     "@mgcrea/eslint-config-node": "^0.14.1",
