@@ -1,11 +1,5 @@
 import debug from "debug";
-import {
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  PlatformAccessory,
-} from "homebridge";
+import type { PlatformAccessory } from "homebridge";
 import { Characteristic, Service } from "src/config/hap";
 import TydomController from "src/controller";
 import {
@@ -226,129 +220,110 @@ export const setupGarageDoorOpener = (
   }
   const service = addAccessoryService(accessory, Service.GarageDoorOpener, accessory.displayName, true);
 
-  service
-    .getCharacteristic(CurrentDoorState)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet(CurrentDoorState, service);
-      try {
-        if (IS_TOGGLE_ONLY) {
-          const currentDoorState = state.currentDoorState;
-          debugGetResult(CurrentDoorState, service, currentDoorState);
-          callback(null, currentDoorState);
-          return;
-        }
-        const currentDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
-        debugGetResult(CurrentDoorState, service, currentDoorState);
-        assignState({
-          currentDoorState: currentDoorState,
-          lastUpdatedAt: Date.now(),
-          computedPosition: currentDoorState === CurrentDoorState.OPEN ? 100 : 0,
-        });
-        debug(`current state = ${state.currentDoorState === CurrentDoorState.OPEN ? "OPEN" : "CLOSE"}`);
-        callback(null, currentDoorState);
-      } catch (err) {
-        callback(err as Error);
-      }
+  service.getCharacteristic(CurrentDoorState).onGet(async () => {
+    debugGet(CurrentDoorState, service);
+    if (IS_TOGGLE_ONLY) {
+      const currentDoorState = state.currentDoorState;
+      debugGetResult(CurrentDoorState, service, currentDoorState);
+      return currentDoorState;
+    }
+    const currentDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
+    debugGetResult(CurrentDoorState, service, currentDoorState);
+    assignState({
+      currentDoorState: currentDoorState,
+      lastUpdatedAt: Date.now(),
+      computedPosition: currentDoorState === CurrentDoorState.OPEN ? 100 : 0,
     });
+    debug(`current state = ${state.currentDoorState === CurrentDoorState.OPEN ? "OPEN" : "CLOSE"}`);
+    return currentDoorState;
+  });
 
   service
     .getCharacteristic(TargetDoorState)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(TargetDoorState, service);
-      try {
-        if (IS_TOGGLE_ONLY) {
-          const targetDoorState = state.currentDoorState;
-          debugGetResult(TargetDoorState, service, targetDoorState);
-          callback(null, targetDoorState);
-          return;
-        }
-        const targetDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
+      if (IS_TOGGLE_ONLY) {
+        const targetDoorState = state.currentDoorState;
         debugGetResult(TargetDoorState, service, targetDoorState);
+        return targetDoorState;
+      }
+      const targetDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
+      debugGetResult(TargetDoorState, service, targetDoorState);
+      assignState({
+        targetDoorState: targetDoorState,
+        lastUpdatedAt: Date.now(),
+        computedPosition: targetDoorState === TargetDoorState.OPEN ? 100 : 0,
+      });
+      debug(`target state = ${state.targetDoorState === TargetDoorState.OPEN ? "OPEN" : "CLOSE"}`);
+      return targetDoorState;
+    })
+    .onSet(async (value) => {
+      debugSet(TargetDoorState, service, value);
+      debugSetResult(TargetDoorState, service, value);
+      const targetDoorState = asNumber(value);
+      assignState({
+        targetDoorState: targetDoorState,
+        lastUpdatedAt: Date.now(),
+        computedPosition: computeCurrentPosition(),
+      });
+      debug(`computedPosition=${chalkNumber(state.computedPosition)}`);
+      let nextCurrentDoorState = getNextCurrentDoorState(targetDoorState);
+      debug(`nextCurrentDoorState=${chalkString(getDoorStateLabel(nextCurrentDoorState))}`);
+      if (nextCurrentDoorState === state.currentDoorState) {
+        debug(`nextCurrentDoorState=${chalkNumber(nextCurrentDoorState)} === state.currentDoorState`);
+        return;
+      }
+      await toggleGarageDoor(targetDoorState);
+      assignCurrentDoorState(nextCurrentDoorState);
+
+      // Handle Stopped state, if we are stopped, wait one second and trigger again to reverse course
+      // eg. Stopped -> Closing if target is Closed
+      if (nextCurrentDoorState === CurrentDoorState.STOPPED) {
+        await waitFor("stopping", 1000);
         assignState({
           targetDoorState: targetDoorState,
           lastUpdatedAt: Date.now(),
-          computedPosition: targetDoorState === TargetDoorState.OPEN ? 100 : 0,
+          computedPosition: computeCurrentPosition(),
         });
-        debug(`target state = ${state.targetDoorState === TargetDoorState.OPEN ? "OPEN" : "CLOSE"}`);
-        callback(null, targetDoorState);
-      } catch (err) {
-        callback(err as Error);
+        debug(`computedPosition=${chalkNumber(state.computedPosition)}`);
+        nextCurrentDoorState = getNextCurrentDoorState(targetDoorState);
+        debug(`nextCurrentDoorState=${chalkString(getDoorStateLabel(nextCurrentDoorState))}`);
+        await toggleGarageDoor(targetDoorState);
+        assignCurrentDoorState(nextCurrentDoorState);
       }
-    })
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(TargetDoorState, service, value);
-        try {
-          debugSetResult(TargetDoorState, service, value);
-          const targetDoorState = asNumber(value);
-          assignState({
-            targetDoorState: targetDoorState,
-            lastUpdatedAt: Date.now(),
-            computedPosition: computeCurrentPosition(),
-          });
-          debug(`computedPosition=${chalkNumber(state.computedPosition)}`);
-          let nextCurrentDoorState = getNextCurrentDoorState(targetDoorState);
-          debug(`nextCurrentDoorState=${chalkString(getDoorStateLabel(nextCurrentDoorState))}`);
-          if (nextCurrentDoorState === state.currentDoorState) {
-            debug(`nextCurrentDoorState=${chalkNumber(nextCurrentDoorState)} === state.currentDoorState`);
-            callback();
-            return;
-          }
-          await toggleGarageDoor(targetDoorState);
-          assignCurrentDoorState(nextCurrentDoorState);
 
-          // Handle Stopped state, if we are stopped, wait one second and trigger again to reverse course
-          // eg. Stopped -> Closing if target is Closed
-          if (nextCurrentDoorState === CurrentDoorState.STOPPED) {
-            await waitFor("stopping", 1000);
-            assignState({
-              targetDoorState: targetDoorState,
-              lastUpdatedAt: Date.now(),
-              computedPosition: computeCurrentPosition(),
-            });
-            debug(`computedPosition=${chalkNumber(state.computedPosition)}`);
-            nextCurrentDoorState = getNextCurrentDoorState(targetDoorState);
-            debug(`nextCurrentDoorState=${chalkString(getDoorStateLabel(nextCurrentDoorState))}`);
-            await toggleGarageDoor(targetDoorState);
-            assignCurrentDoorState(nextCurrentDoorState);
-          }
-          callback();
-
-          // Finally update pending states
-          switch (nextCurrentDoorState) {
-            case CurrentDoorState.OPENING: {
-              const delay = ((100 - state.computedPosition) * garageDoorDelay) / 100;
-              debug(`delay=${chalkNumber(delay)}`);
-              try {
-                await waitFor(`${deviceId}.pending`, delay);
-                assignCurrentDoorState(CurrentDoorState.OPEN);
-                if (autoCloseDelay) {
-                  await waitFor(`${deviceId}.pending`, autoCloseDelay);
-                  assignCurrentDoorState(CurrentDoorState.CLOSED);
-                }
-              } catch (err) {
-                debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
-              }
-              break;
-            }
-            case CurrentDoorState.CLOSING: {
-              const delay = (state.computedPosition * garageDoorDelay) / 100;
-              debug(`delay=${chalkNumber(delay)}`);
-              try {
-                await waitFor(`${deviceId}.pending`, delay);
+      // Finally update pending states (fire-and-forget)
+      void (async () => {
+        switch (nextCurrentDoorState) {
+          case CurrentDoorState.OPENING: {
+            const delay = ((100 - state.computedPosition) * garageDoorDelay) / 100;
+            debug(`delay=${chalkNumber(delay)}`);
+            try {
+              await waitFor(`${deviceId}.pending`, delay);
+              assignCurrentDoorState(CurrentDoorState.OPEN);
+              if (autoCloseDelay) {
+                await waitFor(`${deviceId}.pending`, autoCloseDelay);
                 assignCurrentDoorState(CurrentDoorState.CLOSED);
-              } catch (err) {
-                debug(`Aborted CLOSED update with delay=${chalkNumber(delay)}`);
               }
-              break;
+            } catch (err) {
+              debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
             }
+            break;
           }
-        } catch (err) {
-          callback(err as Error);
+          case CurrentDoorState.CLOSING: {
+            const delay = (state.computedPosition * garageDoorDelay) / 100;
+            debug(`delay=${chalkNumber(delay)}`);
+            try {
+              await waitFor(`${deviceId}.pending`, delay);
+              assignCurrentDoorState(CurrentDoorState.CLOSED);
+            } catch (err) {
+              debug(`Aborted CLOSED update with delay=${chalkNumber(delay)}`);
+            }
+            break;
+          }
         }
-      },
-    );
+      })();
+    });
 
   // const switchService = addAccessoryService(accessory, Service.Switch, `${accessory.displayName} Switch`, true);
   // debugAddSubService(switchService, accessory);

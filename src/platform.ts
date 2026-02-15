@@ -163,8 +163,8 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.api.updatePlatformAccessories([accessory]);
   }
   // Called by homebridge with existing cached accessories
-  configureAccessory(accessory: PlatformAccessory<TydomAccessoryContext>): void {
+  configureAccessory(accessory: PlatformAccessory): void {
     this.log.debug(`Found cached accessory with id="${accessory.UUID}"`);
-    this.accessories.set(accessory.UUID, accessory);
+    this.accessories.set(accessory.UUID, accessory as PlatformAccessory<TydomAccessoryContext>);
   }
 }

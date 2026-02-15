@@ -1,13 +1,6 @@
 import type { PlatformAccessory } from "homebridge";
 import { debounce } from "lodash";
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  Service,
-} from "src/config/hap";
+import { Characteristic, Service } from "src/config/hap";
 import TydomController from "src/controller";
 import {
   addAccessoryService,
@@ -86,86 +79,60 @@ export const setupWindowCovering = (
     { leading: true, trailing: true },
   );
 
-  service
-    .getCharacteristic(PositionState)
-    .on(CharacteristicEventTypes.GET, (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet(PositionState, service);
-      // @NOTE Tydom does not track the current position
-      const nextValue = PositionState.STOPPED;
-      debugGetResult(CurrentPosition, service, nextValue);
-      callback(null, nextValue);
-    });
+  service.getCharacteristic(PositionState).onGet(() => {
+    debugGet(PositionState, service);
+    // @NOTE Tydom does not track the current position
+    const nextValue = PositionState.STOPPED;
+    debugGetResult(CurrentPosition, service, nextValue);
+    return nextValue;
+  });
 
-  service
-    .getCharacteristic(HoldPosition)
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(HoldPosition, service, value);
-        if (!value) {
-          // @NOTE asked to not hold position
-          return;
-        }
-        const nextValue = "STOP";
-        debugTydomPut("positionCmd", accessory, nextValue);
-        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-          {
-            name: "positionCmd",
-            value: nextValue,
-          },
-        ]);
-        debugSetResult(HoldPosition, service, value, nextValue);
-        callback();
+  service.getCharacteristic(HoldPosition).onSet(async (value) => {
+    debugSet(HoldPosition, service, value);
+    if (!value) {
+      // @NOTE asked to not hold position
+      return;
+    }
+    const nextValue = "STOP";
+    debugTydomPut("positionCmd", accessory, nextValue);
+    await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+      {
+        name: "positionCmd",
+        value: nextValue,
       },
-    );
+    ]);
+    debugSetResult(HoldPosition, service, value, nextValue);
+  });
 
-  service
-    .getCharacteristic(CurrentPosition)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet(CurrentPosition, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, { deviceId, endpointId });
-        const position = getTydomDataPropValue<number>(data, "position") || 0;
-        const nextValue = asNumber(position);
-        debugGetResult(CurrentPosition, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
-    });
+  service.getCharacteristic(CurrentPosition).onGet(async () => {
+    debugGet(CurrentPosition, service);
+    const data = await getTydomDeviceData<TydomDeviceShutterData>(client, { deviceId, endpointId });
+    const position = getTydomDataPropValue<number>(data, "position") || 0;
+    const nextValue = asNumber(position);
+    debugGetResult(CurrentPosition, service, nextValue);
+    return nextValue;
+  });
 
   service
     .getCharacteristic(TargetPosition)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(TargetPosition, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceShutterData>(client, { deviceId, endpointId });
-        const position = getTydomDataPropValue<number>(data, "position") || 0;
-        const nextValue = asNumber(position);
-        debugGetResult(CurrentPosition, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData<TydomDeviceShutterData>(client, { deviceId, endpointId });
+      const position = getTydomDataPropValue<number>(data, "position") || 0;
+      const nextValue = asNumber(position);
+      debugGetResult(CurrentPosition, service, nextValue);
+      return nextValue;
     })
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(TargetPosition, service, value);
-        try {
-          const nextValue = value as number;
-          Object.assign(state, {
-            latestPosition: nextValue,
-            lastUpdatedAt: Date.now(),
-          });
-          await debouncedSetPosition(nextValue);
-          debugSetResult(TargetPosition, service, value, nextValue);
-          callback();
-        } catch (err) {
-          callback(err as Error);
-        }
-      },
-    );
+    .onSet(async (value) => {
+      debugSet(TargetPosition, service, value);
+      const nextValue = value as number;
+      Object.assign(state, {
+        latestPosition: nextValue,
+        lastUpdatedAt: Date.now(),
+      });
+      await debouncedSetPosition(nextValue);
+      debugSetResult(TargetPosition, service, value, nextValue);
+    });
 };
 
 export const updateWindowCovering = (

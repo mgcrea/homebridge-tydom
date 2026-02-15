@@ -1,14 +1,6 @@
 import type { PlatformAccessory } from "homebridge";
 import { get } from "lodash";
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicProps,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  Service,
-} from "src/config/hap";
+import { Characteristic, CharacteristicProps, Service } from "src/config/hap";
 import locale from "src/config/locale";
 import TydomController from "src/controller";
 import {
@@ -56,115 +48,81 @@ export const setupThermostat = (
   service
     .getCharacteristic(CurrentHeatingCoolingState)
     .setProps({ validValues: [0, 1] } as Partial<CharacteristicProps>) // [OFF, HEAT, COOL]
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(CurrentHeatingCoolingState, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
-        const authorization = getTydomDataPropValue<TydomDeviceThermostatAuthorization>(data, "authorization");
-        const setpoint = getTydomDataPropValue<number>(data, "setpoint");
-        const temperature = getTydomDataPropValue<number>(data, "temperature");
-        const nextValue =
-          authorization === "HEATING" && setpoint > temperature
-            ? CurrentHeatingCoolingState.HEAT
-            : CurrentHeatingCoolingState.OFF;
-        debugGetResult(CurrentHeatingCoolingState, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
+      const authorization = getTydomDataPropValue<TydomDeviceThermostatAuthorization>(data, "authorization");
+      const setpoint = getTydomDataPropValue<number>(data, "setpoint");
+      const temperature = getTydomDataPropValue<number>(data, "temperature");
+      const nextValue =
+        authorization === "HEATING" && setpoint > temperature
+          ? CurrentHeatingCoolingState.HEAT
+          : CurrentHeatingCoolingState.OFF;
+      debugGetResult(CurrentHeatingCoolingState, service, nextValue);
+      return nextValue;
     });
 
   service
     .getCharacteristic(TargetHeatingCoolingState)
     .setProps({ validValues: [0, 1] } as Partial<CharacteristicProps>) // [OFF, HEAT, COOL, AUTO]
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(TargetHeatingCoolingState, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
-        const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, "hvacMode");
-        const authorization = getTydomDataPropValue<"STOP" | "HEATING">(data, "authorization");
-        const nextValue =
-          authorization === "HEATING" && ["NORMAL"].includes(hvacMode)
-            ? TargetHeatingCoolingState.HEAT
-            : TargetHeatingCoolingState.OFF;
-        debugGetResult(TargetHeatingCoolingState, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
+      const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, "hvacMode");
+      const authorization = getTydomDataPropValue<"STOP" | "HEATING">(data, "authorization");
+      const nextValue =
+        authorization === "HEATING" && ["NORMAL"].includes(hvacMode)
+          ? TargetHeatingCoolingState.HEAT
+          : TargetHeatingCoolingState.OFF;
+      debugGetResult(TargetHeatingCoolingState, service, nextValue);
+      return nextValue;
     })
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(TargetHeatingCoolingState, service, value);
-        try {
-          const shouldHeat = [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(
-            value as number,
-          );
-          const tydomValue = shouldHeat ? "NORMAL" : "STOP";
-          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-            {
-              name: "hvacMode",
-              value: tydomValue,
-            },
-          ]);
-          debugSetResult(TargetHeatingCoolingState, service, value, tydomValue);
-          // @NOTE directly update currentHeadingCoolingState
-          service
-            .getCharacteristic(CurrentHeatingCoolingState)
-            .updateValue(shouldHeat ? CurrentHeatingCoolingState.HEAT : CurrentHeatingCoolingState.OFF);
-          callback();
-        } catch (err) {
-          callback(err as Error);
-        }
-      },
-    );
-
-  service
-    .getCharacteristic(CurrentTemperature)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet(CurrentTemperature, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
-        const temperature = getTydomDataPropValue<number>(data, "temperature");
-        debugGetResult(CurrentTemperature, service, temperature);
-        callback(null, temperature);
-      } catch (err) {
-        callback(err as Error);
-      }
+    .onSet(async (value) => {
+      debugSet(TargetHeatingCoolingState, service, value);
+      const shouldHeat = [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(
+        value as number,
+      );
+      const tydomValue = shouldHeat ? "NORMAL" : "STOP";
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: "hvacMode",
+          value: tydomValue,
+        },
+      ]);
+      debugSetResult(TargetHeatingCoolingState, service, value, tydomValue);
+      // @NOTE directly update currentHeadingCoolingState
+      service
+        .getCharacteristic(CurrentHeatingCoolingState)
+        .updateValue(shouldHeat ? CurrentHeatingCoolingState.HEAT : CurrentHeatingCoolingState.OFF);
     });
+
+  service.getCharacteristic(CurrentTemperature).onGet(async () => {
+    debugGet(CurrentTemperature, service);
+    const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
+    const temperature = getTydomDataPropValue<number>(data, "temperature");
+    debugGetResult(CurrentTemperature, service, temperature);
+    return temperature;
+  });
 
   service
     .getCharacteristic(TargetTemperature)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(TargetTemperature, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
-        const setpoint = getTydomDataPropValue<number>(data, "setpoint");
-        debugGetResult(TargetTemperature, service, setpoint);
-        callback(null, setpoint);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
+      const setpoint = getTydomDataPropValue<number>(data, "setpoint");
+      debugGetResult(TargetTemperature, service, setpoint);
+      return setpoint;
     })
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        try {
-          debugSet(TargetTemperature, service, value);
-          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-            {
-              name: "setpoint",
-              value: value,
-            },
-          ]);
-          debugSetResult(TargetTemperature, service, value);
-          callback();
-        } catch (err) {
-          callback(err as Error);
-        }
-      },
-    );
+    .onSet(async (value) => {
+      debugSet(TargetTemperature, service, value);
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: "setpoint",
+          value: value,
+        },
+      ]);
+      debugSetResult(TargetTemperature, service, value);
+    });
 
   const thermicLevelData = metadata.find(({ name }) => name === "thermicLevel");
   if (!thermicLevelData) {
@@ -192,39 +150,27 @@ export const setupThermostat = (
     service.addLinkedService(absenceModeService);
     absenceModeService
       .getCharacteristic(On)
-      .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      .onGet(async () => {
         debugGet(On, absenceModeService);
-        try {
-          const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
-          const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, "hvacMode");
-          // const antifrostOn = getTydomDataPropValue<boolean>(data, 'antifrostOn');
-          // const nextValue = hvacMode === 'ANTI_FROST' && antifrostOn;
-          const nextValue = hvacMode === "ANTI_FROST";
-          debugGetResult(On, absenceModeService, nextValue);
-          callback(null, nextValue);
-        } catch (err) {
-          callback(err as Error);
-        }
+        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
+        const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, "hvacMode");
+        // const antifrostOn = getTydomDataPropValue<boolean>(data, 'antifrostOn');
+        // const nextValue = hvacMode === 'ANTI_FROST' && antifrostOn;
+        const nextValue = hvacMode === "ANTI_FROST";
+        debugGetResult(On, absenceModeService, nextValue);
+        return nextValue;
       })
-      .on(
-        CharacteristicEventTypes.SET,
-        async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-          debugSet(On, absenceModeService, value);
-          try {
-            const tydomValue = value ? "ANTI_FROST" : "NORMAL";
-            await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-              {
-                name: "hvacMode",
-                value: tydomValue,
-              },
-            ]);
-            debugSetResult(On, absenceModeService, value, tydomValue);
-            callback();
-          } catch (err) {
-            callback(err as Error);
-          }
-        },
-      );
+      .onSet(async (value) => {
+        debugSet(On, absenceModeService, value);
+        const tydomValue = value ? "ANTI_FROST" : "NORMAL";
+        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+          {
+            name: "hvacMode",
+            value: tydomValue,
+          },
+        ]);
+        debugSetResult(On, absenceModeService, value, tydomValue);
+      });
   }
 
   // Multiple thermic levels
@@ -247,49 +193,37 @@ export const setupThermostat = (
         service.addLinkedService(thermicLevelService);
         thermicLevelService
           .getCharacteristic(On)
-          .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+          .onGet(async () => {
             debugGet(On, thermicLevelService);
-            try {
-              const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {
-                deviceId,
-                endpointId,
-              });
-              const thermicLevel = getTydomDataPropValue<TydomDeviceThermostatThermicLevel>(
-                data,
-                "thermicLevel",
-              );
-              const nextValue = thermicLevel === thermicLevelValue;
-              debugGetResult(On, thermicLevelService, nextValue);
-              callback(null, nextValue);
-            } catch (err) {
-              callback(err as Error);
-            }
+            const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {
+              deviceId,
+              endpointId,
+            });
+            const thermicLevel = getTydomDataPropValue<TydomDeviceThermostatThermicLevel>(
+              data,
+              "thermicLevel",
+            );
+            const nextValue = thermicLevel === thermicLevelValue;
+            debugGetResult(On, thermicLevelService, nextValue);
+            return nextValue;
           })
-          .on(
-            CharacteristicEventTypes.SET,
-            async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-              debugSet(On, thermicLevelService, value);
-              try {
-                const tydomValue = value ? thermicLevelValue : "NORMAL";
-                await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-                  {
-                    name: "hvacMode",
-                    value: tydomValue,
-                  },
-                ]);
-                debugSetResult(On, thermicLevelService, tydomValue);
-                callback();
-                // @NOTE disable any other existing thermicLevel
-                thermicLevelServices
-                  .filter(({ value }) => value !== thermicLevelValue)
-                  .forEach(({ service }) => {
-                    service.updateCharacteristic(On, false);
-                  });
-              } catch (err) {
-                callback(err as Error);
-              }
-            },
-          );
+          .onSet(async (value) => {
+            debugSet(On, thermicLevelService, value);
+            const tydomValue = value ? thermicLevelValue : "NORMAL";
+            await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+              {
+                name: "hvacMode",
+                value: tydomValue,
+              },
+            ]);
+            debugSetResult(On, thermicLevelService, tydomValue);
+            // @NOTE disable any other existing thermicLevel
+            thermicLevelServices
+              .filter(({ value }) => value !== thermicLevelValue)
+              .forEach(({ service }) => {
+                service.updateCharacteristic(On, false);
+              });
+          });
         return { value: thermicLevelValue, service: thermicLevelService };
       });
   }

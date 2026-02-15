@@ -1,11 +1,5 @@
 import type { PlatformAccessory } from "homebridge";
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicValue,
-  NodeCallback,
-  Service,
-} from "src/config/hap";
+import { Characteristic, Service } from "src/config/hap";
 import TydomController from "src/controller";
 import {
   addAccessoryService,
@@ -37,16 +31,12 @@ export const setupTemperatureSensor = (
     .setProps({
       minValue: -100,
     })
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(CurrentTemperature, service);
-      try {
-        const data = await getTydomDeviceData(client, { deviceId, endpointId });
-        const outTemperature = getTydomDataPropValue<number>(data, "outTemperature");
-        debugGetResult(CurrentTemperature, service, outTemperature);
-        callback(null, outTemperature);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData(client, { deviceId, endpointId });
+      const outTemperature = getTydomDataPropValue<number>(data, "outTemperature");
+      debugGetResult(CurrentTemperature, service, outTemperature);
+      return outTemperature;
     });
 };
 

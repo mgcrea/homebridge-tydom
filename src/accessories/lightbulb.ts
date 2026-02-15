@@ -1,11 +1,5 @@
 import debug from "debug";
-import {
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  PlatformAccessory,
-} from "homebridge";
+import type { PlatformAccessory } from "homebridge";
 import { debounce, find } from "lodash";
 import { Characteristic, Service } from "src/config/hap";
 import TydomController from "src/controller";
@@ -85,65 +79,41 @@ export const setupLightbulb = (
 
   service
     .getCharacteristic(Characteristic.On)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(On, service);
-      try {
-        const data = await getTydomDeviceData(client, { deviceId, endpointId });
-        const level = getTydomDataPropValue<number>(data, "level");
-        const nextValue = level > 0;
-        debugGetResult(On, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData(client, { deviceId, endpointId });
+      const level = getTydomDataPropValue<number>(data, "level");
+      const nextValue = level > 0;
+      debugGetResult(On, service, nextValue);
+      return nextValue;
     })
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(On, service, value);
-        try {
-          const nextLevel = value ? state.latestBrightness || 100 : 0;
-          await debouncedSetLevel(nextLevel);
-          service.updateCharacteristic(Brightness, nextLevel);
-          debugSetResult(On, service, value);
-          callback();
-        } catch (err) {
-          callback(err as Error);
-        }
-      },
-    );
+    .onSet(async (value) => {
+      debugSet(On, service, value);
+      const nextLevel = value ? state.latestBrightness || 100 : 0;
+      await debouncedSetLevel(nextLevel);
+      service.updateCharacteristic(Brightness, nextLevel);
+      debugSetResult(On, service, value);
+    });
 
   service
     .getCharacteristic(Characteristic.Brightness)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(Brightness, service);
-      try {
-        const data = await getTydomDeviceData(client, { deviceId, endpointId });
-        const level = getTydomDataPropValue<number>(data, "level");
-        debugGetResult(Brightness, service, level);
-        callback(null, level);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData(client, { deviceId, endpointId });
+      const level = getTydomDataPropValue<number>(data, "level");
+      debugGetResult(Brightness, service, level);
+      return level;
     })
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(Brightness, service, value);
-        try {
-          const nextValue = value as number;
-          Object.assign(state, {
-            latestBrightness: nextValue,
-            lastUpdatedAt: Date.now(),
-          });
-          await debouncedSetLevel(nextValue);
-          debugSetResult(Brightness, service, value);
-          callback();
-        } catch (err) {
-          callback(err as Error);
-        }
-      },
-    );
+    .onSet(async (value) => {
+      debugSet(Brightness, service, value);
+      const nextValue = value as number;
+      Object.assign(state, {
+        latestBrightness: nextValue,
+        lastUpdatedAt: Date.now(),
+      });
+      await debouncedSetLevel(nextValue);
+      debugSetResult(Brightness, service, value);
+    });
 };
 
 export const updateLightbulb = (

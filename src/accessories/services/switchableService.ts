@@ -1,11 +1,5 @@
 import type { PlatformAccessory, Service } from "homebridge";
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-} from "src/config/hap";
+import { Characteristic } from "src/config/hap";
 import TydomController from "src/controller";
 import { addAccessoryService, getAccessoryService, ServiceClass } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
@@ -26,37 +20,25 @@ export const addAccessorySwitchableService = (
 
   service
     .getCharacteristic(On)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(On, service);
-      try {
-        const data = await getTydomDeviceData(client, { deviceId, endpointId });
-        const level = getTydomDataPropValue<number>(data, "level");
-        const nextValue = level === 100;
-        debugGetResult(On, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData(client, { deviceId, endpointId });
+      const level = getTydomDataPropValue<number>(data, "level");
+      const nextValue = level === 100;
+      debugGetResult(On, service, nextValue);
+      return nextValue;
     })
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(On, service, value);
-        try {
-          const tydomValue = value ? 100 : 0;
-          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-            {
-              name: "level",
-              value: tydomValue,
-            },
-          ]);
-          debugSetResult(On, service, value, tydomValue);
-          callback();
-        } catch (err) {
-          callback(err as Error);
-        }
-      },
-    );
+    .onSet(async (value) => {
+      debugSet(On, service, value);
+      const tydomValue = value ? 100 : 0;
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: "level",
+          value: tydomValue,
+        },
+      ]);
+      debugSetResult(On, service, value, tydomValue);
+    });
 
   return service;
 };

@@ -53,8 +53,8 @@ export const addAccessoryService = (
     }
     accessory.removeService(existingService);
   }
-  // @ts-expect-error legacy HAP API
-  return accessory.addService(service, name);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return accessory.addService(service as any, name);
 };
 
 export const addAccessoryServiceWithSubtype = (

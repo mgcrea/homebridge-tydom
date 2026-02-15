@@ -1,14 +1,7 @@
 import type { PlatformAccessory } from "homebridge";
 import { get } from "lodash";
 import { HOMEBRIDGE_TYDOM_PIN } from "src/config/env";
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  Service,
-} from "src/config/hap";
+import { Characteristic, Service } from "src/config/hap";
 import locale from "src/config/locale";
 import TydomController, { ControllerDevicePayload, ControllerUpdatePayload } from "src/controller";
 import {
@@ -187,92 +180,72 @@ export const setupSecuritySystem = async (
   service
     .getCharacteristic(SecuritySystemCurrentState)
     .updateValue(SecuritySystemCurrentState.DISARMED) // Default to disarmed to prevent notifications
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(SecuritySystemCurrentState, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, { deviceId, endpointId });
-        const nextValue = getStateForAlarmData(data, aliases, settings);
-        debugGetResult(SecuritySystemCurrentState, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, { deviceId, endpointId });
+      const nextValue = getStateForAlarmData(data, aliases, settings);
+      debugGetResult(SecuritySystemCurrentState, service, nextValue);
+      return nextValue;
     });
 
-  service
-    .getCharacteristic(StatusTampered)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet(StatusTampered, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, { deviceId, endpointId });
-        const systAutoProtect = getTydomDataPropValue<boolean>(data, "systAutoProtect");
-        debugGetResult(StatusTampered, service, systAutoProtect);
-        callback(null, systAutoProtect);
-      } catch (err) {
-        callback(err as Error);
-      }
-    });
+  service.getCharacteristic(StatusTampered).onGet(async () => {
+    debugGet(StatusTampered, service);
+    const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, { deviceId, endpointId });
+    const systAutoProtect = getTydomDataPropValue<boolean>(data, "systAutoProtect");
+    debugGetResult(StatusTampered, service, systAutoProtect);
+    return systAutoProtect;
+  });
 
   service
     .getCharacteristic(SecuritySystemTargetState)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(SecuritySystemTargetState, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, { deviceId, endpointId });
-        const nextValue = getStateForAlarmData(data, aliases, settings);
-        debugGetResult(SecuritySystemTargetState, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, { deviceId, endpointId });
+      const nextValue = getStateForAlarmData(data, aliases, settings);
+      debugGetResult(SecuritySystemTargetState, service, nextValue);
+      return nextValue;
     })
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(SecuritySystemTargetState, service, value);
-        if (!pin) {
-          callback();
-          return;
-        }
-        // Clear preAlarm trigger
-        if ([SecuritySystemTargetState.DISARM].includes(value as number)) {
-          preAlarmService.updateCharacteristic(ContactSensorState, false);
-        }
-        // Global ON/OFF
-        if ([SecuritySystemTargetState.AWAY_ARM, SecuritySystemTargetState.DISARM].includes(value as number)) {
-          const tydomValue = value === SecuritySystemTargetState.DISARM ? "OFF" : "ON";
-          if (!isLegacy) {
-            await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=alarmCmd`, {
+    .onSet(async (value) => {
+      debugSet(SecuritySystemTargetState, service, value);
+      if (!pin) {
+        return;
+      }
+      // Clear preAlarm trigger
+      if ([SecuritySystemTargetState.DISARM].includes(value as number)) {
+        preAlarmService.updateCharacteristic(ContactSensorState, false);
+      }
+      // Global ON/OFF
+      if ([SecuritySystemTargetState.AWAY_ARM, SecuritySystemTargetState.DISARM].includes(value as number)) {
+        const tydomValue = value === SecuritySystemTargetState.DISARM ? "OFF" : "ON";
+        if (!isLegacy) {
+          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=alarmCmd`, {
+            value: tydomValue,
+            pwd: pin,
+          });
+        } else {
+          for (const zone of [1, 2, 3, 4]) {
+            await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=partCmd`, {
               value: tydomValue,
-              pwd: pin,
+              part: zone,
             });
-          } else {
-            for (const zone of [1, 2, 3, 4]) {
-              await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=partCmd`, {
-                value: tydomValue,
-                part: zone,
-              });
-            }
           }
-          debugSetResult(SecuritySystemTargetState, service, value, tydomValue);
-          callback();
-          return;
         }
-        // Zones ON/OFF
-        if (
-          [SecuritySystemTargetState.STAY_ARM, SecuritySystemTargetState.NIGHT_ARM].includes(value as number)
-        ) {
-          const targetZones = value === SecuritySystemTargetState.STAY_ARM ? aliases.stay : aliases.night;
-          const tydomValue = value === SecuritySystemTargetState.DISARM ? "OFF" : "ON";
-          if (Array.isArray(targetZones) && targetZones.length > 0) {
-            await setTydomZones(targetZones, tydomValue);
-          }
-          debugSetResult(SecuritySystemTargetState, service, value, tydomValue);
-          callback();
-          return;
+        debugSetResult(SecuritySystemTargetState, service, value, tydomValue);
+        return;
+      }
+      // Zones ON/OFF
+      if (
+        [SecuritySystemTargetState.STAY_ARM, SecuritySystemTargetState.NIGHT_ARM].includes(value as number)
+      ) {
+        const targetZones = value === SecuritySystemTargetState.STAY_ARM ? aliases.stay : aliases.night;
+        const tydomValue = value === SecuritySystemTargetState.DISARM ? "OFF" : "ON";
+        if (Array.isArray(targetZones) && targetZones.length > 0) {
+          await setTydomZones(targetZones, tydomValue);
         }
-      },
-    );
+        debugSetResult(SecuritySystemTargetState, service, value, tydomValue);
+        return;
+      }
+    });
 
   // Setup systOpenIssue contactSensor
   const systOpenIssueId = `systOpenIssue`;
@@ -286,22 +259,16 @@ export const setupSecuritySystem = async (
   );
   debugAddSubService(systOpenIssueService, accessory);
   service.addLinkedService(systOpenIssueService);
-  systOpenIssueService
-    .getCharacteristic(ContactSensorState)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet(ContactSensorState, systOpenIssueService);
-      try {
-        const data = await getTydomDeviceData(client, {
-          deviceId,
-          endpointId,
-        });
-        const systOpenIssue = getTydomDataPropValue<boolean>(data, "systOpenIssue");
-        debugGetResult(ContactSensorState, systOpenIssueService, systOpenIssue);
-        callback(null, systOpenIssue);
-      } catch (err) {
-        callback(err as Error);
-      }
+  systOpenIssueService.getCharacteristic(ContactSensorState).onGet(async () => {
+    debugGet(ContactSensorState, systOpenIssueService);
+    const data = await getTydomDeviceData(client, {
+      deviceId,
+      endpointId,
     });
+    const systOpenIssue = getTydomDataPropValue<boolean>(data, "systOpenIssue");
+    debugGetResult(ContactSensorState, systOpenIssueService, systOpenIssue);
+    return systOpenIssue;
+  });
   systOpenIssueService.getCharacteristic(Characteristic.StatusActive).updateValue(true);
   systOpenIssueService.getCharacteristic(Characteristic.StatusFault).updateValue(false);
 
@@ -317,22 +284,16 @@ export const setupSecuritySystem = async (
   );
   debugAddSubService(alarmSOSService, accessory);
   service.addLinkedService(alarmSOSService);
-  alarmSOSService
-    .getCharacteristic(ContactSensorState)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet(ContactSensorState, alarmSOSService);
-      try {
-        const data = await getTydomDeviceData(client, {
-          deviceId,
-          endpointId,
-        });
-        const alarmSOS = getTydomDataPropValue<boolean>(data, "alarmSOS");
-        debugGetResult(ContactSensorState, alarmSOSService, alarmSOS);
-        callback(null, alarmSOS);
-      } catch (err) {
-        callback(err as Error);
-      }
+  alarmSOSService.getCharacteristic(ContactSensorState).onGet(async () => {
+    debugGet(ContactSensorState, alarmSOSService);
+    const data = await getTydomDeviceData(client, {
+      deviceId,
+      endpointId,
     });
+    const alarmSOS = getTydomDataPropValue<boolean>(data, "alarmSOS");
+    debugGetResult(ContactSensorState, alarmSOSService, alarmSOS);
+    return alarmSOS;
+  });
   alarmSOSService.getCharacteristic(Characteristic.StatusActive).updateValue(true);
   alarmSOSService.getCharacteristic(Characteristic.StatusFault).updateValue(false);
 
@@ -376,36 +337,27 @@ export const setupSecuritySystem = async (
     service.addLinkedService(zoneService);
     zoneService
       .getCharacteristic(On)
-      .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+      .onGet(async () => {
         debugGet(On, zoneService);
-        try {
-          const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {
-            deviceId,
-            endpointId,
-          });
-          const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(data, zoneProp);
-          const nextValue = zoneState === "ON";
-          debugGetResult(On, zoneService, nextValue);
-          callback(null, nextValue);
-        } catch (err) {
-          callback(err as Error);
-        }
+        const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {
+          deviceId,
+          endpointId,
+        });
+        const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(data, zoneProp);
+        const nextValue = zoneState === "ON";
+        debugGetResult(On, zoneService, nextValue);
+        return nextValue;
       })
-      .on(
-        CharacteristicEventTypes.SET,
-        async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-          debugSet(On, zoneService, value);
-          if (!pin) {
-            callback();
-            return;
-          }
-          const targetZones = [zoneIndex];
-          const tydomValue = value ? "ON" : "OFF";
-          await setTydomZones(targetZones, tydomValue);
-          debugSetResult(On, zoneService, value, tydomValue);
-          callback();
-        },
-      );
+      .onSet(async (value) => {
+        debugSet(On, zoneService, value);
+        if (!pin) {
+          return;
+        }
+        const targetZones = [zoneIndex];
+        const tydomValue = value ? "ON" : "OFF";
+        await setTydomZones(targetZones, tydomValue);
+        debugSetResult(On, zoneService, value, tydomValue);
+      });
   }
 };
 

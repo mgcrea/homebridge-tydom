@@ -1,12 +1,6 @@
 import type { PlatformAccessory } from "homebridge";
 import { Formats } from "homebridge";
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicValue,
-  NodeCallback,
-  Service,
-} from "src/config/hap";
+import { Characteristic, Service } from "src/config/hap";
 import TydomController from "src/controller";
 import {
   addAccessoryService,
@@ -38,34 +32,21 @@ export const setupSmokeDetector = (
     .setProps({
       format: Formats.BOOL,
     })
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(SmokeDetected, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, { deviceId, endpointId });
-        const smokeDefect = getTydomDataPropValue<boolean>(data, "techSmokeDefect");
-        debugGetResult(SmokeDetected, service, smokeDefect);
-        callback(null, smokeDefect);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, { deviceId, endpointId });
+      const smokeDefect = getTydomDataPropValue<boolean>(data, "techSmokeDefect");
+      debugGetResult(SmokeDetected, service, smokeDefect);
+      return smokeDefect;
     });
 
-  service
-    .getCharacteristic(StatusLowBattery)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet(StatusLowBattery, service);
-      try {
-        const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, { deviceId, endpointId });
-        const battDefect = getTydomDataPropValue<boolean>(data, "battDefect");
-        debugGetResult(StatusLowBattery, service, battDefect);
-        callback(
-          null,
-          battDefect ? StatusLowBattery.BATTERY_LEVEL_LOW : StatusLowBattery.BATTERY_LEVEL_NORMAL,
-        );
-      } catch (err) {
-        callback(err as Error);
-      }
-    });
+  service.getCharacteristic(StatusLowBattery).onGet(async () => {
+    debugGet(StatusLowBattery, service);
+    const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, { deviceId, endpointId });
+    const battDefect = getTydomDataPropValue<boolean>(data, "battDefect");
+    debugGetResult(StatusLowBattery, service, battDefect);
+    return battDefect ? StatusLowBattery.BATTERY_LEVEL_LOW : StatusLowBattery.BATTERY_LEVEL_NORMAL;
+  });
 };
 
 export const updateSmokeDetector = (

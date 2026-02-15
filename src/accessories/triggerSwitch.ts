@@ -1,11 +1,5 @@
 import type { PlatformAccessory } from "homebridge";
-import {
-  Characteristic,
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  Service,
-} from "src/config/hap";
+import { Characteristic, Service } from "src/config/hap";
 import TydomController from "src/controller";
 import {
   addAccessoryService,
@@ -40,31 +34,22 @@ export const setupTriggerSwitch = (
 
   service
     .getCharacteristic(Characteristic.On)
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(Characteristic.On, service, value);
-        if (!value) {
-          callback();
-          return;
-        }
-        try {
-          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-            {
-              name: "levelCmd",
-              value: "TOGGLE",
-            },
-          ]);
-          debugSetResult(Characteristic.On, service, value);
-          callback();
-          setTimeout(() => {
-            service.updateCharacteristic(Characteristic.On, false);
-          }, delay);
-        } catch (err) {
-          callback(err as Error);
-        }
-      },
-    )
+    .onSet(async (value) => {
+      debugSet(Characteristic.On, service, value);
+      if (!value) {
+        return;
+      }
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: "levelCmd",
+          value: "TOGGLE",
+        },
+      ]);
+      debugSetResult(Characteristic.On, service, value);
+      setTimeout(() => {
+        service.updateCharacteristic(Characteristic.On, false);
+      }, delay);
+    })
     .updateValue(false);
 };
 

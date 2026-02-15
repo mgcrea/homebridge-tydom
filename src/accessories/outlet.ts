@@ -1,10 +1,4 @@
-import {
-  CharacteristicEventTypes,
-  CharacteristicSetCallback,
-  CharacteristicValue,
-  NodeCallback,
-  PlatformAccessory,
-} from "homebridge";
+import type { PlatformAccessory } from "homebridge";
 import { toNumber } from "lodash";
 import { Characteristic, Service } from "src/config/hap";
 import TydomController from "src/controller";
@@ -34,52 +28,34 @@ export const setupOutlet = (
 
   service
     .getCharacteristic(On)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
+    .onGet(async () => {
       debugGet(On, service);
-      try {
-        const data = await getTydomDeviceData(client, { deviceId, endpointId });
-        const plugCmd = getTydomDataPropValue<string>(data, "plugCmd");
-        const nextValue = plugCmd === "ON";
-        debugGetResult(On, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+      const data = await getTydomDeviceData(client, { deviceId, endpointId });
+      const plugCmd = getTydomDataPropValue<string>(data, "plugCmd");
+      const nextValue = plugCmd === "ON";
+      debugGetResult(On, service, nextValue);
+      return nextValue;
     })
-    .on(
-      CharacteristicEventTypes.SET,
-      async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
-        debugSet(On, service, value);
-        try {
-          const tydomValue = value ? "ON" : "OFF";
-          await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-            {
-              name: "plugCmd",
-              value: tydomValue,
-            },
-          ]);
-          debugSetResult(On, service, value, tydomValue);
-          callback();
-        } catch (err) {
-          callback(err as Error);
-        }
-      },
-    );
-
-  service
-    .getCharacteristic(OutletInUse)
-    .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<CharacteristicValue>) => {
-      debugGet(OutletInUse, service);
-      try {
-        const data = await getTydomDeviceData(client, { deviceId, endpointId });
-        const energyInstantTotElecP = getTydomDataPropValue<number>(data, "energyInstantTotElecP");
-        const nextValue = energyInstantTotElecP > 0;
-        debugGetResult(OutletInUse, service, nextValue);
-        callback(null, nextValue);
-      } catch (err) {
-        callback(err as Error);
-      }
+    .onSet(async (value) => {
+      debugSet(On, service, value);
+      const tydomValue = value ? "ON" : "OFF";
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: "plugCmd",
+          value: tydomValue,
+        },
+      ]);
+      debugSetResult(On, service, value, tydomValue);
     });
+
+  service.getCharacteristic(OutletInUse).onGet(async () => {
+    debugGet(OutletInUse, service);
+    const data = await getTydomDeviceData(client, { deviceId, endpointId });
+    const energyInstantTotElecP = getTydomDataPropValue<number>(data, "energyInstantTotElecP");
+    const nextValue = energyInstantTotElecP > 0;
+    debugGetResult(OutletInUse, service, nextValue);
+    return nextValue;
+  });
 };
 
 export const updateOutlet = (
