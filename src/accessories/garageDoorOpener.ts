@@ -247,7 +247,7 @@ export const setupGarageDoorOpener = (
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
         debug(`${(0, import_kolorist3.yellow)("⚠️ ")}GarageDoor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
-        return CurrentDoorState.CLOSED; // Safe state
+        return CurrentDoorState.CLOSED;
       }
       throw err;
     }
@@ -275,7 +275,7 @@ export const setupGarageDoorOpener = (
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
         debug(`${(0, import_kolorist3.yellow)("⚠️ ")}GarageDoor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
-        return TargetDoorState.CLOSED; // Safe state
+        return TargetDoorState.CLOSED;
       }
       throw err;
     }
