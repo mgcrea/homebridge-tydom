@@ -30,11 +30,19 @@ export const setupOutlet = (
     .getCharacteristic(On)
     .onGet(async () => {
       debugGet(On, service);
-      const data = await getTydomDeviceData(client, { deviceId, endpointId });
-      const plugCmd = getTydomDataPropValue<string>(data, "plugCmd");
-      const nextValue = plugCmd === "ON";
-      debugGetResult(On, service, nextValue);
-      return nextValue;
+      try {
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
+        const plugCmd = getTydomDataPropValue(data, "plugCmd");
+        const nextValue = plugCmd === "ON";
+        debugGetResult(On, service, nextValue);
+        return nextValue;
+      } catch (err) {
+        if (err instanceof Error && err.message === "UnreacheableAccessory") {
+          debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          return false; // Default to off (safe state)
+        }
+        throw err;
+      }
     })
     .onSet(async (value) => {
       debugSet(On, service, value);
@@ -50,11 +58,19 @@ export const setupOutlet = (
 
   service.getCharacteristic(OutletInUse).onGet(async () => {
     debugGet(OutletInUse, service);
-    const data = await getTydomDeviceData(client, { deviceId, endpointId });
-    const energyInstantTotElecP = getTydomDataPropValue<number>(data, "energyInstantTotElecP");
-    const nextValue = energyInstantTotElecP > 0;
-    debugGetResult(OutletInUse, service, nextValue);
-    return nextValue;
+    try {
+      const data = await getTydomDeviceData(client, { deviceId, endpointId });
+      const energyInstantTotElecP = getTydomDataPropValue(data, "energyInstantTotElecP");
+      const nextValue = energyInstantTotElecP > 0;
+      debugGetResult(OutletInUse, service, nextValue);
+      return nextValue;
+    } catch (err) {
+      if (err instanceof Error && err.message === "UnreacheableAccessory") {
+        debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        return false; // Default to not in use (safe state)
+      }
+      throw err;
+    }
   });
 };
 
