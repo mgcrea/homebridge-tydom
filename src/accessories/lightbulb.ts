@@ -81,11 +81,19 @@ export const setupLightbulb = (
     .getCharacteristic(Characteristic.On)
     .onGet(async () => {
       debugGet(On, service);
-      const data = await getTydomDeviceData(client, { deviceId, endpointId });
-      const level = getTydomDataPropValue<number>(data, "level");
-      const nextValue = level > 0;
-      debugGetResult(On, service, nextValue);
-      return nextValue;
+      try {
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
+        const level = getTydomDataPropValue(data, "level");
+        const nextValue = level > 0;
+        debugGetResult(On, service, nextValue);
+        return nextValue;
+      } catch (err) {
+        if (err instanceof Error && err.message === "UnreacheableAccessory") {
+          debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Lightbulb unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          return false;
+      }
+      throw err;
+      }
     })
     .onSet(async (value) => {
       debugSet(On, service, value);
@@ -99,10 +107,18 @@ export const setupLightbulb = (
     .getCharacteristic(Characteristic.Brightness)
     .onGet(async () => {
       debugGet(Brightness, service);
-      const data = await getTydomDeviceData(client, { deviceId, endpointId });
-      const level = getTydomDataPropValue<number>(data, "level");
-      debugGetResult(Brightness, service, level);
-      return level;
+      try {
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
+        const level = getTydomDataPropValue(data, "level");
+        debugGetResult(Brightness, service, level);
+        return level;
+      } catch (err) {
+        if (err instanceof Error && err.message === "UnreacheableAccessory") {
+          debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Lightbulb brightness unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          return 0;
+      }
+      throw err;
+      }
     })
     .onSet(async (value) => {
       debugSet(Brightness, service, value);
