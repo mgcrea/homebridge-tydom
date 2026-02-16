@@ -42,21 +42,28 @@ const DEFAULT_GARAGE_DOOR_DELAY = 20 * 1000;
 
 const getTydomCurrentDoorState = async (client: TydomClient, deviceId: number, endpointId: number) => {
   const { CurrentDoorState } = Characteristic;
-  const tydomDeviceData = await getTydomDeviceData<TydomDeviceGarageDoorData>(client, {
-    deviceId,
-    endpointId,
-  });
-  const tydomDeviceLevel = getTydomDataPropValue<number>(tydomDeviceData, "level") || 0;
-  let currentDoorState = CurrentDoorState.CLOSED;
-  if (tydomDeviceLevel === 0) {
-    currentDoorState = CurrentDoorState.CLOSED; // 1
-  } else if (tydomDeviceLevel === 100) {
-    currentDoorState = CurrentDoorState.OPEN; // 0
-  } else if (tydomDeviceLevel > 0 && tydomDeviceLevel < 100) {
-    // Half-Open/Closed does not seems to be assignable...
-    debug(`Encountered a ${chalkString("level")} update with value different from 0 or 100 !`);
+  try {
+    const tydomDeviceData = await getTydomDeviceData(client, {
+      deviceId,
+      endpointId
+    });
+    const tydomDeviceLevel = getTydomDataPropValue(tydomDeviceData, "level") || 0;
+    let currentDoorState = CurrentDoorState.CLOSED;
+    if (tydomDeviceLevel === 0) {
+      currentDoorState = CurrentDoorState.CLOSED;
+    } else if (tydomDeviceLevel === 100) {
+      currentDoorState = CurrentDoorState.OPEN;
+    } else if (tydomDeviceLevel > 0 && tydomDeviceLevel < 100) {
+      (0, import_debug4.default)(`Encountered a ${chalkString("level")} update with value different from 0 or 100 !`);
+    }
+    return currentDoorState;
+  } catch (err) {
+    if (err instanceof Error && err.message === "UnreacheableAccessory") {
+      debug(`${(0, import_kolorist3.yellow)("\u26a0\ufe0f ")}GarageDoor unreacheable for device with deviceId=${deviceId} and endpointId=${endpointId}`);
+      return Characteristic.CurrentDoorState.CLOSED;
+    }
+    throw err;
   }
-  return currentDoorState;
 };
 
 export const setupGarageDoorOpener = (
