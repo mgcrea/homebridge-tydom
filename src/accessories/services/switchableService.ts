@@ -22,11 +22,19 @@ export const addAccessorySwitchableService = (
     .getCharacteristic(On)
     .onGet(async () => {
       debugGet(On, service);
-      const data = await getTydomDeviceData(client, { deviceId, endpointId });
-      const level = getTydomDataPropValue<number>(data, "level");
-      const nextValue = level === 100;
-      debugGetResult(On, service, nextValue);
-      return nextValue;
+      try {
+        const data = await getTydomDeviceData(client, { deviceId, endpointId });
+        const level = getTydomDataPropValue(data, "level");
+        const nextValue = level === 100;
+        debugGetResult(On, service, nextValue);
+        return nextValue;
+      } catch (err) {
+      if (err instanceof Error && err.message === "UnreacheableAccessory") {
+        debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Switchable service unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        return false;
+      }
+      throw err;
+      }
     })
     .onSet(async (value) => {
       debugSet(On, service, value);
