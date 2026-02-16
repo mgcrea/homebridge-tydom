@@ -39,7 +39,7 @@ export const setupOutlet = (
       } catch (err) {
         if (err instanceof Error && err.message === "UnreacheableAccessory") {
           debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
-          return false; // Default to off (safe state)
+          return false;
         }
         throw err;
       }
@@ -67,7 +67,7 @@ export const setupOutlet = (
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
         debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
-        return false; // Default to not in use (safe state)
+        return false;
       }
       throw err;
     }
