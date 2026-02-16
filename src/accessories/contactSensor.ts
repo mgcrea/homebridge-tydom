@@ -28,10 +28,18 @@ export const setupContactSensor = (
 
   service.getCharacteristic(ContactSensorState).onGet(async () => {
     debugGet(ContactSensorState, service);
-    const data = await getTydomDeviceData(client, { deviceId, endpointId });
-    const intrusionDetect = getTydomDataPropValue<boolean>(data, "intrusionDetect");
-    debugGetResult(ContactSensorState, service, intrusionDetect);
-    return intrusionDetect;
+    try {
+      const data = await getTydomDeviceData(client, { deviceId, endpointId });
+      const intrusionDetect = getTydomDataPropValue(data, "intrusionDetect");
+      debugGetResult(ContactSensorState, service, intrusionDetect);
+      return intrusionDetect;
+    } catch (err) {
+      if (err instanceof Error && err.message === "UnreacheableAccessory") {
+        debug(`${(0, import_kolorist3.yellow)("⚠️ ")}ContactSensor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        return ContactSensorState.CONTACT_DETECTED;
+      }
+      throw err;
+    }
   });
 };
 
