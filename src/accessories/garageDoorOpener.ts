@@ -229,40 +229,56 @@ export const setupGarageDoorOpener = (
 
   service.getCharacteristic(CurrentDoorState).onGet(async () => {
     debugGet(CurrentDoorState, service);
-    if (IS_TOGGLE_ONLY) {
-      const currentDoorState = state.currentDoorState;
+    try {
+      if (IS_TOGGLE_ONLY) {
+        const currentDoorState2 = state.currentDoorState;
+        debugGetResult(CurrentDoorState, service, currentDoorState2);
+        return currentDoorState2;
+      }
+      const currentDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
       debugGetResult(CurrentDoorState, service, currentDoorState);
+      assignState({
+        currentDoorState,
+        lastUpdatedAt: Date.now(),
+        computedPosition: currentDoorState === CurrentDoorState.OPEN ? 100 : 0
+      });
+      (0, import_debug4.default)(`current state = ${state.currentDoorState === CurrentDoorState.OPEN ? "OPEN" : "CLOSE"}`);
       return currentDoorState;
+    } catch (err) {
+      if (err instanceof Error && err.message === "UnreacheableAccessory") {
+        debug(`${(0, import_kolorist3.yellow)("⚠️ ")}GarageDoor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        return CurrentDoorState.CLOSED; // Safe state
+      }
+      throw err;
     }
-    const currentDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
-    debugGetResult(CurrentDoorState, service, currentDoorState);
-    assignState({
-      currentDoorState: currentDoorState,
-      lastUpdatedAt: Date.now(),
-      computedPosition: currentDoorState === CurrentDoorState.OPEN ? 100 : 0,
-    });
-    debug(`current state = ${state.currentDoorState === CurrentDoorState.OPEN ? "OPEN" : "CLOSE"}`);
-    return currentDoorState;
   });
 
   service
     .getCharacteristic(TargetDoorState)
     .onGet(async () => {
       debugGet(TargetDoorState, service);
+      try {
       if (IS_TOGGLE_ONLY) {
-        const targetDoorState = state.currentDoorState;
-        debugGetResult(TargetDoorState, service, targetDoorState);
-        return targetDoorState;
+        const targetDoorState2 = state.currentDoorState;
+        debugGetResult(TargetDoorState, service, targetDoorState2);
+        return targetDoorState2;
       }
       const targetDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
       debugGetResult(TargetDoorState, service, targetDoorState);
       assignState({
-        targetDoorState: targetDoorState,
+        targetDoorState,
         lastUpdatedAt: Date.now(),
-        computedPosition: targetDoorState === TargetDoorState.OPEN ? 100 : 0,
+        computedPosition: targetDoorState === TargetDoorState.OPEN ? 100 : 0
       });
-      debug(`target state = ${state.targetDoorState === TargetDoorState.OPEN ? "OPEN" : "CLOSE"}`);
+      (0, import_debug4.default)(`target state = ${state.targetDoorState === TargetDoorState.OPEN ? "OPEN" : "CLOSE"}`);
       return targetDoorState;
+    } catch (err) {
+      if (err instanceof Error && err.message === "UnreacheableAccessory") {
+        debug(`${(0, import_kolorist3.yellow)("⚠️ ")}GarageDoor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        return TargetDoorState.CLOSED; // Safe state
+      }
+      throw err;
+    }
     })
     .onSet(async (value) => {
       debugSet(TargetDoorState, service, value);
