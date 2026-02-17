@@ -35,7 +35,7 @@ export const setupContactSensor = (
       return intrusionDetect;
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
-        debug(`${(0, import_kolorist3.yellow)("⚠️ ")}ContactSensor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        debug2(`${(0, import_kolorist3.yellow)("⚠️ ")}ContactSensor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
         return ContactSensorState.CONTACT_DETECTED;
       }
       throw err;

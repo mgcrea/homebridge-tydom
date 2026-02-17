@@ -30,7 +30,7 @@ export const addAccessorySwitchableService = (
         return nextValue;
       } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
-        debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Switchable service unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        debug2(`${(0, import_kolorist3.yellow)("⚠️ ")}Switchable service unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
         return false;
       }
       throw err;
