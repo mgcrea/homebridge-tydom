@@ -68,9 +68,7 @@ export const debugSetResult = (
   value: unknown,
   tydomValue?: unknown,
 ): void => {
-  const valStr =
-    typeof value === "object" ? JSON.stringify(value) : String(value);
-
+  const valStr = typeof value === "object" ? JSON.stringify(value) : String(value);
   const tydomValStr =
     tydomValue !== undefined
       ? typeof tydomValue === "object"
@@ -80,12 +78,8 @@ export const debugSetResult = (
 
   debug(
     `${chalkSet("←SET")}:${blue(characteristic.name)} value=${chalkVal(
-      valStr as unknown as string,
-    )}${
-      tydomValStr !== undefined
-        ? ` (tydomValue=${chalkVal(tydomValStr as unknown as string)})`
-        : ""
-    } for accessory named=${chalkString(name)} with id=${chalkString(id)}`,
+      valStr as string,
+    )}${tydomValStr !== undefined ? ` (tydomValue=${chalkVal(tydomValStr as string)})` : ""} for accessory named=${chalkString(name)} with id=${chalkString(id)}`,
   );
 };
 
