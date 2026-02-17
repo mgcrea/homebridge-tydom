@@ -93,7 +93,7 @@ export const debugTydomPut = (
   value: unknown,
 ): void => {
   debug(
-    `${chalkSet("→PUT")}:${blue(property)} value=${chalkVal(value)} for accessory named=${chalkString(
+    `${chalkSet("→PUT")}:${blue(property)} value=${chalkVal(String(value))} for accessory named=${chalkString( // Fixed line
       name,
     )} with id=${chalkString(id)}`,
   );
@@ -106,7 +106,7 @@ export const debugAddSubService = (
   debug(
     `Adding new sub service ${chalkKeyword(service.constructor.name)} with name=${chalkString(
       service.displayName,
-    )}, subtype=${chalkString(String(service.subtype))} and id="${chalkString(
+    )}, subtype=${chalkString(String(service.subtype))} and id="${chalkString( // Fixed line
       service.UUID,
     )}" for accessory named=${chalkString(name)} with id=${chalkString(id)}`,
   );
