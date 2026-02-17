@@ -398,7 +398,7 @@ export const updateSecuritySystem = (
           debug(`New ${chalkKeyword("SecuritySystem")} alarm event=${chalkJson(event)}`);
           controller.emit("notification", {
             level: "warn",
-            message: `SecuritySystem \`${String(name)}\` event, name=\`${event.name}\` parameters=\`${JSON.stringify(
+            message: `SecuritySystem \`${name}\` event, name=\`${event.name}\` parameters=\`${JSON.stringify(
               parameters,
             )}\`, values=\`${JSON.stringify(values)}\``,
           });

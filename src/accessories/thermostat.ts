@@ -133,7 +133,7 @@ export const setupThermostat = (
     );
     return;
   }
-  
+
   const thermicLevelValues = thermicLevelData.enum_values ?? [];
   // Only absence (aka. anti-frost) mode
   if (thermicLevelValues.length === 1) {
@@ -247,14 +247,11 @@ export const updateThermostat = (
           // @TODO Trigger a get as we miss info
           return;
         }
-        if (authorization === "STOP") {
-          debugSetUpdate(CurrentHeatingCoolingState, service, CurrentHeatingCoolingState.OFF);
-          service.updateCharacteristic(CurrentHeatingCoolingState, CurrentHeatingCoolingState.OFF);
-          // External update probably comes from the Tydom app, let's agree on the target state
-          debugSetUpdate(TargetHeatingCoolingState, service, TargetHeatingCoolingState.OFF);
-          service.updateCharacteristic(TargetHeatingCoolingState, TargetHeatingCoolingState.OFF);
-          return;
-        }
+        debugSetUpdate(CurrentHeatingCoolingState, service, CurrentHeatingCoolingState.OFF);
+        service.updateCharacteristic(CurrentHeatingCoolingState, CurrentHeatingCoolingState.OFF);
+        // External update probably comes from the Tydom app, let's agree on the target state
+        debugSetUpdate(TargetHeatingCoolingState, service, TargetHeatingCoolingState.OFF);
+        service.updateCharacteristic(TargetHeatingCoolingState, TargetHeatingCoolingState.OFF);
         return;
       }
       case "hvacMode": {

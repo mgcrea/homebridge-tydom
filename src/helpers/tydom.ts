@@ -53,7 +53,7 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
       }
     }
     return ((res as Record<string, unknown>).data ?? res) as T;
-  }) as Promise<T>;
+  });
   cacheMap.set(uri, { time: now, promise });
   return promise;
 };
