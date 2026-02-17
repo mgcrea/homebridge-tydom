@@ -438,7 +438,7 @@ export const updateSecuritySystem = (
           controller.emit("notification", {
             level: "debug",
             message: `SecuritySystem \`${String(name)}\` event parameters=\`${JSON.stringify(
-441              parameters,
+              parameters,
             )}\`, values=\`${JSON.stringify(values)}\``,
           });
           return;
