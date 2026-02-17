@@ -32,7 +32,7 @@ export const debugGetResult = (
   value: unknown,
 ): void => {
   debug(
-    `${chalkGet("←GET")}:${blue(characteristic.name)} value=${chalkVal(value as any)} for accessory named=${chalkString(
+    `${chalkGet("←GET")}:${blue(characteristic.name)} value=${chalkVal(String(value))} for accessory named=${chalkString(
       name,
     )} with id=${chalkString(id)} ...`,
   );
@@ -44,7 +44,7 @@ export const debugSetUpdate = (
   value: unknown,
 ): void => {
   debug(
-    `${chalkUpd("←UPD")}:${blue(characteristic.name)} value=${chalkVal(value as any)} for accessory named=${chalkString(
+    `${chalkUpd("←UPD")}:${blue(characteristic.name)} value=${chalkVal(String(value))} for accessory named=${chalkString(
       name,
     )} with id=${chalkString(id)}`,
   );
@@ -56,7 +56,7 @@ export const debugSet = (
   value: unknown,
 ): void => {
   debug(
-    `${chalkSet("→SET")}:${blue(characteristic.name)} value=${chalkVal(value as any)} for accessory named=${chalkString(
+    `${chalkSet("→SET")}:${blue(characteristic.name)} value=${chalkVal(String(value))} for accessory named=${chalkString(
       name,
     )} with id=${chalkString(id)} ...`,
   );
@@ -69,8 +69,8 @@ export const debugSetResult = (
   tydomValue?: unknown,
 ): void => {
   debug(
-    `${chalkSet("←SET")}:${blue(characteristic.name)} value=${chalkVal(value as any)}${
-      tydomValue !== undefined ? ` (tydomValue=${chalkVal(tydomValue as any)})` : ""
+    `${chalkSet("←SET")}:${blue(characteristic.name)} value=${chalkVal(String(value))}${
+      tydomValue !== undefined ? ` (tydomValue=${chalkVal(String(tydomValue))})` : ""
     } for accessory named=${chalkString(name)} with id=${chalkString(id)}`,
   );
 };
@@ -94,7 +94,7 @@ export const debugAddSubService = (
   debug(
     `Adding new sub service ${chalkKeyword(service.constructor.name)} with name=${chalkString(
       service.displayName,
-    )}, subtype=${chalkString(service.subtype as any)} and id="${chalkString(service.UUID)}" for accessory named=${chalkString(
+    )}, subtype=${chalkString(String(service.subtype))} and id="${chalkString(service.UUID)}" for accessory named=${chalkString(
       name,
     )} with id=${chalkString(id)}`,
   );

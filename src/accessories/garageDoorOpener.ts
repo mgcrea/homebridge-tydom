@@ -296,7 +296,7 @@ export const setupGarageDoorOpener = (
     .onSet(async (value) => {
       debugSet(TargetDoorState, service, value);
       debugSetResult(TargetDoorState, service, value);
-      const targetDoorState = typeof value === 'number' ? value : asNumber(value);
+      const targetDoorState = typeof value === "number" ? value : asNumber(value);
       assignState({
         targetDoorState: targetDoorState,
         lastUpdatedAt: Date.now(),
