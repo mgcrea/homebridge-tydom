@@ -133,8 +133,8 @@ export const setupThermostat = (
     );
     return;
   }
-const thermicLevelValues = thermicLevelData.enum_values ?? [];
-
+  
+  const thermicLevelValues = thermicLevelData.enum_values ?? [];
   // Only absence (aka. anti-frost) mode
   if (thermicLevelValues.length === 1) {
     const absenceModeId = `hvacMode_absence`;

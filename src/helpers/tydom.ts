@@ -52,7 +52,7 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
         );
       }
     }
-    return res.data ?? res;
+    return ((res as Record<string, unknown>).data ?? res) as T;
   }) as Promise<T>;
   cacheMap.set(uri, { time: now, promise });
   return promise;
@@ -179,8 +179,10 @@ export const resolveEndpointCategory = ({
   const metaSignature = getEndpointSignatureFromMetadata(metadata);
   const hash = `${firstUsage}:${sha256Sync(metaSignature)}`;
   // dir({metaSignature, hash});
-  const category = ENDPOINTS_SIGNATURES_CATEGORIES[hash];
-  const category = ENDPOINTS_SIGNATURES_CATEGORIES[hash] as Categories | [Categories, Record<string, unknown>] | undefined;
+  const category = ENDPOINTS_SIGNATURES_CATEGORIES[hash] as
+    | Categories
+    | [Categories, Record<string, unknown>]
+    | undefined;
   if (category !== undefined) {
     // Support settings override
     if (Array.isArray(category)) {
