@@ -4,7 +4,7 @@ import TydomController from "src/controller";
 import { addAccessoryService, getAccessoryService, ServiceClass } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type { TydomAccessoryContext } from "src/typings/tydom";
-import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils/debug";
+import { debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils/debug";
 
 export const addAccessorySwitchableService = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -29,11 +29,11 @@ export const addAccessorySwitchableService = (
         debugGetResult(On, service, nextValue);
         return nextValue;
       } catch (err) {
-      if (err instanceof Error && err.message === "UnreacheableAccessory") {
-        debug2(`${(0, import_kolorist3.yellow)("⚠️ ")}Switchable service unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
-        return false;
-      }
-      throw err;
+        if (err instanceof Error && err.message === "UnreacheableAccessory") {
+          debug(`⚠️ Switchable service unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          return false;
+        }
+        throw err;
       }
     })
     .onSet(async (value) => {

@@ -9,7 +9,7 @@ import {
 } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import { TydomAccessoryContext } from "src/typings";
-import { debugGet, debugGetResult, debugSetUpdate } from "src/utils/debug";
+import { debug, debugGet, debugGetResult, debugSetUpdate } from "src/utils/debug";
 
 export const setupContactSensor = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -35,7 +35,7 @@ export const setupContactSensor = (
       return intrusionDetect;
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
-        debug2(`${(0, import_kolorist3.yellow)("⚠️ ")}ContactSensor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        debug(`⚠️ ContactSensor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
         return ContactSensorState.CONTACT_DETECTED;
       }
       throw err;

@@ -10,7 +10,7 @@ import {
 } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import { TydomAccessoryContext } from "src/typings";
-import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils";
+import { debug, debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils";
 
 export const setupOutlet = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -38,7 +38,7 @@ export const setupOutlet = (
         return nextValue;
       } catch (err) {
         if (err instanceof Error && err.message === "UnreacheableAccessory") {
-          debug2(`${(0, import_kolorist3.yellow)("⚠️ ")}Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          debug(`⚠️ Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
           return false;
         }
         throw err;
@@ -66,7 +66,7 @@ export const setupOutlet = (
       return nextValue;
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
-        debug2(`${(0, import_kolorist3.yellow)("⚠️ ")}Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        debug(`⚠️ Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
         return false;
       }
       throw err;
