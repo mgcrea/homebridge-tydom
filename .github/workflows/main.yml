@@ -40,6 +40,11 @@ jobs:
     strategy:
       matrix:
         node: ['lts/-1', 'lts/*']
+        include:
+          - node: 'lts/-1'
+            node-id: 'lts-prev'
+          - node: 'lts/*'
+            node-id: 'lts-current'
     name: Build on node@v${{ matrix.node }}
     steps:
       - name: Checkout 🛎️
@@ -59,6 +64,6 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-output-node-${{ matrix.node }}
+          name: build-output-node-${{ matrix.node-id }}
           path: dist/
           retention-days: 30
