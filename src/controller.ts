@@ -155,8 +155,8 @@ export default class TydomController extends EventEmitter {
       const { metadata } = getEndpointDetailsFromMeta(endpoint, meta);
       const groupId = getEndpointGroupIdFromGroups(endpoint, groups);
       const group = groupId ? configGroups.find(({ id }) => id === groupId) : undefined;
-      const deviceSettings = settings[deviceId];
-      const categoryFromSettings = deviceSettings.category;
+      const deviceSettings = settings?.[deviceId];
+      const categoryFromSettings = deviceSettings?.category;
       // @TODO resolve endpoint productType
       this.log.info(
         `Found new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
