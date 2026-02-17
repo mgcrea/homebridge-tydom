@@ -101,7 +101,7 @@ export default class TydomController extends EventEmitter {
       // await asyncWait(250);
       // await this.client.put('/configs/gateway/api_mode');
     } catch (err) {
-      this.log.error(`Failed to connect to Tydom hostname=${hostname} with username="${username}"`);
+      this.log.error(`Failed to connect to Tydom hostname=${this.config.hostname} with username="${this.config.username}"`);
       throw err;
     }
   }

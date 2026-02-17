@@ -46,7 +46,7 @@ const getTydomCurrentDoorState = async (client: TydomClient, deviceId: number, e
       deviceId,
       endpointId,
     });
-    const tydomDeviceLevel = asNumber(getTydomDataPropValue(tydomDeviceData, "level") ?? 0);
+    const tydomDeviceLevel = asNumber(getTydomDataPropValue(tydomDeviceData, "level"));
     let currentDoorState = CurrentDoorState.CLOSED;
     if (tydomDeviceLevel === 0) {
       currentDoorState = CurrentDoorState.CLOSED;
@@ -438,10 +438,10 @@ export const updateGarageDoorOpener = (
         }
         // Update CurrentDoorState
         debugSetResult(CurrentDoorState, service, doorState);
-        service.updateCharacteristic(CurrentDoorState, doorState as number);
+        service.updateCharacteristic(CurrentDoorState, doorState);
         // Update TargetDoorState
         debugSetResult(TargetDoorState, service, doorState);
-        service.updateCharacteristic(TargetDoorState, doorState as number);
+        service.updateCharacteristic(TargetDoorState, doorState);
 
         Object.assign(state, {
           currentDoorState: doorState,
