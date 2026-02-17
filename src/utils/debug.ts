@@ -106,8 +106,8 @@ export const debugAddSubService = (
   debug(
     `Adding new sub service ${chalkKeyword(service.constructor.name)} with name=${chalkString(
       service.displayName,
-    )}, subtype=${chalkString(String(service.subtype))} and id="${chalkString(service.UUID)}" for accessory named=${chalkString(
-      name,
-    )} with id=${chalkString(id)}`,
+    )}, subtype=${chalkString(String(service.subtype))} and id="${chalkString(
+      service.UUID,
+    )}" for accessory named=${chalkString(name)} with id=${chalkString(id)}`,
   );
 };

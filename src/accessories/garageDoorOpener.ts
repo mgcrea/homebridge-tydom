@@ -295,8 +295,11 @@ export const setupGarageDoorOpener = (
     })
     .onSet(async (value) => {
       debugSet(TargetDoorState, service, value);
+      if (typeof value === 'object' && value !== null) {
+        throw new Error(`Unexpected complex value received for TargetDoorState: ${JSON.stringify(value)}`);
+      }
+      const targetDoorState = asNumber(value as number);
       debugSetResult(TargetDoorState, service, value);
-      const targetDoorState = typeof value === "number" ? value : asNumber(value);
       assignState({
         targetDoorState: targetDoorState,
         lastUpdatedAt: Date.now(),
