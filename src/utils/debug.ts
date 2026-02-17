@@ -68,7 +68,11 @@ export const debugSetResult = (
   value: unknown,
   tydomValue?: unknown,
 ): void => {
-  const valStr = typeof value === "object" ? JSON.stringify(value) : String(value as string | number | boolean | null | undefined);
+  const valStr =
+    typeof value === "object"
+      ? JSON.stringify(value)
+      : String(value as string | number | boolean | null | undefined);
+
   const tydomValStr =
     tydomValue !== undefined
       ? typeof tydomValue === "object"
