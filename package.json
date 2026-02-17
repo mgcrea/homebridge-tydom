@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "homebridge-tydom",
   "version": "0.27.0",
   "description": "Homebridge plugin to manage Tydom devices by Delta Dore",
@@ -24,8 +25,8 @@
     "start:prod": "npm run spec:watch",
     "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
     "lint": "eslint src/",
-    "format": "prettier --write src/ test/",
-    "format:check": "prettier --check src/ test/",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
     "check": "tsc --noEmit",
     "test": "npm run lint && npm run format && npm run check",
     "build": "tsup",
