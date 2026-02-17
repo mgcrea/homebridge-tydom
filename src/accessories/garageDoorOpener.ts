@@ -1,4 +1,3 @@
-import debug from "debug";
 import type { PlatformAccessory } from "homebridge";
 import { Characteristic, Service } from "src/config/hap";
 import TydomController from "src/controller";
@@ -10,14 +9,14 @@ import {
   TydomAccessoryUpdateType,
 } from "src/helpers";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import { TydomAccessoryContext } from "src/typings";
-import type { TydomDeviceGarageDoorData } from "src/typings/tydom";
+import type { TydomAccessoryContext } from "src/typings";
 import {
   asNumber,
   chalkJson,
   chalkKeyword,
   chalkNumber,
   chalkString,
+  debug,
   debugGet,
   debugGetResult,
   debugSet,
@@ -45,7 +44,7 @@ const getTydomCurrentDoorState = async (client: TydomClient, deviceId: number, e
   try {
     const tydomDeviceData = await getTydomDeviceData(client, {
       deviceId,
-      endpointId
+      endpointId,
     });
     const tydomDeviceLevel = getTydomDataPropValue(tydomDeviceData, "level") || 0;
     let currentDoorState = CurrentDoorState.CLOSED;
@@ -54,15 +53,21 @@ const getTydomCurrentDoorState = async (client: TydomClient, deviceId: number, e
     } else if (tydomDeviceLevel === 100) {
       currentDoorState = CurrentDoorState.OPEN;
     } else if (tydomDeviceLevel > 0 && tydomDeviceLevel < 100) {
-      (0, import_debug4.default)(`Encountered a ${chalkString("level")} update with value different from 0 or 100 !`);
+      const message = `Encountered a ${chalkString("level")} update with value different from 0 or 100 !`;
+      debug(message);
     }
     return currentDoorState;
   } catch (err) {
     if (err instanceof Error && err.message === "UnreacheableAccessory") {
-      debug(`${(0, import_kolorist3.yellow)("\u26a0\ufe0f ")}GarageDoor unreacheable for device with deviceId=${deviceId} and endpointId=${endpointId}`);
+      debug(
+        `⚠️ GarageDoor unreacheable for device with deviceId=${deviceId} and endpointId=${endpointId}`,
+      );
       return Characteristic.CurrentDoorState.CLOSED;
     }
-    throw err;
+    if (err instanceof Error) {
+      throw err;
+    }
+    throw new Error(String(err));
   }
 };
 
@@ -240,16 +245,23 @@ export const setupGarageDoorOpener = (
       assignState({
         currentDoorState,
         lastUpdatedAt: Date.now(),
-        computedPosition: currentDoorState === CurrentDoorState.OPEN ? 100 : 0
+        computedPosition: currentDoorState === CurrentDoorState.OPEN ? 100 : 0,
       });
-      (0, import_debug4.default)(`current state = ${state.currentDoorState === CurrentDoorState.OPEN ? "OPEN" : "CLOSE"}`);
+      debug(
+        `current state = ${state.currentDoorState === CurrentDoorState.OPEN ? "OPEN" : "CLOSE"}`,
+      );
       return currentDoorState;
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
-        debug(`${(0, import_kolorist3.yellow)("⚠️ ")}GarageDoor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        debug(
+          `⚠️ GarageDoor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`,
+        );
         return CurrentDoorState.CLOSED;
       }
-      throw err;
+      if (err instanceof Error) {
+        throw err;
+      }
+      throw new Error(String(err));
     }
   });
 
@@ -258,27 +270,34 @@ export const setupGarageDoorOpener = (
     .onGet(async () => {
       debugGet(TargetDoorState, service);
       try {
-      if (IS_TOGGLE_ONLY) {
-        const targetDoorState2 = state.currentDoorState;
-        debugGetResult(TargetDoorState, service, targetDoorState2);
-        return targetDoorState2;
+        if (IS_TOGGLE_ONLY) {
+          const targetDoorState2 = state.currentDoorState;
+          debugGetResult(TargetDoorState, service, targetDoorState2);
+          return targetDoorState2;
+        }
+        const targetDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
+        debugGetResult(TargetDoorState, service, targetDoorState);
+        assignState({
+          targetDoorState,
+          lastUpdatedAt: Date.now(),
+          computedPosition: targetDoorState === TargetDoorState.OPEN ? 100 : 0,
+        });
+        debug(
+          `target state = ${state.targetDoorState === TargetDoorState.OPEN ? "OPEN" : "CLOSE"}`,
+        );
+        return targetDoorState;
+      } catch (err) {
+        if (err instanceof Error && err.message === "UnreacheableAccessory") {
+          debug(
+            `⚠️ GarageDoor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`,
+          );
+          return TargetDoorState.CLOSED;
+        }
+        if (err instanceof Error) {
+          throw err;
+        }
+        throw new Error(String(err));
       }
-      const targetDoorState = await getTydomCurrentDoorState(client, deviceId, endpointId);
-      debugGetResult(TargetDoorState, service, targetDoorState);
-      assignState({
-        targetDoorState,
-        lastUpdatedAt: Date.now(),
-        computedPosition: targetDoorState === TargetDoorState.OPEN ? 100 : 0
-      });
-      (0, import_debug4.default)(`target state = ${state.targetDoorState === TargetDoorState.OPEN ? "OPEN" : "CLOSE"}`);
-      return targetDoorState;
-    } catch (err) {
-      if (err instanceof Error && err.message === "UnreacheableAccessory") {
-        debug(`${(0, import_kolorist3.yellow)("⚠️ ")}GarageDoor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
-        return TargetDoorState.CLOSED;
-      }
-      throw err;
-    }
     })
     .onSet(async (value) => {
       debugSet(TargetDoorState, service, value);

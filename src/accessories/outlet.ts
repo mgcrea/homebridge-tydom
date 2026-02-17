@@ -38,10 +38,15 @@ export const setupOutlet = (
         return nextValue;
       } catch (err) {
         if (err instanceof Error && err.message === "UnreacheableAccessory") {
-          debug(`⚠️ Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          debug(
+            `⚠️ Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`,
+          );
           return false;
         }
+        if (err instanceof Error) {
         throw err;
+        }
+        throw new Error(String(err));
       }
     })
     .onSet(async (value) => {
@@ -66,10 +71,15 @@ export const setupOutlet = (
       return nextValue;
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
-        debug(`⚠️ Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        debug(
+          `⚠️ Outlet unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`,
+        );
         return false;
       }
-      throw err;
+      if (err instanceof Error) {
+        throw err;
+      }
+      throw new Error(String(err));
     }
   });
 };

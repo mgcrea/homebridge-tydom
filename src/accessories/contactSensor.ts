@@ -35,10 +35,15 @@ export const setupContactSensor = (
       return intrusionDetect;
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
-        debug(`⚠️ ContactSensor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+        debug(
+          `⚠️ ContactSensor unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`,
+        );
         return ContactSensorState.CONTACT_DETECTED;
       }
-      throw err;
+      if (err instanceof Error) {
+        throw err;
+      }
+      throw new Error(String(err));
     }
   });
 };

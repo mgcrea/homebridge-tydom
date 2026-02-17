@@ -89,10 +89,13 @@ export const setupLightbulb = (
         return nextValue;
       } catch (err) {
         if (err instanceof Error && err.message === "UnreacheableAccessory") {
-          debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Lightbulb unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          debug(`⚠️ Lightbulb unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
           return false;
-      }
-      throw err;
+        }
+        if (err instanceof Error) {
+          throw err;
+        }
+        throw new Error(String(err));
       }
     })
     .onSet(async (value) => {
@@ -114,10 +117,13 @@ export const setupLightbulb = (
         return level;
       } catch (err) {
         if (err instanceof Error && err.message === "UnreacheableAccessory") {
-          debug(`${(0, import_kolorist3.yellow)("⚠️ ")}Lightbulb brightness unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          debug(`⚠️ Lightbulb brightness unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
           return 0;
-      }
-      throw err;
+        }
+        if (err instanceof Error) {
+          throw err;
+        }
+        throw new Error(String(err));
       }
     })
     .onSet(async (value) => {
