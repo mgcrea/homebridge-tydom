@@ -160,7 +160,7 @@ export const updateWindowCovering = (
     switch (name) {
       case "position": {
         const service = getAccessoryService(accessory, Service.WindowCovering);
-        const position = asNumber(value as number);
+        const position = asNumber(value as number) as number | null;
         if (position === null) {
           debug(`Encountered a ${chalkString("position")} update with a null value!`);
           return;

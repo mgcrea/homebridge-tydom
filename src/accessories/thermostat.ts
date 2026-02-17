@@ -133,7 +133,7 @@ export const setupThermostat = (
     );
     return;
   }
-  const thermicLevelValues = thermicLevelData.enum_values!;
+const thermicLevelValues = thermicLevelData.enum_values ?? [];
 
   // Only absence (aka. anti-frost) mode
   if (thermicLevelValues.length === 1) {
@@ -277,7 +277,7 @@ export const updateThermostat = (
         return;
       }
       case "thermicLevel": {
-        const thermicLevel = value as TydomDeviceThermostatThermicLevel;
+        const thermicLevel = value as TydomDeviceThermostatThermicLevel | null;
         if (thermicLevel === null) {
           debug(`Encountered a ${chalkString("thermicLevel")} update with a null value!`);
           return;
@@ -299,7 +299,7 @@ export const updateThermostat = (
       //   return;
       // }
       case "setpoint": {
-        const setpoint = value as number;
+        const setpoint = value as number | null;
         if (setpoint === null) {
           debug(`Encountered a ${chalkString("setpoint")} update with a null value!`);
           return;

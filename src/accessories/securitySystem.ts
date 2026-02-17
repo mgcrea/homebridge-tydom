@@ -151,7 +151,7 @@ export const setupSecuritySystem = async (
         `/devices/${deviceId}/endpoints/${endpointId}/cdata?name=label`,
       );
       zones = labelResults[0].zones;
-    } catch (err) {
+    } catch {
       log.warn(`Failed to query labels for security system`);
       zones = [];
     }
@@ -398,7 +398,7 @@ export const updateSecuritySystem = (
           debug(`New ${chalkKeyword("SecuritySystem")} alarm event=${chalkJson(event)}`);
           controller.emit("notification", {
             level: "warn",
-            message: `SecuritySystem \`${name}\` event, name=\`${event.name}\` parameters=\`${JSON.stringify(
+            message: `SecuritySystem \`${String(name)}\` event, name=\`${event.name}\` parameters=\`${JSON.stringify(
               parameters,
             )}\`, values=\`${JSON.stringify(values)}\``,
           });
@@ -437,8 +437,8 @@ export const updateSecuritySystem = (
         default: {
           controller.emit("notification", {
             level: "debug",
-            message: `SecuritySystem \`${name}\` event parameters=\`${JSON.stringify(
-              parameters,
+            message: `SecuritySystem \`${String(name)}\` event parameters=\`${JSON.stringify(
+441              parameters,
             )}\`, values=\`${JSON.stringify(values)}\``,
           });
           return;

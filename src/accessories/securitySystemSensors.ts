@@ -72,7 +72,7 @@ export const setupSecuritySystemSensors = async (
     // service.addLinkedService(contactSensorService); // @TODO ServiceLabel?
     contactSensorService
       .getCharacteristic(ContactSensorState)
-      .setValue(initialOpenedIssues[productId] ? 1 : 0)
+      .setValue(productId in initialOpenedIssues ? 1 : 0)
       .onGet(async () => {
         debugGet(ContactSensorState, contactSensorService);
         const openedIssues = getOpenedIssues(
@@ -82,7 +82,7 @@ export const setupSecuritySystemSensors = async (
             searchParams: histoSearchParams,
           }),
         );
-        const nextValue = openedIssues[productId] ? 1 : 0;
+        const nextValue = productId in openedIssues ? 1 : 0;
         debugGetResult(ContactSensorState, contactSensorService, nextValue);
         return nextValue;
       });
@@ -130,7 +130,7 @@ export const updateSecuritySystemSensors = (
           contactSensorProducts.forEach(({ id: productId }) => {
             const subDeviceId = `systOpenIssue_${productId}`;
             const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, subDeviceId);
-            const nextValue = openedIssues[productId] ? 1 : 0;
+            const nextValue = productId in openedIssues ? 1 : 0;
             debugSetUpdate(ContactSensorState, service, nextValue);
             service.updateCharacteristic(ContactSensorState, nextValue);
           });

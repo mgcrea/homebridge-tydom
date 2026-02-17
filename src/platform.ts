@@ -112,9 +112,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     const accessory = this.accessories.get(id);
     if (!accessory || !this.controller) return;
     const tydomAccessoryUpdate = getTydomAccessoryDataUpdate(accessory, context);
-    if (tydomAccessoryUpdate) {
-      void tydomAccessoryUpdate(accessory, this.controller, updates, type);
-    }
+    void tydomAccessoryUpdate(accessory, this.controller, updates, type);
   }
   handleControllerNotification({ level, message }: ControllerNotificationPayload): void {
     const { webhooks = [] } = this.config;

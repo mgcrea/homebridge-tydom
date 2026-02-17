@@ -52,7 +52,7 @@ export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndp
         );
       }
     }
-    return res.data || res;
+    return res.data ?? res;
   }) as Promise<T>;
   cacheMap.set(uri, { time: now, promise });
   return promise;
@@ -180,6 +180,7 @@ export const resolveEndpointCategory = ({
   const hash = `${firstUsage}:${sha256Sync(metaSignature)}`;
   // dir({metaSignature, hash});
   const category = ENDPOINTS_SIGNATURES_CATEGORIES[hash];
+  const category = ENDPOINTS_SIGNATURES_CATEGORIES[hash] as Categories | [Categories, Record<string, unknown>] | undefined;
   if (category !== undefined) {
     // Support settings override
     if (Array.isArray(category)) {
@@ -191,7 +192,7 @@ export const resolveEndpointCategory = ({
   }
   debug(`Unknown hash=${hash} with firstUsage="${firstUsage}"`);
   // Fallback on legacy resolution
-  const legacyCategory = LEGACY_SUPPORTED_CATEGORIES_MAP[firstUsage];
+  const legacyCategory = LEGACY_SUPPORTED_CATEGORIES_MAP[firstUsage] as Categories | undefined;
   if (legacyCategory !== undefined) {
     return legacyCategory;
   }
