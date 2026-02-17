@@ -21,7 +21,7 @@ export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
   username: string;
   password: string;
-  settings: Record<string, { name?: string; category?: Categories }>;
+  settings?: Record<string, { name?: string; category?: Categories }>;
   debug?: boolean;
   webhooks?: Webhook[];
   includedDevices?: string[];

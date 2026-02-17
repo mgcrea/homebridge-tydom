@@ -341,7 +341,7 @@ export const setupGarageDoorOpener = (
                 await waitFor(`${deviceId}.pending`, autoCloseDelay);
                 assignCurrentDoorState(CurrentDoorState.CLOSED);
               }
-            } catch (_err) {
+            } catch {
               debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
             }
             break;
@@ -352,7 +352,7 @@ export const setupGarageDoorOpener = (
             try {
               await waitFor(`${deviceId}.pending`, delay);
               assignCurrentDoorState(CurrentDoorState.CLOSED);
-            } catch (_err) {
+            } catch {
               debug(`Aborted CLOSED update with delay=${chalkNumber(delay)}`);
             }
             break;
