@@ -89,7 +89,9 @@ export const setupLightbulb = (
         return nextValue;
       } catch (err) {
         if (err instanceof Error && err.message === "UnreacheableAccessory") {
-          debug(`⚠️ Lightbulb unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          debug(
+            `⚠️ Lightbulb unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`,
+          );
           return false;
         }
         if (err instanceof Error) {
@@ -117,7 +119,9 @@ export const setupLightbulb = (
         return level;
       } catch (err) {
         if (err instanceof Error && err.message === "UnreacheableAccessory") {
-          debug(`⚠️ Lightbulb brightness unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`);
+          debug(
+            `⚠️ Lightbulb brightness unreacheable for accessory with deviceId=${deviceId} and endpointId=${endpointId}`,
+          );
           return 0;
         }
         if (err instanceof Error) {
@@ -159,7 +163,7 @@ export const updateLightbulb = (
       case "level": {
         const service = getAccessoryService(accessory, Service.Lightbulb);
         const level = value as number;
-        if (level === null) {
+        if (value === null) {
           debug(`Encountered a ${chalkString("level")} update with a null value!`);
           return;
         }

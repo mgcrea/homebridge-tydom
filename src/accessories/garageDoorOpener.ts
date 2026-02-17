@@ -59,9 +59,7 @@ const getTydomCurrentDoorState = async (client: TydomClient, deviceId: number, e
     return currentDoorState;
   } catch (err) {
     if (err instanceof Error && err.message === "UnreacheableAccessory") {
-      debug(
-        `⚠️ GarageDoor unreacheable for device with deviceId=${deviceId} and endpointId=${endpointId}`,
-      );
+      debug(`⚠️ GarageDoor unreacheable for device with deviceId=${deviceId} and endpointId=${endpointId}`);
       return Characteristic.CurrentDoorState.CLOSED;
     }
     if (err instanceof Error) {
@@ -247,9 +245,7 @@ export const setupGarageDoorOpener = (
         lastUpdatedAt: Date.now(),
         computedPosition: currentDoorState === CurrentDoorState.OPEN ? 100 : 0,
       });
-      debug(
-        `current state = ${state.currentDoorState === CurrentDoorState.OPEN ? "OPEN" : "CLOSE"}`,
-      );
+      debug(`current state = ${state.currentDoorState === CurrentDoorState.OPEN ? "OPEN" : "CLOSE"}`);
       return currentDoorState;
     } catch (err) {
       if (err instanceof Error && err.message === "UnreacheableAccessory") {
@@ -282,9 +278,7 @@ export const setupGarageDoorOpener = (
           lastUpdatedAt: Date.now(),
           computedPosition: targetDoorState === TargetDoorState.OPEN ? 100 : 0,
         });
-        debug(
-          `target state = ${state.targetDoorState === TargetDoorState.OPEN ? "OPEN" : "CLOSE"}`,
-        );
+        debug(`target state = ${state.targetDoorState === TargetDoorState.OPEN ? "OPEN" : "CLOSE"}`);
         return targetDoorState;
       } catch (err) {
         if (err instanceof Error && err.message === "UnreacheableAccessory") {
@@ -347,7 +341,7 @@ export const setupGarageDoorOpener = (
                 await waitFor(`${deviceId}.pending`, autoCloseDelay);
                 assignCurrentDoorState(CurrentDoorState.CLOSED);
               }
-            } catch (err) {
+            } catch (_err) {
               debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
             }
             break;
@@ -358,7 +352,7 @@ export const setupGarageDoorOpener = (
             try {
               await waitFor(`${deviceId}.pending`, delay);
               assignCurrentDoorState(CurrentDoorState.CLOSED);
-            } catch (err) {
+            } catch (_err) {
               debug(`Aborted CLOSED update with delay=${chalkNumber(delay)}`);
             }
             break;

@@ -126,7 +126,7 @@ export default class TydomController extends EventEmitter {
       try {
         await this.refresh();
       } catch (err) {
-        debug(`Failed interval refresh with err ${err}`);
+        debug(`Failed interval refresh with err ${stringifyError(err)}`);
       }
     }, refreshInterval * 1000);
     Object.assign(this.state, { config, groups, meta });
@@ -136,7 +136,7 @@ export default class TydomController extends EventEmitter {
     const { hostname } = this.config;
     this.log.info(`Scaning devices from hostname=${chalkString(hostname)}...`);
     const {
-      settings = {},
+      settings,
       includedDevices = [],
       excludedDevices = [],
       includedCategories = [],
@@ -155,8 +155,8 @@ export default class TydomController extends EventEmitter {
       const { metadata } = getEndpointDetailsFromMeta(endpoint, meta);
       const groupId = getEndpointGroupIdFromGroups(endpoint, groups);
       const group = groupId ? configGroups.find(({ id }) => id === groupId) : undefined;
-      const deviceSettings = settings[deviceId] || {};
-      const categoryFromSettings = deviceSettings.category;
+      const deviceSettings = settings[deviceId];
+      const categoryFromSettings = deviceSettings?.category;
       // @TODO resolve endpoint productType
       this.log.info(
         `Found new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
