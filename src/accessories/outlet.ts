@@ -64,7 +64,7 @@ export const setupOutlet = (
     try {
       const data = await getTydomDeviceData(client, { deviceId, endpointId });
       const energyInstantTotElecP = getTydomDataPropValue(data, "energyInstantTotElecP");
-      const nextValue = energyInstantTotElecP > 0;
+      const nextValue = Number(energyInstantTotElecP) > 0;
       debugGetResult(OutletInUse, service, nextValue);
       return nextValue;
     } catch (err) {

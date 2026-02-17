@@ -84,7 +84,7 @@ export const setupLightbulb = (
       try {
         const data = await getTydomDeviceData(client, { deviceId, endpointId });
         const level = getTydomDataPropValue(data, "level");
-        const nextValue = level > 0;
+        const nextValue = Number(level) > 0;
         debugGetResult(On, service, nextValue);
         return nextValue;
       } catch (err) {

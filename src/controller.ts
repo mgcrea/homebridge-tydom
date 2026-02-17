@@ -126,7 +126,7 @@ export default class TydomController extends EventEmitter {
       try {
         await this.refresh();
       } catch (err) {
-        debug(`Failed interval refresh with err ${stringifyError(err)}`);
+        debug(`Failed interval refresh with err ${stringifyError(err as Error)}`);
       }
     }, refreshInterval * 1000);
     Object.assign(this.state, { config, groups, meta });
