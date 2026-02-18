@@ -16,6 +16,7 @@ import { triggerWebhook, Webhook } from "src/helpers";
 import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "src/helpers/accessory";
 import { TydomAccessoryContext } from "src/typings/tydom";
 import { assert, chalkKeyword, chalkNumber, chalkString, debug, enableDebug } from "src/utils";
+import { stringifyError } from "src/utils/error";
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
@@ -59,9 +60,19 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
 
     this.controller = new TydomController(log, this.config);
     // Prevent configureAccessory getting called after node ready
-    this.api.on("didFinishLaunching", () => setTimeout(() => this.didFinishLaunching(), 16));
+    this.api.on("didFinishLaunching", () =>
+      setTimeout(() => {
+        this.didFinishLaunching().catch((err: unknown) => {
+          this.log.error(`Failed to finish launching: ${stringifyError(err as Error)}`);
+        });
+      }, 16),
+    );
     // this.controller.on('connect', () => {});
-    this.controller.on("device", this.handleControllerDevice.bind(this));
+    this.controller.on("device", (context: ControllerDevicePayload) => {
+      this.handleControllerDevice(context).catch((err: unknown) => {
+        this.log.error(`Failed to handle device ${context.deviceId}: ${stringifyError(err as Error)}`);
+      });
+    });
     this.controller.on("update", this.handleControllerDataUpdate.bind(this));
     this.controller.on("notification", this.handleControllerNotification.bind(this));
   }
@@ -113,7 +124,18 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     if (!accessory || !this.controller) return;
     const tydomAccessoryUpdate = getTydomAccessoryDataUpdate(accessory, context);
     if (tydomAccessoryUpdate) {
-      void tydomAccessoryUpdate(accessory, this.controller, updates, type);
+      try {
+        const result = tydomAccessoryUpdate(accessory, this.controller, updates, type);
+        if (result instanceof Promise) {
+          void result.catch((err: unknown) => {
+            this.log.error(
+              `Failed to update accessory ${context.accessoryId}: ${stringifyError(err as Error)}`,
+            );
+          });
+        }
+      } catch (err) {
+        this.log.error(`Failed to update accessory ${context.accessoryId}: ${stringifyError(err as Error)}`);
+      }
     }
   }
   handleControllerNotification({ level, message }: ControllerNotificationPayload): void {
