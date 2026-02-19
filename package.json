@@ -1,6 +1,6 @@
 {
   "name": "homebridge-tydom",
-  "version": "0.27.2",
+  "version": "0.28.0",
   "description": "Homebridge plugin to manage Tydom devices by Delta Dore",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
