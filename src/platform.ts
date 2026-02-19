@@ -79,7 +79,26 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   async didFinishLaunching(): Promise<void> {
     assert(this.controller);
     this.cleanupAccessoriesIds = new Set(this.accessories.keys());
-    await this.controller.connect();
+
+    const maxRetries = 10;
+    const maxDelay = 5 * 60 * 1000; // 5 minutes
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        await this.controller.connect();
+        break;
+      } catch (err) {
+        if (attempt === maxRetries) {
+          this.log.error(
+            `Failed to connect after ${maxRetries} retries, giving up: ${stringifyError(err as Error)}`,
+          );
+          return;
+        }
+        const delay = Math.min(5000 * Math.pow(2, attempt), maxDelay);
+        this.log.warn(`Connection attempt ${attempt + 1} failed, retrying in ${Math.round(delay / 1000)}s...`);
+        await new Promise<void>((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
     await this.controller.scan();
     this.cleanupAccessoriesIds.forEach((accessoryId) => {
       const accessory = this.accessories.get(accessoryId);
