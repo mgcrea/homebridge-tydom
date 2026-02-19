@@ -136,7 +136,7 @@ export default class TydomController extends EventEmitter {
     const { hostname } = this.config;
     this.log.info(`Scaning devices from hostname=${chalkString(hostname)}...`);
     const {
-      settings,
+      settings = {},
       includedDevices = [],
       excludedDevices = [],
       includedCategories = [],
