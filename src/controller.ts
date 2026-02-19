@@ -50,6 +50,7 @@ export default class TydomController extends EventEmitter {
   private devices = new Map<string, Categories>();
   private state = new Map<string, unknown>();
   private refreshInterval?: NodeJS.Timeout;
+  private hasConnectedOnce = false;
   constructor(log: Logging, config: TydomPlatformConfig) {
     super();
     this.config = config;
@@ -76,10 +77,20 @@ export default class TydomController extends EventEmitter {
       this.log.info(
         `Successfully connected to Tydom hostname=${chalkString(hostname)} with username=${chalkString(username)}`,
       );
+      if (this.hasConnectedOnce) {
+        this.log.warn(`Reconnected to Tydom hostname=${chalkString(hostname)}, re-syncing state...`);
+        this.resync().catch((err: unknown) => {
+          this.log.error(`Failed to re-sync after reconnection: ${stringifyError(err as Error)}`);
+        });
+      }
       this.emit("connect");
     });
     this.client.on("disconnect", () => {
       this.log.warn(`Disconnected from Tydom hostname=${chalkString(hostname)}"`);
+      if (this.refreshInterval) {
+        clearInterval(this.refreshInterval);
+        this.refreshInterval = undefined;
+      }
       this.emit("disconnect");
     });
   }
@@ -98,6 +109,7 @@ export default class TydomController extends EventEmitter {
       await asyncWait(250);
       // Initial intro handshake
       await this.client.get("/ping");
+      this.hasConnectedOnce = true;
       // await asyncWait(250);
       // await this.client.put('/configs/gateway/api_mode');
     } catch (err) {
@@ -220,6 +232,25 @@ export default class TydomController extends EventEmitter {
   async refresh(): Promise<void> {
     debug(`Refreshing Tydom controller ...`);
     await this.client.post("/refresh/all");
+  }
+  private async resync(): Promise<void> {
+    const { hostname, refreshInterval = DEFAULT_REFRESH_INTERVAL_SEC } = this.config;
+    debug(`Re-syncing state after reconnection to hostname=${chalkString(hostname)}...`);
+    await asyncWait(250);
+    await this.client.get("/ping");
+    await this.refresh();
+    // Re-establish refresh interval (cleared on disconnect)
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+    debug(`Re-configuring refresh interval of ${chalkNumber(Math.round(refreshInterval))}s`);
+    this.refreshInterval = setInterval(async () => {
+      try {
+        await this.refresh();
+      } catch (err) {
+        debug(`Failed interval refresh with err ${err}`);
+      }
+    }, refreshInterval * 1000);
   }
   handleMessage(message: TydomHttpMessage): void {
     const { uri, method, body } = message;

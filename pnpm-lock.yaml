@@ -24,8 +24,8 @@ importers:
         specifier: ^0.5.21
         version: 0.5.21
       tydom-client:
-        specifier: ^0.15.0
-        version: 0.15.0
+        specifier: ^0.15.1
+        version: 0.15.1
     devDependencies:
       '@mgcrea/eslint-config-node':
         specifier: ^0.14.1
@@ -2564,8 +2564,8 @@ packages:
   tweetnacl@1.0.3:
     resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
 
-  tydom-client@0.15.0:
-    resolution: {integrity: sha512-Ttzzm6GHFHYjtFVgCeS9m/1aIjeMQtl91wKBQ3eqjWF/0ZWrE5IG2t/xO6TeGNd8TKaFM2vTVrMUiFlCAMOmZw==}
+  tydom-client@0.15.1:
+    resolution: {integrity: sha512-CrxBaSsEYnuorK1qtCNoocSbdeugpM2dY1JUtNMbAxJhVF6DbVuqHD55sMsaIg93BvlA1fzdBPQGrTgwN4sAUA==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -5440,7 +5440,7 @@ snapshots:
 
   tweetnacl@1.0.3: {}
 
-  tydom-client@0.15.0:
+  tydom-client@0.15.1:
     dependencies:
       debug: 4.4.3
       http-parser-js: 0.5.10
