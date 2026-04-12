@@ -47,7 +47,7 @@ export const setupThermostat = (
 
   service
     .getCharacteristic(CurrentHeatingCoolingState)
-    .setProps({ validValues: [0, 1] } as Partial<CharacteristicProps>) // [OFF, HEAT, COOL]
+    .setProps({ validValues: [0, 1, 2] } as Partial<CharacteristicProps>) // [OFF, HEAT, COOL]
     .onGet(async () => {
       debugGet(CurrentHeatingCoolingState, service);
       const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
@@ -55,45 +55,59 @@ export const setupThermostat = (
       const setpoint = getTydomDataPropValue<number>(data, "setpoint");
       const temperature = getTydomDataPropValue<number>(data, "temperature");
       const nextValue =
-        authorization === "HEATING" && setpoint > temperature
-          ? CurrentHeatingCoolingState.HEAT
-          : CurrentHeatingCoolingState.OFF;
+        authorization === "COOLING"
+          ? CurrentHeatingCoolingState.COOL
+          : authorization === "HEATING" && setpoint > temperature
+            ? CurrentHeatingCoolingState.HEAT
+            : CurrentHeatingCoolingState.OFF;
       debugGetResult(CurrentHeatingCoolingState, service, nextValue);
       return nextValue;
     });
 
   service
     .getCharacteristic(TargetHeatingCoolingState)
-    .setProps({ validValues: [0, 1] } as Partial<CharacteristicProps>) // [OFF, HEAT, COOL, AUTO]
+    .setProps({ validValues: [0, 1, 2] } as Partial<CharacteristicProps>) // [OFF, HEAT, COOL]
     .onGet(async () => {
       debugGet(TargetHeatingCoolingState, service);
       const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
       const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, "hvacMode");
-      const authorization = getTydomDataPropValue<"STOP" | "HEATING">(data, "authorization");
+      const authorization = getTydomDataPropValue<TydomDeviceThermostatAuthorization>(data, "authorization");
       const nextValue =
-        authorization === "HEATING" && ["NORMAL"].includes(hvacMode)
-          ? TargetHeatingCoolingState.HEAT
-          : TargetHeatingCoolingState.OFF;
+        authorization === "COOLING" && ["NORMAL"].includes(hvacMode)
+          ? TargetHeatingCoolingState.COOL
+          : authorization === "HEATING" && ["NORMAL"].includes(hvacMode)
+            ? TargetHeatingCoolingState.HEAT
+            : TargetHeatingCoolingState.OFF;
       debugGetResult(TargetHeatingCoolingState, service, nextValue);
       return nextValue;
     })
     .onSet(async (value) => {
       debugSet(TargetHeatingCoolingState, service, value);
-      const shouldHeat = [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(
-        value as number,
-      );
-      const tydomValue = shouldHeat ? "NORMAL" : "STOP";
+      const isActive = [
+        TargetHeatingCoolingState.HEAT,
+        TargetHeatingCoolingState.COOL,
+        TargetHeatingCoolingState.AUTO,
+      ].includes(value as number);
+      const tydomHvacMode = isActive ? "NORMAL" : "STOP";
+      const tydomAuthorization =
+        value === TargetHeatingCoolingState.COOL
+          ? "COOLING"
+          : isActive
+            ? "HEATING"
+            : "STOP";
       await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
-        {
-          name: "hvacMode",
-          value: tydomValue,
-        },
+        { name: "hvacMode", value: tydomHvacMode },
+        { name: "authorization", value: tydomAuthorization },
       ]);
-      debugSetResult(TargetHeatingCoolingState, service, value, tydomValue);
-      // @NOTE directly update currentHeadingCoolingState
-      service
-        .getCharacteristic(CurrentHeatingCoolingState)
-        .updateValue(shouldHeat ? CurrentHeatingCoolingState.HEAT : CurrentHeatingCoolingState.OFF);
+      debugSetResult(TargetHeatingCoolingState, service, value, tydomHvacMode);
+      // Directly update currentHeatingCoolingState
+      const currentState =
+        value === TargetHeatingCoolingState.COOL
+          ? CurrentHeatingCoolingState.COOL
+          : isActive
+            ? CurrentHeatingCoolingState.HEAT
+            : CurrentHeatingCoolingState.OFF;
+      service.getCharacteristic(CurrentHeatingCoolingState).updateValue(currentState);
     });
 
   service.getCharacteristic(CurrentTemperature).onGet(async () => {
@@ -243,14 +257,23 @@ export const updateThermostat = (
       case "authorization": {
         const service = getAccessoryService(accessory, Service.Thermostat);
         const authorization = value as TydomDeviceThermostatAuthorization;
+        if (authorization === "COOLING") {
+          debugSetUpdate(CurrentHeatingCoolingState, service, CurrentHeatingCoolingState.COOL);
+          service.updateCharacteristic(CurrentHeatingCoolingState, CurrentHeatingCoolingState.COOL);
+          debugSetUpdate(TargetHeatingCoolingState, service, TargetHeatingCoolingState.COOL);
+          service.updateCharacteristic(TargetHeatingCoolingState, TargetHeatingCoolingState.COOL);
+          return;
+        }
         if (authorization === "HEATING") {
-          // @TODO Trigger a get as we miss info
+          debugSetUpdate(CurrentHeatingCoolingState, service, CurrentHeatingCoolingState.HEAT);
+          service.updateCharacteristic(CurrentHeatingCoolingState, CurrentHeatingCoolingState.HEAT);
+          debugSetUpdate(TargetHeatingCoolingState, service, TargetHeatingCoolingState.HEAT);
+          service.updateCharacteristic(TargetHeatingCoolingState, TargetHeatingCoolingState.HEAT);
           return;
         }
         if (authorization === "STOP") {
           debugSetUpdate(CurrentHeatingCoolingState, service, CurrentHeatingCoolingState.OFF);
           service.updateCharacteristic(CurrentHeatingCoolingState, CurrentHeatingCoolingState.OFF);
-          // External update probably comes from the Tydom app, let's agree on the target state
           debugSetUpdate(TargetHeatingCoolingState, service, TargetHeatingCoolingState.OFF);
           service.updateCharacteristic(TargetHeatingCoolingState, TargetHeatingCoolingState.OFF);
           return;
@@ -324,3 +347,4 @@ export const updateThermostat = (
 // OFF -> authorization === STOP
 // ANTI_FROST -> hvacMode === ANTI_FROST
 // CHAUFFAGE -> authorization === HEATING
+// CLIMATISATION -> authorization === COOLING
