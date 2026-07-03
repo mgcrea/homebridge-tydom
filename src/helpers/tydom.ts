@@ -159,6 +159,10 @@ const ENDPOINTS_SIGNATURES_CATEGORIES: Record<string, Categories | [Categories, 
   "gate:83b0912c6fe14622219522922ea0347dcbf86bf9cfd3346a2eca8eac70ca8260": Categories.GARAGE_DOOR_OPENER, // @mgcrea (TYXIA 4620)
   "hvac:16804a9994bce28275150db329a9c0b931ef7f20608c1a3d2ff248f58569f0d3": Categories.SENSOR, // @D-Roch+@tanabay27 (Sonde TYBOX 2020 Wt)
   "hvac:17f933bec8ed29f9b2a2cd5280fb5b64806cf8a1c064c83950e350f491d7cb9f": Categories.THERMOSTAT, // @Armen85 (RF6600FP) @FIXME
+  "hvac:59ad213a1987de9db02f02421df7b267bacecd43c03f384b3a3a4a7c76516918": [
+    Categories.THERMOSTAT,
+    { thermicLevelOnly: true },
+  ], // thermicLevel-only HVAC
   "hvac:1bab47d1dd7e898b5dc2e9867b14dfb8bc9272c4cb0b5d1221da962d43a6ffb4": Categories.THERMOSTAT, // @mgcrea (RF4890)
   "light:449e2a60377094cde10224cee91d378fb0ae373ae6ceea0ac2cbc1ed011bffa7": Categories.LIGHTBULB, // @mgcrea (TYXIA 5610, TYXIA 6610)
   "light:fce45085835f4f2790ea3b17d208b5ace34935444d2535e75ba3f0a2ce86de5f": Categories.LIGHTBULB, // @mgcrea (TYXIA 5650)
