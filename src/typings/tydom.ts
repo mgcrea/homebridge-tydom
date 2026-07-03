@@ -91,7 +91,8 @@ export type TydomDeviceThermostatThermicLevel =
   | "MEDIO"
   | "COMFORT"
   | "STOP"
-  | "ANTI_FROST";
+  | "ANTI_FROST"
+  | "AUTO";
 
 export type TydomDeviceThermostatData = [
   TydomDataElement<"authorization", TydomDeviceThermostatAuthorization>,

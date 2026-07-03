@@ -1,4 +1,4 @@
-import type { PlatformAccessory } from "homebridge";
+import type { Service as HomebridgeService, PlatformAccessory } from "homebridge";
 import { get } from "lodash";
 import { Characteristic, CharacteristicProps, Service } from "src/config/hap";
 import locale from "src/config/locale";
@@ -17,6 +17,8 @@ import type {
   TydomDeviceThermostatData,
   TydomDeviceThermostatHvacMode,
   TydomDeviceThermostatThermicLevel,
+  TydomEndpointData,
+  TydomMetaElement,
 } from "src/typings/tydom";
 import { chalkString } from "src/utils/color";
 import {
@@ -28,6 +30,247 @@ import {
   debugSetResult,
   debugSetUpdate,
 } from "src/utils/debug";
+
+type ThermicLevelSettings = {
+  thermicLevelOnly?: boolean;
+};
+
+const THERMIC_LEVELS_WHITELIST = ["ANTI_FROST", "ECO", "COMFORT"];
+const THERMIC_LEVEL_SWITCH_SUBTYPE_PREFIX = "thermicLevel_";
+const ABSENCE_MODE_SWITCH_SUBTYPE = "hvacMode_absence";
+
+const THERMIC_LEVEL_ONLY_CURRENT_TEMPERATURE = 20;
+const THERMIC_LEVEL_TARGET_TEMPERATURES: Record<TydomDeviceThermostatThermicLevel, number> = {
+  STOP: 7,
+  ANTI_FROST: 7,
+  ECO: 17,
+  MODERATO: 18,
+  MEDIO: 19,
+  COMFORT: 20,
+  AUTO: 20,
+};
+
+const getTydomDataPropValueOrNull = <
+  V extends string | number | boolean,
+  T extends TydomEndpointData = TydomEndpointData,
+>(
+  data: T,
+  name: string,
+): V | null => {
+  const item = data.find((prop) => prop.name === name);
+  return item ? (item.value as V) : null;
+};
+
+const hasThermostatTemperatureSupport = (metadata: TydomMetaElement[]): boolean =>
+  ["setpoint", "temperature", "hvacMode"].every((name) => metadata.some((prop) => prop.name === name));
+
+const shouldUseThermicLevelOnlyMode = (
+  metadata: TydomMetaElement[],
+  settings: ThermicLevelSettings,
+): boolean =>
+  Boolean(settings.thermicLevelOnly) ||
+  (metadata.some((prop) => prop.name === "thermicLevel") && !hasThermostatTemperatureSupport(metadata));
+
+const removeThermicLevelSwitchServices = (accessory: PlatformAccessory<TydomAccessoryContext>): void => {
+  accessory.services
+    .filter(
+      (service) =>
+        service.UUID === Service.Switch.UUID &&
+        (service.subtype?.startsWith(THERMIC_LEVEL_SWITCH_SUBTYPE_PREFIX) ||
+          service.subtype === ABSENCE_MODE_SWITCH_SUBTYPE),
+    )
+    .forEach((service) => {
+      accessory.removeService(service);
+    });
+};
+
+const getThermicLevelTargetTemperature = (thermicLevel: TydomDeviceThermostatThermicLevel): number =>
+  THERMIC_LEVEL_TARGET_TEMPERATURES[thermicLevel] ?? THERMIC_LEVEL_TARGET_TEMPERATURES.COMFORT;
+
+const getCurrentHeatingCoolingStateFromThermicLevel = (
+  thermicLevel: TydomDeviceThermostatThermicLevel,
+  authorization: TydomDeviceThermostatAuthorization | null,
+): number => {
+  const { CurrentHeatingCoolingState } = Characteristic;
+  return authorization === "STOP" || thermicLevel === "STOP"
+    ? CurrentHeatingCoolingState.OFF
+    : thermicLevel === "ANTI_FROST"
+      ? CurrentHeatingCoolingState.COOL
+      : CurrentHeatingCoolingState.HEAT;
+};
+
+const getTargetHeatingCoolingStateFromThermicLevel = (
+  thermicLevel: TydomDeviceThermostatThermicLevel,
+  authorization: TydomDeviceThermostatAuthorization | null,
+): number => {
+  const { TargetHeatingCoolingState } = Characteristic;
+  if (authorization === "STOP" || thermicLevel === "STOP") {
+    return TargetHeatingCoolingState.OFF;
+  }
+  if (thermicLevel === "COMFORT") {
+    return TargetHeatingCoolingState.HEAT;
+  }
+  if (thermicLevel === "ECO") {
+    return TargetHeatingCoolingState.HEAT;
+  }
+  if (thermicLevel === "AUTO") {
+    return TargetHeatingCoolingState.AUTO;
+  }
+  if (thermicLevel === "ANTI_FROST") {
+    return TargetHeatingCoolingState.COOL;
+  }
+  return TargetHeatingCoolingState.AUTO;
+};
+
+const getThermicLevelFromTargetHeatingCoolingState = (value: number): TydomDeviceThermostatThermicLevel => {
+  const { TargetHeatingCoolingState } = Characteristic;
+  switch (value) {
+    case TargetHeatingCoolingState.OFF:
+      return "STOP";
+    case TargetHeatingCoolingState.COOL:
+      return "ANTI_FROST";
+    case TargetHeatingCoolingState.AUTO:
+      return "AUTO";
+    case TargetHeatingCoolingState.HEAT:
+    default:
+      return "COMFORT";
+  }
+};
+
+const getThermicLevelFromTargetTemperature = (value: number): TydomDeviceThermostatThermicLevel => {
+  if (value <= 10) {
+    return "ANTI_FROST";
+  }
+  if (value <= 18) {
+    return "ECO";
+  }
+  return "COMFORT";
+};
+
+const getThermicLevelOnlyData = async (
+  client: TydomController["client"],
+  deviceId: number,
+  endpointId: number,
+): Promise<{
+  authorization: TydomDeviceThermostatAuthorization | null;
+  thermicLevel: TydomDeviceThermostatThermicLevel;
+}> => {
+  const data = await getTydomDeviceData<TydomEndpointData>(client, { deviceId, endpointId });
+  const thermicLevel =
+    getTydomDataPropValueOrNull<TydomDeviceThermostatThermicLevel>(data, "thermicLevel") ?? "COMFORT";
+  const authorization = getTydomDataPropValueOrNull<TydomDeviceThermostatAuthorization>(data, "authorization");
+  return { authorization, thermicLevel };
+};
+
+const setupThermicLevelOnlyThermostat = (
+  accessory: PlatformAccessory<TydomAccessoryContext>,
+  controller: TydomController,
+  service: HomebridgeService,
+): void => {
+  const { context } = accessory;
+  const { client } = controller;
+  const { TargetHeatingCoolingState, CurrentHeatingCoolingState, TargetTemperature, CurrentTemperature } =
+    Characteristic;
+  const { deviceId, endpointId } = context;
+
+  removeThermicLevelSwitchServices(accessory);
+
+  service
+    .getCharacteristic(CurrentHeatingCoolingState)
+    .setProps({
+      validValues: [
+        CurrentHeatingCoolingState.OFF,
+        CurrentHeatingCoolingState.HEAT,
+        CurrentHeatingCoolingState.COOL,
+      ],
+    })
+    .onGet(async () => {
+      debugGet(CurrentHeatingCoolingState, service);
+      const { authorization, thermicLevel } = await getThermicLevelOnlyData(client, deviceId, endpointId);
+      const nextValue = getCurrentHeatingCoolingStateFromThermicLevel(thermicLevel, authorization);
+      debugGetResult(CurrentHeatingCoolingState, service, nextValue);
+      return nextValue;
+    });
+
+  service
+    .getCharacteristic(TargetHeatingCoolingState)
+    .setProps({
+      validValues: [
+        TargetHeatingCoolingState.OFF,
+        TargetHeatingCoolingState.HEAT,
+        TargetHeatingCoolingState.COOL,
+        TargetHeatingCoolingState.AUTO,
+      ],
+    })
+    .onGet(async () => {
+      debugGet(TargetHeatingCoolingState, service);
+      const { authorization, thermicLevel } = await getThermicLevelOnlyData(client, deviceId, endpointId);
+      const nextValue = getTargetHeatingCoolingStateFromThermicLevel(thermicLevel, authorization);
+      debugGetResult(TargetHeatingCoolingState, service, nextValue);
+      return nextValue;
+    })
+    .onSet(async (value) => {
+      debugSet(TargetHeatingCoolingState, service, value);
+      const thermicLevel = getThermicLevelFromTargetHeatingCoolingState(value as number);
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: "thermicLevel",
+          value: thermicLevel,
+        },
+      ]);
+      debugSetResult(TargetHeatingCoolingState, service, value, thermicLevel);
+      service.updateCharacteristic(
+        CurrentHeatingCoolingState,
+        getCurrentHeatingCoolingStateFromThermicLevel(
+          thermicLevel,
+          thermicLevel === "STOP" ? "STOP" : "HEATING",
+        ),
+      );
+      service.updateCharacteristic(TargetTemperature, getThermicLevelTargetTemperature(thermicLevel));
+      service.updateCharacteristic(CurrentTemperature, THERMIC_LEVEL_ONLY_CURRENT_TEMPERATURE);
+    });
+
+  service
+    .getCharacteristic(CurrentTemperature)
+    .setProps({ minValue: 0, maxValue: 40, minStep: 1 })
+    .onGet(async () => {
+      debugGet(CurrentTemperature, service);
+      debugGetResult(CurrentTemperature, service, THERMIC_LEVEL_ONLY_CURRENT_TEMPERATURE);
+      return THERMIC_LEVEL_ONLY_CURRENT_TEMPERATURE;
+    });
+
+  service
+    .getCharacteristic(TargetTemperature)
+    .setProps({ minValue: 7, maxValue: 20, minStep: 1 })
+    .onGet(async () => {
+      debugGet(TargetTemperature, service);
+      const { thermicLevel } = await getThermicLevelOnlyData(client, deviceId, endpointId);
+      const nextValue = getThermicLevelTargetTemperature(thermicLevel);
+      debugGetResult(TargetTemperature, service, nextValue);
+      return nextValue;
+    })
+    .onSet(async (value) => {
+      debugSet(TargetTemperature, service, value);
+      const thermicLevel = getThermicLevelFromTargetTemperature(value as number);
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/data`, [
+        {
+          name: "thermicLevel",
+          value: thermicLevel,
+        },
+      ]);
+      debugSetResult(TargetTemperature, service, value, thermicLevel);
+      const nextTargetHeatingCoolingState = getTargetHeatingCoolingStateFromThermicLevel(
+        thermicLevel,
+        "HEATING",
+      );
+      service.updateCharacteristic(TargetHeatingCoolingState, nextTargetHeatingCoolingState);
+      service.updateCharacteristic(
+        CurrentHeatingCoolingState,
+        getCurrentHeatingCoolingStateFromThermicLevel(thermicLevel, "HEATING"),
+      );
+      service.updateCharacteristic(CurrentTemperature, THERMIC_LEVEL_ONLY_CURRENT_TEMPERATURE);
+    });
+};
 
 export const setupThermostat = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -42,8 +285,27 @@ export const setupThermostat = (
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
 
+  const thermicLevelData = metadata.find(({ name }) => name === "thermicLevel");
+  const thermicLevelOnly = shouldUseThermicLevelOnlyMode(
+    metadata,
+    (context.settings ?? {}) as ThermicLevelSettings,
+  );
+
   // Add the actual accessory Service
   const service = addAccessoryService(accessory, Service.Thermostat, accessory.displayName, true);
+
+  if (thermicLevelOnly) {
+    if (!thermicLevelData) {
+      controller.log.error(
+        `Failed to properly create the thermic-level thermostat accessory for device ${deviceId}, did not found object in array that matches {"name": "thermicLevel"} in ${JSON.stringify(
+          metadata,
+        )}`,
+      );
+      return;
+    }
+    setupThermicLevelOnlyThermostat(accessory, controller, service);
+    return;
+  }
 
   service
     .getCharacteristic(CurrentHeatingCoolingState)
@@ -124,7 +386,6 @@ export const setupThermostat = (
       debugSetResult(TargetTemperature, service, value);
     });
 
-  const thermicLevelData = metadata.find(({ name }) => name === "thermicLevel");
   if (!thermicLevelData) {
     controller.log.error(
       `Failed to properly create the thermostat accesory for device ${deviceId}, did not found object in array that matches {"name": "thermicLevel"} in ${JSON.stringify(
@@ -176,7 +437,6 @@ export const setupThermostat = (
   // Multiple thermic levels
   // "enum_values": ["ECO", "MODERATO", "MEDIO", "COMFORT", "STOP", "ANTI_FROST"]
   if (thermicLevelValues.length > 1) {
-    const THERMIC_LEVELS_WHITELIST = ["ANTI_FROST", "ECO", "COMFORT"];
     const thermicLevelServices = thermicLevelValues
       .filter((value) => THERMIC_LEVELS_WHITELIST.includes(value))
       .map((thermicLevelValue) => {
@@ -236,6 +496,10 @@ export const updateThermostat = (
 ): void => {
   const { TargetHeatingCoolingState, CurrentHeatingCoolingState, TargetTemperature, CurrentTemperature, On } =
     Characteristic;
+  const thermicLevelOnly = shouldUseThermicLevelOnlyMode(
+    accessory.context.metadata,
+    (accessory.context.settings ?? {}) as ThermicLevelSettings,
+  );
 
   updates.forEach((update) => {
     const { name, value } = update;
@@ -280,6 +544,31 @@ export const updateThermostat = (
         const thermicLevel = value as TydomDeviceThermostatThermicLevel;
         if (thermicLevel === null) {
           debug(`Encountered a ${chalkString("thermicLevel")} update with a null value!`);
+          return;
+        }
+        if (thermicLevelOnly) {
+          const service = getAccessoryService(accessory, Service.Thermostat);
+          const authorization = updates.find((update) => update.name === "authorization")?.value as
+            | TydomDeviceThermostatAuthorization
+            | undefined;
+          const nextAuthorization = authorization ?? (thermicLevel === "STOP" ? "STOP" : "HEATING");
+          const nextCurrentHeatingCoolingState = getCurrentHeatingCoolingStateFromThermicLevel(
+            thermicLevel,
+            nextAuthorization,
+          );
+          const nextTargetHeatingCoolingState = getTargetHeatingCoolingStateFromThermicLevel(
+            thermicLevel,
+            nextAuthorization,
+          );
+          const nextTargetTemperature = getThermicLevelTargetTemperature(thermicLevel);
+          debugSetUpdate(CurrentHeatingCoolingState, service, nextCurrentHeatingCoolingState);
+          service.updateCharacteristic(CurrentHeatingCoolingState, nextCurrentHeatingCoolingState);
+          debugSetUpdate(TargetHeatingCoolingState, service, nextTargetHeatingCoolingState);
+          service.updateCharacteristic(TargetHeatingCoolingState, nextTargetHeatingCoolingState);
+          debugSetUpdate(CurrentTemperature, service, THERMIC_LEVEL_ONLY_CURRENT_TEMPERATURE);
+          service.updateCharacteristic(CurrentTemperature, THERMIC_LEVEL_ONLY_CURRENT_TEMPERATURE);
+          debugSetUpdate(TargetTemperature, service, nextTargetTemperature);
+          service.updateCharacteristic(TargetTemperature, nextTargetTemperature);
           return;
         }
         const service = accessory.getServiceById(Service.Switch, `thermicLevel_${thermicLevel.toLowerCase()}`);
