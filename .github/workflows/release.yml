@@ -59,5 +59,18 @@ jobs:
       - run: pnpm run build
 
       # --provenance links the published tarball to this workflow run.
+      #
+      # The dist-tag is derived from the version rather than left to default:
+      # `npm publish` tags whatever it is given as `latest`, so a prerelease
+      # would have been handed to every installed user on their next upgrade.
+      # A prerelease publishes under its own identifier — 0.30.0-beta.0 goes
+      # out as `beta`, and only someone who asks for it gets it.
       - name: Publish to npm
-        run: npm publish --provenance
+        run: |
+          pkg="$(node -p "require('./package.json').version")"
+          case "$pkg" in
+            *-*) dist_tag="$(printf '%s' "${pkg#*-}" | cut -d. -f1)" ;;
+            *)   dist_tag=latest ;;
+          esac
+          echo "Publishing $pkg under dist-tag $dist_tag"
+          npm publish --provenance --tag "$dist_tag"
