@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [0.30.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.29.0...master)
 
-> Currently in prerelease as `0.30.0-beta.1`, published under the `beta` dist-tag. Install it with `npm install homebridge-tydom@beta`; nobody is upgraded to it automatically.
+> Currently in prerelease as `0.30.0-beta.2`, published under the `beta` dist-tag. Install it with `npm install homebridge-tydom@beta`; nobody is upgraded to it automatically.
 >
-> `beta.1` fixes the dimmer writing the same `level` twice per gesture, reverts a leading write added to the shutter that the released version never had, makes debug-log lines name the device they are about, and stops a thermostat with no setpoint handing HomeKit a null target temperature.
+> `beta.2` settles the alarm zone switches from the panel mode and labels sub-services in the Home app. `beta.1` fixed the dimmer writing the same `level` twice per gesture, reverted a leading write added to the shutter that the released version never had, made debug-log lines name the device they are about, and stopped a thermostat with no setpoint handing HomeKit a null target temperature.
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. See [Migrating to v0.30](https://github.com/mgcrea/homebridge-tydom#migrating-to-v030).
 
@@ -46,7 +46,7 @@ No accessory is re-registered by this release: rooms, names and automations are 
 
 ### Internals
 
-- The plugin is layered: `src/api/` and `src/util/` do not import `homebridge` at all, which is what makes them testable. 164 tests, no HAP mocking and no sockets.
+- The plugin is layered: `src/api/` and `src/util/` do not import `homebridge` at all, which is what makes them testable. 190 tests, no HAP mocking and no sockets.
 - All fourteen device types are classes over a common base, replacing pairs of `setup`/`update` functions dispatched through two parallel switch statements.
 - Accessories no longer emit back into the controller, so per-accessory teardown is possible.
 - Toolchain moved to oxlint, oxfmt, tsdown and vitest, with `@tsconfig/strictest` fully enabled.
