@@ -2,11 +2,12 @@ import type { AccessoryRegistry } from "./base.js";
 import { setupGarageDoorOpener, updateGarageDoorOpener } from "./garageDoorOpener.js";
 import { createContactSensorAccessory } from "./contact-sensor-accessory.js";
 import { fromFunctionPair } from "./legacy-adapter.js";
+import { createLightbulbAccessory } from "./lightbulb-accessory.js";
 import { createOutletAccessory } from "./outlet-accessory.js";
 import { createSmokeDetectorAccessory } from "./smoke-detector-accessory.js";
 import { createTemperatureSensorAccessory } from "./temperature-sensor-accessory.js";
 import { createTriggerSwitchAccessory } from "./trigger-switch-accessory.js";
-import { setupLightbulb, updateLightbulb } from "./lightbulb.js";
+import { createWindowCoveringAccessory } from "./window-covering-accessory.js";
 import {
   createFanAccessory,
   createSwitchableLightbulbAccessory,
@@ -18,7 +19,6 @@ import {
   updateSecuritySystemSensors,
 } from "./securitySystemSensors.js";
 import { setupThermostat, updateThermostat } from "./thermostat.js";
-import { setupWindowCovering, updateWindowCovering } from "./windowCovering.js";
 
 /**
  * The one place a device type is mapped to an implementation.
@@ -39,7 +39,7 @@ export const ACCESSORY_REGISTRY: AccessoryRegistry = {
   "contact-sensor": createContactSensorAccessory,
   fan: createFanAccessory,
   "garage-door": fromFunctionPair(setupGarageDoorOpener, updateGarageDoorOpener),
-  lightbulb: fromFunctionPair(setupLightbulb, updateLightbulb),
+  lightbulb: createLightbulbAccessory,
   "lightbulb-switchable": createSwitchableLightbulbAccessory,
   outlet: createOutletAccessory,
   "smoke-detector": createSmokeDetectorAccessory,
@@ -47,5 +47,5 @@ export const ACCESSORY_REGISTRY: AccessoryRegistry = {
   "temperature-sensor": createTemperatureSensorAccessory,
   thermostat: fromFunctionPair(setupThermostat, updateThermostat),
   "trigger-switch": createTriggerSwitchAccessory,
-  "window-covering": fromFunctionPair(setupWindowCovering, updateWindowCovering),
+  "window-covering": createWindowCoveringAccessory,
 };
