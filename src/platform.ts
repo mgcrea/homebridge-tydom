@@ -8,7 +8,7 @@ import type {
 import type { Service, Characteristic } from "homebridge";
 import type { Categories } from "homebridge";
 import type { PluginLogger } from "./api/client.js";
-import { CATEGORY } from "./api/device-type.js";
+import { CATEGORY, deviceTypeForCategory, type DeviceType } from "./api/device-type.js";
 import { ConfigError, parseConfig, type TydomConfig } from "./config.js";
 import { PLATFORM_NAME, PLUGIN_NAME } from "./config/env.js";
 import { setLocale } from "./config/locale.js";
@@ -20,7 +20,8 @@ import type {
 } from "./controller.js";
 import TydomController from "./controller.js";
 import { triggerWebhook } from "./helpers/webhook.js";
-import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "./helpers/accessory.js";
+import type { TydomAccessory } from "./accessories/base.js";
+import { ACCESSORY_REGISTRY } from "./accessories/registry.js";
 import { setShimLogger } from "./helpers/tydom.js";
 import type { TydomAccessoryContext } from "./typings/tydom.js";
 import { assert } from "./util/assert.js";
@@ -40,6 +41,8 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
 
   cleanupAccessoriesIds = new Set<string>();
   accessories = new Map<string, PlatformAccessory<TydomAccessoryContext>>();
+  /** Live handlers, keyed by the same UUID as `accessories`. */
+  handlers = new Map<string, TydomAccessory>();
   controller?: TydomController;
   api: Homebridge;
   config!: TydomPlatformConfig;
@@ -106,6 +109,10 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   stop(): void {
     this.shuttingDown = true;
     this.controller?.dispose();
+    for (const handler of this.handlers.values()) {
+      handler.dispose();
+    }
+    this.handlers.clear();
   }
 
   async didFinishLaunching(): Promise<void> {
@@ -179,26 +186,19 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   }
   handleControllerDataUpdate({ type, updates, context }: ControllerUpdatePayload): void {
     const id = this.api.hap.uuid.generate(context.accessoryId);
-    const accessory = this.accessories.get(id);
-    if (!accessory || !this.controller) return;
-    const tydomAccessoryUpdate = getTydomAccessoryDataUpdate(accessory, context);
-    if (tydomAccessoryUpdate) {
-      try {
-        const result = tydomAccessoryUpdate(accessory, this.controller, updates, type);
-        if (result instanceof Promise) {
-          void result.catch((err: unknown) => {
-            this.log.error(
-              `Failed to update accessory ${context.accessoryId}: ${stringifyError(err as Error)}`,
-            );
-          });
-        }
-      } catch (err) {
-        this.log.error(
-          `Failed to update accessory ${context.accessoryId}: ${stringifyError(err as Error)}`,
-        );
-      }
+    const handler = this.handlers.get(id);
+    if (!handler) {
+      return;
+    }
+    try {
+      handler.update(updates, type);
+    } catch (err) {
+      this.log.error(
+        `Failed to update accessory ${context.accessoryId}: ${stringifyError(err as Error)}`,
+      );
     }
   }
+
   handleControllerNotification({ level, message }: ControllerNotificationPayload): void {
     const { webhooks = [] } = this.config;
     webhooks.forEach((webhook) => {
@@ -210,6 +210,20 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       });
     });
   }
+  /**
+   * The registry key for an accessory.
+   *
+   * Discovery supplies it directly. A cached accessory registered by an earlier
+   * release has only a category, so it is derived — including the settings-driven
+   * narrowings the old switch statements applied.
+   */
+  resolveDeviceType(context: TydomAccessoryContext, category: number): DeviceType | undefined {
+    return (
+      context.deviceType ??
+      deviceTypeForCategory(category, context.settings as never, context.metadata)
+    );
+  }
+
   async createAccessory(
     name: string,
     id: string,
@@ -240,9 +254,26 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       )} (id=${styleKeyword(id)})"`,
     );
     Object.assign(accessory.context, context);
-    const tydomAccessorySetup = getTydomAccessorySetup(accessory, context);
     assert(this.controller);
-    await tydomAccessorySetup(accessory, this.controller);
+
+    const deviceType = this.resolveDeviceType(context, accessory.category);
+    if (!deviceType) {
+      this.log.warn(
+        `Skipping accessory named=${styleString(accessoryName)}: no handler for category=${styleNumber(
+          accessory.category,
+        )}`,
+      );
+      return;
+    }
+
+    // Re-registering replaces the handler, so the previous one has to let go of
+    // its timers first.
+    this.handlers.get(id)?.dispose();
+    this.handlers.set(
+      id,
+      ACCESSORY_REGISTRY[deviceType]({ platform: this, accessory, controller: this.controller }),
+    );
+
     this.api.updatePlatformAccessories([accessory]);
   }
   // Called by homebridge with existing cached accessories

@@ -190,6 +190,7 @@ export default class TydomController extends EventEmitter {
       const context: TydomAccessoryContext = {
         name: device.name,
         category: category as Categories,
+        deviceType: device.deviceType,
         metadata: device.metadata,
         settings: device.settings,
         group: device.group,

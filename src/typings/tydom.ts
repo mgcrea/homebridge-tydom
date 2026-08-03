@@ -1,4 +1,5 @@
 import type { Categories } from "homebridge";
+import type { DeviceType } from "../api/device-type.js";
 
 type UnknownObject = Record<string, unknown>;
 
@@ -8,6 +9,14 @@ export type TydomAccessoryContext<
 > = {
   accessoryId: string;
   category: Categories;
+  /**
+   * The registry dispatch key. Optional because a cached accessory registered
+   * by an earlier release will not have one; the platform falls back to
+   * deriving it from `category`.
+   */
+  deviceType?: DeviceType;
+  /** Set on a companion accessory, naming the primary it belongs to. */
+  companionOf?: string;
   deviceId: number;
   endpointId: number;
   group?: TydomConfigGroup;
