@@ -18,18 +18,23 @@ import {
 import { setupThermostat, updateThermostat } from "../accessories/thermostat.js";
 import { setupTriggerSwitch, updateTriggerSwitch } from "../accessories/triggerSwitch.js";
 import { setupWindowCovering, updateWindowCovering } from "../accessories/windowCovering.js";
-import {
-  AccessoryEventTypes,
-  Categories,
-  Characteristic,
-  Service as ServiceStatics,
-} from "../config/hap.js";
+import type { Categories } from "homebridge";
+import { CATEGORY } from "../api/device-type.js";
+import { Characteristic, Service as ServiceStatics } from "../config/hap.js";
 import type TydomController from "../controller.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
 import { assert } from "../util/assert.js";
 import { debug } from "../platform/trace.js";
 
-export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
+/**
+ * Synthetic companion category — 110, not a real HAP category. See
+ * CATEGORY.ALARM_SENSORS for why the number is frozen.
+ *
+ * The cast is needed because it is not a member of HAP's `Categories` enum, yet
+ * it is stored in fields typed as one. Phase 5 stops using categories as the
+ * dispatch key, which removes the need for it.
+ */
+export const SECURITY_SYSTEM_SENSORS = CATEGORY.ALARM_SENSORS as unknown as Categories;
 
 export type ServiceClass = WithUUID<typeof Service>;
 
@@ -117,26 +122,26 @@ export const getTydomAccessorySetup = <
     return setupSecuritySystemSensors;
   }
   switch (category) {
-    case Categories.LIGHTBULB:
+    case CATEGORY.LIGHTBULB:
       return setupLightbulb;
-    case Categories.OUTLET:
+    case CATEGORY.OUTLET:
       return setupOutlet;
-    case Categories.THERMOSTAT:
+    case CATEGORY.THERMOSTAT:
       return setupThermostat;
-    case Categories.FAN:
+    case CATEGORY.FAN:
       return setupFan;
-    case Categories.GARAGE_DOOR_OPENER:
+    case CATEGORY.GARAGE_DOOR_OPENER:
       return setupGarageDoorOpener;
-    case Categories.SWITCH:
+    case CATEGORY.SWITCH:
       return settings.trigger ? setupTriggerSwitch : setupSwitch;
-    case Categories.WINDOW_COVERING:
+    case CATEGORY.WINDOW_COVERING:
       return setupWindowCovering;
-    case Categories.SECURITY_SYSTEM:
+    case CATEGORY.SECURITY_SYSTEM:
       return setupSecuritySystem;
-    case Categories.SENSOR:
+    case CATEGORY.SENSOR:
       return settings.smokeDetector ? setupSmokeDetector : setupTemperatureSensor;
-    case Categories.WINDOW:
-    case Categories.DOOR:
+    case CATEGORY.WINDOW:
+    case CATEGORY.DOOR:
       return setupContactSensor;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
@@ -167,26 +172,26 @@ export const getTydomAccessoryDataUpdate = <
     return updateSecuritySystemSensors;
   }
   switch (category) {
-    case Categories.LIGHTBULB:
+    case CATEGORY.LIGHTBULB:
       return updateLightbulb;
-    case Categories.OUTLET:
+    case CATEGORY.OUTLET:
       return updateOutlet;
-    case Categories.THERMOSTAT:
+    case CATEGORY.THERMOSTAT:
       return updateThermostat;
-    case Categories.FAN:
+    case CATEGORY.FAN:
       return updateFan;
-    case Categories.GARAGE_DOOR_OPENER:
+    case CATEGORY.GARAGE_DOOR_OPENER:
       return updateGarageDoorOpener;
-    case Categories.SWITCH:
+    case CATEGORY.SWITCH:
       return settings.trigger ? updateTriggerSwitch : updateSwitch;
-    case Categories.WINDOW_COVERING:
+    case CATEGORY.WINDOW_COVERING:
       return updateWindowCovering;
-    case Categories.SECURITY_SYSTEM:
+    case CATEGORY.SECURITY_SYSTEM:
       return updateSecuritySystem;
-    case Categories.SENSOR:
+    case CATEGORY.SENSOR:
       return settings.smokeDetector ? updateSmokeDetector : updateTemperatureSensor;
-    case Categories.WINDOW:
-    case Categories.DOOR:
+    case CATEGORY.WINDOW:
+    case CATEGORY.DOOR:
       return updateContactSensor;
     default:
       throw new Error(`Unsupported accessory category=${category}`);
@@ -218,7 +223,7 @@ export const setupAccessoryIdentifyHandler = (
 ): void => {
   const { displayName: name, UUID: id } = accessory;
   // listen for the "identify" event for this Accessory
-  accessory.on(AccessoryEventTypes.IDENTIFY, (/* paired: boolean, callback: VoidCallback */) => {
+  accessory.on("identify", (/* paired: boolean, callback: VoidCallback */) => {
     // debug({id, type: 'AccessoryEventTypes.IDENTIFY', paired});
     debug(`New identify request for device named="${name}" with id="${id}"`);
     // callback();

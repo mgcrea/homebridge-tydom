@@ -1,4 +1,4 @@
-import type { Categories } from "../config/hap.js";
+import type { Categories } from "homebridge";
 
 type UnknownObject = Record<string, unknown>;
 

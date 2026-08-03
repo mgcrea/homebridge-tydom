@@ -5,73 +5,88 @@ import type {
   PlatformAccessory,
   PlatformConfig,
 } from "homebridge";
+import type { Service, Characteristic } from "homebridge";
+import type { Categories } from "homebridge";
+import type { PluginLogger } from "./api/client.js";
+import { CATEGORY } from "./api/device-type.js";
+import { ConfigError, parseConfig, type TydomConfig } from "./config.js";
 import { PLATFORM_NAME, PLUGIN_NAME } from "./config/env.js";
-import { Categories } from "./config/hap.js";
+import { setLocale } from "./config/locale.js";
+import { createPluginLogger } from "./platform/logger.js";
 import type {
   ControllerDevicePayload,
   ControllerNotificationPayload,
   ControllerUpdatePayload,
 } from "./controller.js";
 import TydomController from "./controller.js";
-import type { Webhook } from "./helpers/webhook.js";
 import { triggerWebhook } from "./helpers/webhook.js";
 import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "./helpers/accessory.js";
+import { setShimLogger } from "./helpers/tydom.js";
 import type { TydomAccessoryContext } from "./typings/tydom.js";
 import { assert } from "./util/assert.js";
 import { styleKeyword, styleNumber, styleString } from "./util/style.js";
 import { debug, enableDebug } from "./platform/trace.js";
 import { stringifyError } from "./util/error.js";
 
-export type TydomPlatformConfig = PlatformConfig & {
-  hostname: string;
-  username: string;
-  password: string;
-  settings: Record<string, { name?: string; category?: Categories }>;
-  debug?: boolean;
-  webhooks?: Webhook[];
-  includedDevices?: string[];
-  includedCategories?: string[];
-  excludedDevices?: string[];
-  excludedCategories?: string[];
-  refreshInterval?: number;
-};
+/**
+ * What the controller reads. Parsed once by `parseConfig`, so nothing
+ * downstream ever touches the raw `PlatformConfig` again.
+ */
+export type TydomPlatformConfig = TydomConfig;
 
 export default class TydomPlatform implements DynamicPlatformPlugin {
+  readonly Service: typeof Service;
+  readonly Characteristic: typeof Characteristic;
+
   cleanupAccessoriesIds = new Set<string>();
   accessories = new Map<string, PlatformAccessory<TydomAccessoryContext>>();
   controller?: TydomController;
   api: Homebridge;
-  config: TydomPlatformConfig;
+  config!: TydomPlatformConfig;
+  pluginLog?: PluginLogger;
   disabled = false;
+  shuttingDown = false;
   log: Logging;
 
   constructor(log: Logging, config: PlatformConfig, api: Homebridge) {
-    // Expose args
-    this.config = config as TydomPlatformConfig;
     this.log = log;
     this.api = api;
+    // Injected rather than reached for through the module-level globals in
+    // config/hap.ts. Both are the same process-singleton objects, which is what
+    // lets converted and unconverted accessories coexist during phase 6.
+    this.Service = api.hap.Service;
+    this.Characteristic = api.hap.Characteristic;
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!config) {
-      log.warn("Ignoring Tydom platform setup because it is not configured");
+    try {
+      this.config = parseConfig(config);
+    } catch (err) {
+      // A misconfigured platform must not take Homebridge down with it. Report
+      // it once, clearly, and stay dormant so the rest of the bridge keeps
+      // working. The assertions this replaces threw from inside the controller
+      // constructor, which surfaced as an unhandled AssertionError.
+      this.log.error(
+        err instanceof ConfigError ? err.message : `Invalid configuration: ${String(err)}`,
+      );
       this.disabled = true;
       return;
     }
 
-    if (config.debug) {
+    if (this.config.debug) {
       enableDebug();
     }
+    setLocale(this.config.locale);
+    this.pluginLog = createPluginLogger(log, this.config.debug);
+    setShimLogger(this.pluginLog);
 
     this.controller = new TydomController(log, this.config);
-    // Prevent configureAccessory getting called after node ready
-    this.api.on("didFinishLaunching", () =>
-      setTimeout(() => {
-        this.didFinishLaunching().catch((err: unknown) => {
-          this.log.error(`Failed to finish launching: ${stringifyError(err as Error)}`);
-        });
-      }, 16),
-    );
-    // this.controller.on('connect', () => {});
+    this.api.on("didFinishLaunching", () => {
+      this.didFinishLaunching().catch((err: unknown) => {
+        this.log.error(`Failed to finish launching: ${stringifyError(err as Error)}`);
+      });
+    });
+    this.api.on("shutdown", () => {
+      this.stop();
+    });
     this.controller.on("device", (context: ControllerDevicePayload) => {
       this.handleControllerDevice(context).catch((err: unknown) => {
         this.log.error(
@@ -82,6 +97,17 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.controller.on("update", this.handleControllerDataUpdate.bind(this));
     this.controller.on("notification", this.handleControllerNotification.bind(this));
   }
+
+  /**
+   * Release everything that would otherwise keep the process alive or keep
+   * talking to a gateway Homebridge is done with. Previously absent entirely:
+   * the refresh interval was only ever cleared on an explicit disconnect.
+   */
+  stop(): void {
+    this.shuttingDown = true;
+    this.controller?.dispose();
+  }
+
   async didFinishLaunching(): Promise<void> {
     assert(this.controller);
     this.cleanupAccessoriesIds = new Set(this.accessories.keys());
@@ -89,6 +115,9 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     const maxRetries = 10;
     const maxDelay = 5 * 60 * 1000; // 5 minutes
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      if (this.shuttingDown) {
+        return;
+      }
       try {
         await this.controller.connect();
         break;
@@ -103,7 +132,10 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
         this.log.warn(
           `Connection attempt ${attempt + 1} failed, retrying in ${Math.round(delay / 1000)}s...`,
         );
-        await new Promise<void>((resolve) => setTimeout(resolve, delay));
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, delay);
+          timer.unref?.();
+        });
       }
     }
 
@@ -186,7 +218,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   ): Promise<PlatformAccessory<TydomAccessoryContext>> {
     const { platformAccessory: PlatformAccessory } = this.api;
     const { group } = context;
-    const accessoryName = category === Categories.WINDOW && group ? group.name || name : name;
+    const accessoryName = category === CATEGORY.WINDOW && group ? group.name || name : name;
     this.log.info(
       `Creating accessory named=${styleString(accessoryName)}, deviceId="${styleNumber(
         context.deviceId,

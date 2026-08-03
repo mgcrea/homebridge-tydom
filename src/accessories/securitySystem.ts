@@ -1,6 +1,5 @@
 import type { PlatformAccessory } from "homebridge";
 import get from "lodash/get.js";
-import { HOMEBRIDGE_TYDOM_PIN } from "../config/env.js";
 import { Characteristic, Service } from "../config/hap.js";
 import locale from "../config/locale.js";
 import type { ControllerDevicePayload, ControllerUpdatePayload } from "../controller.js";
@@ -29,7 +28,6 @@ import type {
 import { assert } from "../util/assert.js";
 import { asNumber, sameArrays } from "../util/basic.js";
 import { styleJson, styleKeyword } from "../util/style.js";
-import { decode } from "../util/hash.js";
 import {
   debug,
   debugAddSubService,
@@ -183,7 +181,8 @@ export const setupSecuritySystem = async (
   }
 
   // Pin code check
-  const pin = HOMEBRIDGE_TYDOM_PIN ? decode(HOMEBRIDGE_TYDOM_PIN) : settingsPin;
+  // The env escape hatch is resolved by parseConfig; a per-device setting still wins.
+  const pin = settingsPin ?? controller.config.pin;
   if (!pin) {
     log.warn(
       `Missing pin for device securitySystem, add either {"settings": {"${deviceId}": {"pin": "123456"}}} or HOMEBRIDGE_TYDOM_PIN env var (base64 encoded)`,

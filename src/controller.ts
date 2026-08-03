@@ -10,7 +10,6 @@ import {
   parseDeviceDataUpdate,
 } from "./api/messages.js";
 import type { TydomUpdateType } from "./api/types.js";
-import { HOMEBRIDGE_TYDOM_PASSWORD } from "./config/env.js";
 import type { TydomAccessoryUpdateType } from "./helpers/accessory.js";
 import { asyncWait } from "./helpers/tydom.js";
 import type { TydomPlatformConfig } from "./platform.js";
@@ -21,10 +20,8 @@ import type {
   TydomGroupsResponse,
   TydomMetaResponse,
 } from "./typings/tydom.js";
-import { assert } from "./util/assert.js";
 import { styleJson, styleNumber, styleString } from "./util/style.js";
 import { debug } from "./platform/trace.js";
-import { decode } from "./util/hash.js";
 import { stringifyError } from "./util/error.js";
 import type TydomClient from "tydom-client";
 import {
@@ -47,25 +44,20 @@ export type ControllerNotificationPayload = {
   message: string;
 };
 
-const DEFAULT_REFRESH_INTERVAL_SEC = 4 * 60 * 60; // 4 hours
-
 export default class TydomController extends EventEmitter {
   public client: TydomClient;
   public config: TydomPlatformConfig;
   public log: Logging;
   private devices = new Map<string, Categories>();
-  private state = new Map<string, unknown>();
   private refreshInterval?: NodeJS.Timeout;
   private hasConnectedOnce = false;
   constructor(log: Logging, config: TydomPlatformConfig) {
     super();
     this.config = config;
     this.log = log;
-    const { hostname, username, password: configPassword } = config;
-    assert(hostname, 'Missing "hostname" config field for platform');
-    assert(username, 'Missing "username" config field for platform');
-    const password = HOMEBRIDGE_TYDOM_PASSWORD ? decode(HOMEBRIDGE_TYDOM_PASSWORD) : configPassword;
-    assert(password, 'Missing "password" config field for platform');
+    // hostname/username/password are validated and resolved by parseConfig,
+    // so there is nothing left to assert here.
+    const { hostname, username, password } = config;
     this.log.info(
       `Creating tydom client with username=${styleString(username)} and hostname=${styleString(hostname)}`,
     );
@@ -130,7 +122,7 @@ export default class TydomController extends EventEmitter {
     groups: TydomGroupsResponse;
     meta: TydomMetaResponse;
   }> {
-    const { hostname, refreshInterval = DEFAULT_REFRESH_INTERVAL_SEC } = this.config;
+    const { hostname, refreshIntervalMs } = this.config;
     debug(`Syncing state from hostname=${styleString(hostname)}...`);
     const config = await this.client.get<TydomConfigResponse>("/configs/file");
     const groups = await this.client.get<TydomGroupsResponse>("/groups/file");
@@ -141,15 +133,15 @@ export default class TydomController extends EventEmitter {
       debug(`Removing existing refresh interval`);
       clearInterval(this.refreshInterval);
     }
-    debug(`Configuring refresh interval of ${styleNumber(Math.round(refreshInterval))}s`);
+    debug(`Configuring refresh interval of ${styleNumber(Math.round(refreshIntervalMs / 1000))}s`);
     this.refreshInterval = setInterval(async () => {
       try {
         await this.refresh();
       } catch (err) {
         debug(`Failed interval refresh with err ${err}`);
       }
-    }, refreshInterval * 1000);
-    Object.assign(this.state, { config, groups, meta });
+    }, refreshIntervalMs);
+    this.refreshInterval.unref?.();
     return { config, groups, meta };
   }
   async scan(): Promise<void> {
@@ -216,7 +208,7 @@ export default class TydomController extends EventEmitter {
     await this.client.post("/refresh/all");
   }
   private async resync(): Promise<void> {
-    const { hostname, refreshInterval = DEFAULT_REFRESH_INTERVAL_SEC } = this.config;
+    const { hostname, refreshIntervalMs } = this.config;
     debug(`Re-syncing state after reconnection to hostname=${styleString(hostname)}...`);
     await asyncWait(250);
     await this.client.get("/ping");
@@ -225,15 +217,30 @@ export default class TydomController extends EventEmitter {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
-    debug(`Re-configuring refresh interval of ${styleNumber(Math.round(refreshInterval))}s`);
+    debug(
+      `Re-configuring refresh interval of ${styleNumber(Math.round(refreshIntervalMs / 1000))}s`,
+    );
     this.refreshInterval = setInterval(async () => {
       try {
         await this.refresh();
       } catch (err) {
         debug(`Failed interval refresh with err ${err}`);
       }
-    }, refreshInterval * 1000);
+    }, refreshIntervalMs);
   }
+  /** Stop the refresh timer and close the socket. Idempotent. */
+  dispose(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = undefined;
+    }
+    try {
+      this.client.close();
+    } catch (err) {
+      debug(`Ignoring error while closing the Tydom client: ${String(err)}`);
+    }
+  }
+
   handleMessage(message: TydomHttpMessage): void {
     const { uri, method, body } = message;
     const type = classifyMessage(uri, method);

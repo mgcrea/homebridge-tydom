@@ -15,11 +15,21 @@ import { assert } from "../util/assert.js";
  *
  * Deleted in phase 6, when the accessories take a `TydomDeviceClient` directly.
  */
-const shimLogger: PluginLogger = {
+let shimLogger: PluginLogger = {
   debug: (message) => debug(message),
   info: (message) => debug(message),
   warn: (message) => debug(message),
   error: (message) => debug(message),
+};
+
+/**
+ * Point the shim at the platform's logger.
+ *
+ * Without this the api layer's warnings and errors would only ever reach the
+ * `debug` sink, so a user not running with DEBUG set would never see them.
+ */
+export const setShimLogger = (logger: PluginLogger): void => {
+  shimLogger = logger;
 };
 
 const apiClients = new WeakMap<TydomClient, TydomApiClient>();
@@ -29,7 +39,13 @@ const apiFor = (client: TydomClient): TydomApiClient => {
   if (!api) {
     api = new TydomApiClient({
       transport: client as unknown as TydomTransport,
-      logger: shimLogger,
+      // Read through a closure so a logger installed later still applies.
+      logger: {
+        debug: (m) => shimLogger.debug(m),
+        info: (m) => shimLogger.info(m),
+        warn: (m) => shimLogger.warn(m),
+        error: (m) => shimLogger.error(m),
+      },
     });
     apiClients.set(client, api);
   }

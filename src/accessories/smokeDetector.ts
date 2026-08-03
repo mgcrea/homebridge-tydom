@@ -1,5 +1,4 @@
 import type { PlatformAccessory } from "homebridge";
-import { Formats } from "homebridge";
 import { Characteristic, Service } from "../config/hap.js";
 import type TydomController from "../controller.js";
 import {
@@ -30,7 +29,7 @@ export const setupSmokeDetector = (
   service
     .getCharacteristic(SmokeDetected)
     .setProps({
-      format: Formats.BOOL,
+      format: "bool",
     })
     .onGet(async () => {
       debugGet(SmokeDetected, service);
