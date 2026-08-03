@@ -1,7 +1,9 @@
 import type { AccessoryRegistry } from "./base.js";
-import { setupContactSensor, updateContactSensor } from "./contactSensor.js";
 import { setupGarageDoorOpener, updateGarageDoorOpener } from "./garageDoorOpener.js";
+import { createContactSensorAccessory } from "./contact-sensor-accessory.js";
 import { fromFunctionPair } from "./legacy-adapter.js";
+import { createSmokeDetectorAccessory } from "./smoke-detector-accessory.js";
+import { createTemperatureSensorAccessory } from "./temperature-sensor-accessory.js";
 import { setupLightbulb, updateLightbulb } from "./lightbulb.js";
 import {
   createFanAccessory,
@@ -14,8 +16,6 @@ import {
   setupSecuritySystemSensors,
   updateSecuritySystemSensors,
 } from "./securitySystemSensors.js";
-import { setupSmokeDetector, updateSmokeDetector } from "./smokeDetector.js";
-import { setupTemperatureSensor, updateTemperatureSensor } from "./temperatureSensor.js";
 import { setupThermostat, updateThermostat } from "./thermostat.js";
 import { setupTriggerSwitch, updateTriggerSwitch } from "./triggerSwitch.js";
 import { setupWindowCovering, updateWindowCovering } from "./windowCovering.js";
@@ -36,15 +36,15 @@ import { setupWindowCovering, updateWindowCovering } from "./windowCovering.js";
 export const ACCESSORY_REGISTRY: AccessoryRegistry = {
   alarm: fromFunctionPair(setupSecuritySystem, updateSecuritySystem),
   "alarm-sensors": fromFunctionPair(setupSecuritySystemSensors, updateSecuritySystemSensors),
-  "contact-sensor": fromFunctionPair(setupContactSensor, updateContactSensor),
+  "contact-sensor": createContactSensorAccessory,
   fan: createFanAccessory,
   "garage-door": fromFunctionPair(setupGarageDoorOpener, updateGarageDoorOpener),
   lightbulb: fromFunctionPair(setupLightbulb, updateLightbulb),
   "lightbulb-switchable": createSwitchableLightbulbAccessory,
   outlet: fromFunctionPair(setupOutlet, updateOutlet),
-  "smoke-detector": fromFunctionPair(setupSmokeDetector, updateSmokeDetector),
+  "smoke-detector": createSmokeDetectorAccessory,
   switch: createSwitchAccessory,
-  "temperature-sensor": fromFunctionPair(setupTemperatureSensor, updateTemperatureSensor),
+  "temperature-sensor": createTemperatureSensorAccessory,
   thermostat: fromFunctionPair(setupThermostat, updateThermostat),
   "trigger-switch": fromFunctionPair(setupTriggerSwitch, updateTriggerSwitch),
   "window-covering": fromFunctionPair(setupWindowCovering, updateWindowCovering),
