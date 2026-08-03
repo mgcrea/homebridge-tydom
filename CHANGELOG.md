@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 > Currently in prerelease as `0.30.0-beta.1`, published under the `beta` dist-tag. Install it with `npm install homebridge-tydom@beta`; nobody is upgraded to it automatically.
 >
-> `beta.1` fixes the dimmer writing the same `level` twice per gesture, reverts a leading write added to the shutter that the released version never had, and makes debug-log lines name the device they are about.
+> `beta.1` fixes the dimmer writing the same `level` twice per gesture, reverts a leading write added to the shutter that the released version never had, makes debug-log lines name the device they are about, and stops a thermostat with no setpoint handing HomeKit a null target temperature.
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. See [Migrating to v0.30](https://github.com/mgcrea/homebridge-tydom#migrating-to-v030).
 
@@ -29,6 +29,7 @@ No accessory is re-registered by this release: rooms, names and automations are 
 - **smoke detector:** the low-battery characteristic now reports HomeKit's `LOW`/`NORMAL` values rather than a raw boolean.
 - **garage door:** an ignored update no longer leaves the simulated travel timer running.
 - **thermostat:** switching heating level now turns the other levels off.
+- **thermostat:** a device driven by thermic levels rather than a temperature — a towel rail, typically — reports no setpoint at all. Reading its target temperature handed HomeKit a null, which HAP rejects and warns about on every query.
 - **echo suppression:** a write no longer clears the whole pending backlog on its first match, which lost suppression for interleaved writes.
 - **dimmer:** switching a light on at a brightness sends one write instead of two. HomeKit maps both `On` and `Brightness` onto the same `level`, so the gesture arrived as two writes of the same value a millisecond apart and the trailing one repeated the leading one verbatim. A tap still acts immediately.
 - **dimmer, shutter:** buffered writes can no longer land out of order on a device that is physically moving. The gateway applies writes in arrival order with no revision check, and `lodash.debounce` had no way to chain them.
