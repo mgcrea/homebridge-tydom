@@ -2,43 +2,169 @@
   "pluginAlias": "Tydom",
   "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "Homebridge plugin to manage Tydom devices by Delta Dore",
-  "footerDisplay": "For a detailed description, see the [wiki](https://github.com/mgcrea/homebridge-tydom/wiki/Configuration)",
+  "headerDisplay": "Exposes [Delta Dore](https://www.deltadore.fr/) hardware to HomeKit through a **Tydom** gateway. Lights, shutters, thermostats, garage doors, contact and smoke sensors and Tyxal alarms are discovered automatically — nothing has to be listed by hand.",
+  "footerDisplay": "Per-device options live under **Device settings**, keyed by the numeric device id shown in the Homebridge log at startup (`Found new tydom device ... with deviceId=1234567`). Full reference in the [wiki](https://github.com/mgcrea/homebridge-tydom/wiki/Configuration).",
   "schema": {
     "type": "object",
     "properties": {
       "hostname": {
-        "title": "Tydom hostname",
+        "title": "Hostname",
         "type": "string",
         "required": true,
-        "default": "mediation.tydom.com"
+        "default": "mediation.tydom.com",
+        "description": "Leave as `mediation.tydom.com` to reach the gateway through Delta Dore's relay. To talk to it directly on your LAN, use its IP address or `.local` name — faster and it keeps working when the relay is down, but the gateway serves a self-signed certificate, so Node must be started with `NODE_TLS_REJECT_UNAUTHORIZED=0`."
       },
       "username": {
-        "title": "Tydom username",
+        "title": "Username",
         "type": "string",
         "required": true,
-        "default": ""
+        "description": "Your gateway's MAC address, uppercase and without separators — e.g. `001A25123456`. It is printed underneath the Tydom box."
       },
       "password": {
-        "title": "Tydom password",
+        "title": "Password",
         "type": "string",
         "required": true,
-        "default": ""
+        "x-schema-form": { "type": "password" },
+        "description": "The password of your Tydom account. Can be supplied out of band instead, as a base64-encoded `HOMEBRIDGE_TYDOM_PASSWORD` environment variable, which takes precedence over this field."
       },
-      "debug": {
-        "title": "Enable debug",
-        "type": "boolean",
-        "required": false,
-        "default": true
+      "pin": {
+        "title": "Alarm PIN",
+        "type": "string",
+        "x-schema-form": { "type": "password" },
+        "description": "Required only to arm and disarm a Tyxal alarm from HomeKit. Without it the alarm still reports its state but cannot be controlled. Also accepted as a base64-encoded `HOMEBRIDGE_TYDOM_PIN` environment variable."
+      },
+      "locale": {
+        "title": "Language",
+        "type": "string",
+        "default": "fr",
+        "oneOf": [
+          { "title": "Français", "enum": ["fr"] },
+          { "title": "English", "enum": ["en"] }
+        ],
+        "description": "Language of the labels Delta Dore supplies for alarm zones, detectors and thermostat modes. Does not affect Homebridge's own log."
+      },
+      "refreshInterval": {
+        "title": "Refresh interval (seconds)",
+        "type": "integer",
+        "default": 14400,
+        "minimum": 60,
+        "description": "How often to ask the gateway to re-push the state of everything. The gateway pushes changes as they happen, so this is only a safety net against a missed message; the default is four hours. Values below 60 seconds are clamped."
+      },
+      "includedDevices": {
+        "title": "Only these devices",
+        "type": "array",
+        "items": { "title": "Device id", "type": "string" },
+        "description": "If non-empty, every device not listed here is ignored. Use the numeric `deviceId` from the startup log."
+      },
+      "excludedDevices": {
+        "title": "Except these devices",
+        "type": "array",
+        "items": { "title": "Device id", "type": "string" },
+        "description": "Devices to leave out. Applied after the include list."
+      },
+      "includedCategories": {
+        "title": "Only these categories",
+        "type": "array",
+        "items": { "title": "HAP category number", "type": "string" },
+        "description": "HAP category numbers, if you want whole classes of device rather than individual ones: 3 fan, 4 garage door, 5 light, 7 outlet, 8 switch, 9 thermostat, 10 sensor, 11 alarm, 12 door, 13 window, 14 shutter."
+      },
+      "excludedCategories": {
+        "title": "Except these categories",
+        "type": "array",
+        "items": { "title": "HAP category number", "type": "string" },
+        "description": "Categories to leave out. Applied after the include list."
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "title": "URL",
+              "type": "string",
+              "required": true,
+              "description": "The Discord webhook URL to post to."
+            },
+            "type": {
+              "title": "Type",
+              "type": "string",
+              "default": "discord",
+              "required": true,
+              "oneOf": [{ "title": "Discord", "enum": ["discord"] }]
+            }
+          }
+        },
+        "description": "Posts alarm events — triggered, pre-alarm, SOS — somewhere outside HomeKit. Useful because HomeKit will not notify on an alarm it did not arm."
       },
       "settings": {
-        "description": "Device settings",
+        "title": "Device settings",
         "type": "object",
         "patternProperties": {
-          "^[0-9]+$": {"type": "object"}
-        }
+          "^[0-9]+$": { "type": "object" }
+        },
+        "description": "Per-device overrides, keyed by numeric device id. Free-form, because the options a device accepts depend on what it is — edit this in the JSON config rather than here.\n\n```json\n\"settings\": {\n  \"1234567\": { \"name\": \"Kitchen blind\" },\n  \"1234568\": { \"trigger\": true },\n  \"1234569\": { \"delay\": 20 },\n  \"1657464\": {\n    \"pin\": \"1234\",\n    \"sensors\": true,\n    \"aliases\": { \"stay\": [1], \"night\": [1, 2] }\n  }\n}\n```\n\n`name` renames the accessory. `trigger` turns a switch into a stateless one that returns to off. `delay` is a garage door's travel time in seconds. `smokeDetector` publishes a temperature sensor as a smoke detector. On an alarm: `pin` overrides the platform PIN, `sensors` adds a companion accessory holding one contact sensor per opening detector, `aliases` says which armed-zone combinations HomeKit should show as Home and Night, and `legacy` selects the CTX60 protocol (detected automatically; only set it if detection is wrong)."
+      },
+      "debug": {
+        "title": "Verbose logging",
+        "type": "boolean",
+        "default": false,
+        "description": "Logs every gateway request and every characteristic read and write. Noisy, and the right first step for a bug report. Your password and PIN are never logged."
       }
     }
   },
-  "form": ["hostname", "username", "password", "settings"]
+  "layout": [
+    { "type": "fieldset", "title": "Connection", "items": ["hostname", "username", "password"] },
+    {
+      "type": "fieldset",
+      "title": "Alarm",
+      "expandable": true,
+      "items": ["pin"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Devices",
+      "expandable": true,
+      "items": [
+        {
+          "key": "includedDevices",
+          "type": "array",
+          "items": [{ "key": "includedDevices[]", "notitle": true }]
+        },
+        {
+          "key": "excludedDevices",
+          "type": "array",
+          "items": [{ "key": "excludedDevices[]", "notitle": true }]
+        },
+        {
+          "key": "includedCategories",
+          "type": "array",
+          "items": [{ "key": "includedCategories[]", "notitle": true }]
+        },
+        {
+          "key": "excludedCategories",
+          "type": "array",
+          "items": [{ "key": "excludedCategories[]", "notitle": true }]
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Notifications",
+      "expandable": true,
+      "items": [
+        {
+          "key": "webhooks",
+          "type": "array",
+          "items": [{ "key": "webhooks[]", "items": ["webhooks[].type", "webhooks[].url"] }]
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Advanced",
+      "expandable": true,
+      "items": ["locale", "refreshInterval", "debug", "settings"]
+    }
+  ]
 }
