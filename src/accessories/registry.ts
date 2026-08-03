@@ -2,22 +2,22 @@ import type { AccessoryRegistry } from "./base.js";
 import { setupGarageDoorOpener, updateGarageDoorOpener } from "./garageDoorOpener.js";
 import { createContactSensorAccessory } from "./contact-sensor-accessory.js";
 import { fromFunctionPair } from "./legacy-adapter.js";
+import { createOutletAccessory } from "./outlet-accessory.js";
 import { createSmokeDetectorAccessory } from "./smoke-detector-accessory.js";
 import { createTemperatureSensorAccessory } from "./temperature-sensor-accessory.js";
+import { createTriggerSwitchAccessory } from "./trigger-switch-accessory.js";
 import { setupLightbulb, updateLightbulb } from "./lightbulb.js";
 import {
   createFanAccessory,
   createSwitchableLightbulbAccessory,
   createSwitchAccessory,
 } from "./switchable-accessory.js";
-import { setupOutlet, updateOutlet } from "./outlet.js";
 import { setupSecuritySystem, updateSecuritySystem } from "./securitySystem.js";
 import {
   setupSecuritySystemSensors,
   updateSecuritySystemSensors,
 } from "./securitySystemSensors.js";
 import { setupThermostat, updateThermostat } from "./thermostat.js";
-import { setupTriggerSwitch, updateTriggerSwitch } from "./triggerSwitch.js";
 import { setupWindowCovering, updateWindowCovering } from "./windowCovering.js";
 
 /**
@@ -41,11 +41,11 @@ export const ACCESSORY_REGISTRY: AccessoryRegistry = {
   "garage-door": fromFunctionPair(setupGarageDoorOpener, updateGarageDoorOpener),
   lightbulb: fromFunctionPair(setupLightbulb, updateLightbulb),
   "lightbulb-switchable": createSwitchableLightbulbAccessory,
-  outlet: fromFunctionPair(setupOutlet, updateOutlet),
+  outlet: createOutletAccessory,
   "smoke-detector": createSmokeDetectorAccessory,
   switch: createSwitchAccessory,
   "temperature-sensor": createTemperatureSensorAccessory,
   thermostat: fromFunctionPair(setupThermostat, updateThermostat),
-  "trigger-switch": fromFunctionPair(setupTriggerSwitch, updateTriggerSwitch),
+  "trigger-switch": createTriggerSwitchAccessory,
   "window-covering": fromFunctionPair(setupWindowCovering, updateWindowCovering),
 };
