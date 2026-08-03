@@ -28,7 +28,9 @@ No accessory is re-registered by this release: rooms, names and automations are 
 - **garage door:** an ignored update no longer leaves the simulated travel timer running.
 - **thermostat:** switching heating level now turns the other levels off.
 - **echo suppression:** a write no longer clears the whole pending backlog on its first match, which lost suppression for interleaved writes.
-- **dimmer, shutter:** dragging a slider sends one write rather than two, and buffered writes can no longer land out of order on a device that is physically moving. A tap still acts immediately.
+- **dimmer:** switching a light on at a brightness sends one write instead of two. HomeKit maps both `On` and `Brightness` onto the same `level`, so the gesture arrived as two writes of the same value a millisecond apart and the trailing one repeated the leading one verbatim. A tap still acts immediately.
+- **dimmer, shutter:** buffered writes can no longer land out of order on a device that is physically moving. The gateway applies writes in arrival order with no revision check, and `lodash.debounce` had no way to chain them.
+- **debug log:** trace lines identify the device they are about. They logged a Service's `UUID`, which is its *type* — every light in the house reported `00000043-…`, so a log with seven lights in it could not be read.
 
 ### Features
 

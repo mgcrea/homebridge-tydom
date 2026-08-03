@@ -35,10 +35,12 @@ export class WindowCoveringAccessory extends BaseAccessory {
 
     this.#writer = new WriteCoalescer<number>({
       delayMs: WRITE_DELAY_MS,
-      // Leading, so a tap starts the shutter moving straight away. Dropping it
-      // would add a quarter second to every gesture on hardware the user is
-      // watching move.
-      leading: true,
+      // Trailing only, matching the released behaviour. A leading write would
+      // start the shutter travelling to wherever the finger first landed and
+      // then redirect it 250 ms later — a visible stutter on hardware that
+      // physically moves, which is the thing this class exists to avoid. The
+      // quarter second before a tap takes effect is the price, and the released
+      // version has always paid it.
       send: async (position) => {
         debugTydomPut("position", this.accessory, position);
         this.#echo.expect("position", position);

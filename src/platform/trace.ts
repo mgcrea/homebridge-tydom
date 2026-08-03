@@ -17,87 +17,86 @@ export const enableDebug = () => {
   createDebug.enable("homebridge-tydom");
 };
 
+/**
+ * How a trace line names the thing it is about.
+ *
+ * These helpers are handed a `Service` far more often than an accessory, and a
+ * Service's `UUID` is its *type* — every Lightbulb in the house reports
+ * `00000043-…`. Logging that as "id" made it impossible to tell seven lights
+ * apart in a support log, which is the one job these lines have. So the display
+ * name leads, and an id is printed only when it distinguishes anything: an
+ * accessory's real UUID, or a sub-service's subtype.
+ */
+const describe = (target: IdentifiableAccessoryObject): string => {
+  const name = styleString(target.displayName);
+  if ("subtype" in target) {
+    return target.subtype ? `${name} (${styleString(target.subtype)})` : name;
+  }
+  return `${name} (${styleString(target.UUID)})`;
+};
+
 export const debugGet = (
   characteristic: typeof Characteristic,
-  { displayName: name, UUID: id }: IdentifiableAccessoryObject,
+  target: IdentifiableAccessoryObject,
 ): void => {
-  debug(
-    `${styleGet("→GET")}:${blue(characteristic.name)} for accessory named=${styleString(name)} with id=${styleString(
-      id,
-    )} ...`,
-  );
+  debug(`${styleGet("→GET")}:${blue(characteristic.name)} for ${describe(target)} ...`);
 };
 
 export const debugGetResult = (
   characteristic: typeof Characteristic,
-  { displayName: name, UUID: id }: IdentifiableAccessoryObject,
+  target: IdentifiableAccessoryObject,
   value: unknown,
 ): void => {
   debug(
-    `${styleGet("←GET")}:${blue(characteristic.name)} value=${styleVal(value)} for accessory named=${styleString(
-      name,
-    )} with id=${styleString(id)} ...`,
+    `${styleGet("←GET")}:${blue(characteristic.name)} value=${styleVal(value)} for ${describe(target)}`,
   );
 };
 
 export const debugSetUpdate = (
   characteristic: typeof Characteristic,
-  { displayName: name, UUID: id }: IdentifiableAccessoryObject,
+  target: IdentifiableAccessoryObject,
   value: unknown,
 ): void => {
   debug(
-    `${styleUpd("←UPD")}:${blue(characteristic.name)} value=${styleVal(value)} for accessory named=${styleString(
-      name,
-    )} with id=${styleString(id)}`,
+    `${styleUpd("←UPD")}:${blue(characteristic.name)} value=${styleVal(value)} for ${describe(target)}`,
   );
 };
 
 export const debugSet = (
   characteristic: typeof Characteristic,
-  { displayName: name, UUID: id }: IdentifiableAccessoryObject,
+  target: IdentifiableAccessoryObject,
   value: unknown,
 ): void => {
   debug(
-    `${styleSet("→SET")}:${blue(characteristic.name)} value=${styleVal(value)} for accessory named=${styleString(
-      name,
-    )} with id=${styleString(id)} ...`,
+    `${styleSet("→SET")}:${blue(characteristic.name)} value=${styleVal(value)} for ${describe(target)} ...`,
   );
 };
 
 export const debugSetResult = (
   characteristic: typeof Characteristic,
-  { displayName: name, UUID: id }: IdentifiableAccessoryObject,
+  target: IdentifiableAccessoryObject,
   value: unknown,
   tydomValue?: unknown,
 ): void => {
   debug(
     `${styleSet("←SET")}:${blue(characteristic.name)} value=${styleVal(value)}${
       tydomValue !== undefined ? ` (tydomValue=${styleVal(tydomValue)})` : ""
-    } for accessory named=${styleString(name)} with id=${styleString(id)}`,
+    } for ${describe(target)}`,
   );
 };
 
 export const debugTydomPut = (
   property: string,
-  { displayName: name, UUID: id }: IdentifiableAccessoryObject,
+  target: IdentifiableAccessoryObject,
   value: unknown,
 ): void => {
-  debug(
-    `${styleSet("→PUT")}:${blue(property)} value=${styleVal(value)} for accessory named=${styleString(
-      name,
-    )} with id=${styleString(id)}`,
-  );
+  debug(`${styleSet("→PUT")}:${blue(property)} value=${styleVal(value)} for ${describe(target)}`);
 };
 
-export const debugAddSubService = (
-  service: Service,
-  { displayName: name, UUID: id }: IdentifiableAccessoryObject,
-): void => {
+export const debugAddSubService = (service: Service, target: IdentifiableAccessoryObject): void => {
   debug(
     `Adding new sub service ${styleKeyword(service.constructor.name)} with name=${styleString(
       service.displayName,
-    )}, subtype=${styleString(service.subtype)} and id="${styleString(service.UUID)}" for accessory named=${styleString(
-      name,
-    )} with id=${styleString(id)}`,
+    )} and subtype=${styleString(service.subtype)} for ${describe(target)}`,
   );
 };

@@ -35,6 +35,38 @@ describe("WriteCoalescer", () => {
       expect(sent).toEqual([10, 40]);
     });
 
+    it("does not repeat the leading write as the trailing one", async () => {
+      // Observed on real hardware: HomeKit maps a dimmer's On and Brightness
+      // onto the same `level`, so switching a light on at a level arrives as
+      // two writes of the same number a millisecond apart. Before this, the
+      // gateway got `PUT level=45` twice, 35 ms apart.
+      const { sent, coalescer } = create(true);
+      coalescer.submit(45);
+      coalescer.submit(45);
+      await vi.advanceTimersByTimeAsync(300);
+      expect(sent).toEqual([45]);
+    });
+
+    it("still sends a trailing write that differs from the leading one", async () => {
+      const { sent, coalescer } = create(true);
+      coalescer.submit(45);
+      coalescer.submit(47);
+      await vi.advanceTimersByTimeAsync(300);
+      expect(sent).toEqual([45, 47]);
+    });
+
+    it("re-sends the same value for a gesture in a later burst", async () => {
+      // Not deduplicated across bursts: a value resubmitted after the quiet
+      // period is a fresh user action, and may be re-asserting a state the
+      // device drifted away from while a push was missed.
+      const { sent, coalescer } = create(true);
+      coalescer.submit(47);
+      await vi.advanceTimersByTimeAsync(300);
+      coalescer.submit(47);
+      await vi.advanceTimersByTimeAsync(300);
+      expect(sent).toEqual([47, 47]);
+    });
+
     it("does not send a trailing write when there was only one", async () => {
       const { sent, coalescer } = create(true);
       coalescer.submit(50);
