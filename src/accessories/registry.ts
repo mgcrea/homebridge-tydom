@@ -1,6 +1,6 @@
 import type { AccessoryRegistry } from "./base.js";
-import { setupGarageDoorOpener, updateGarageDoorOpener } from "./garageDoorOpener.js";
 import { createContactSensorAccessory } from "./contact-sensor-accessory.js";
+import { createGarageDoorAccessory } from "./garage-door-accessory.js";
 import { fromFunctionPair } from "./legacy-adapter.js";
 import { createLightbulbAccessory } from "./lightbulb-accessory.js";
 import { createOutletAccessory } from "./outlet-accessory.js";
@@ -38,7 +38,7 @@ export const ACCESSORY_REGISTRY: AccessoryRegistry = {
   "alarm-sensors": fromFunctionPair(setupSecuritySystemSensors, updateSecuritySystemSensors),
   "contact-sensor": createContactSensorAccessory,
   fan: createFanAccessory,
-  "garage-door": fromFunctionPair(setupGarageDoorOpener, updateGarageDoorOpener),
+  "garage-door": createGarageDoorAccessory,
   lightbulb: createLightbulbAccessory,
   "lightbulb-switchable": createSwitchableLightbulbAccessory,
   outlet: createOutletAccessory,
