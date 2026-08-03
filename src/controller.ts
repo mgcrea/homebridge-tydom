@@ -18,7 +18,7 @@ import {
   type TydomUpdateType,
 } from "./api/types.js";
 import type { TydomUpdateType as TydomAccessoryUpdateType } from "./api/types.js";
-import { asyncWait } from "./helpers/tydom.js";
+import { asyncWait } from "./util/async.js";
 import type { TydomPlatformConfig } from "./platform.js";
 import type {
   TydomAccessoryContext,

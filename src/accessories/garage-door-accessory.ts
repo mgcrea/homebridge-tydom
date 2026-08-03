@@ -1,6 +1,6 @@
+import { getTydomDataPropValue } from "../api/types.js";
 import type { Service } from "homebridge";
 import type { TydomUpdateType } from "../api/types.js";
-import { getTydomDataPropValue } from "../helpers/tydom.js";
 import type { TydomDeviceGarageDoorData } from "../typings/tydom.js";
 import { debug, debugGet, debugGetResult, debugSet, debugSetResult } from "../platform/trace.js";
 import { asNumber } from "../util/basic.js";

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assert } from "../util/assert.js";
 
 /**
  * Tydom wire types.
@@ -141,4 +142,24 @@ export const parseDiscoveryResponse = <T>(
     throw new TydomSchemaError(uri, z.prettifyError(result.error).slice(0, 300));
   }
   return result.data;
+};
+
+/**
+ * Read one property out of an endpoint's data array.
+ *
+ * Throws rather than returning undefined: every caller feeds the result
+ * straight to a HomeKit characteristic, and a missing property means the
+ * device is not the shape the accessory was built for — which is a bug in the
+ * signature table, not a value HomeKit should be handed.
+ */
+export const getTydomDataPropValue = <
+  V extends AnyTydomDataValue = AnyTydomDataValue,
+  T extends TydomEndpointData = TydomEndpointData,
+>(
+  data: T,
+  name: string,
+): V => {
+  const item = data.find((prop) => prop.name === name);
+  assert(item, `Missing property with name="${name}" in endpoint data`);
+  return item.value as V;
 };

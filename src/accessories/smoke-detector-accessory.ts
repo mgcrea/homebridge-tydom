@@ -1,5 +1,5 @@
+import { getTydomDataPropValue } from "../api/types.js";
 import type { Service } from "homebridge";
-import { getTydomDataPropValue } from "../helpers/tydom.js";
 import { debugGet, debugGetResult, debugSetUpdate } from "../platform/trace.js";
 import type { TydomDeviceSmokeDetectorData } from "../typings/tydom.js";
 import { BaseAccessory } from "./base-accessory.js";

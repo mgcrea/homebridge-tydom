@@ -1,6 +1,6 @@
+import { getTydomDataPropValue } from "../api/types.js";
 import type { Service } from "homebridge";
 import type { ServiceClass } from "./service-class.js";
-import { getTydomDataPropValue } from "../helpers/tydom.js";
 import {
   debugGet,
   debugGetResult,

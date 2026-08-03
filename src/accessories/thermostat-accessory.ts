@@ -1,5 +1,5 @@
+import { getTydomDataPropValue } from "../api/types.js";
 import type { CharacteristicProps, Service } from "homebridge";
-import { getTydomDataPropValue } from "../helpers/tydom.js";
 import {
   debug,
   debugAddSubService,

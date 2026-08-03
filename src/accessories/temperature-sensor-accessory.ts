@@ -1,5 +1,5 @@
+import { getTydomDataPropValue } from "../api/types.js";
 import type { Service } from "homebridge";
-import { getTydomDataPropValue } from "../helpers/tydom.js";
 import { debugGet, debugGetResult, debugSetUpdate } from "../platform/trace.js";
 import { BaseAccessory } from "./base-accessory.js";
 import type { AccessoryDeps } from "./base.js";

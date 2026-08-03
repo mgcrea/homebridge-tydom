@@ -7,7 +7,7 @@ import type {
 } from "homebridge";
 import type { Service, Characteristic } from "homebridge";
 import type { Categories } from "homebridge";
-import type { PluginLogger } from "./api/client.js";
+import { TydomApiClient, type PluginLogger, type TydomTransport } from "./api/client.js";
 import { CATEGORY, deviceTypeForCategory, type DeviceType } from "./api/device-type.js";
 import { ConfigError, parseConfig, type TydomConfig } from "./config.js";
 import { PLATFORM_NAME, PLUGIN_NAME } from "./config/env.js";
@@ -22,7 +22,6 @@ import TydomController from "./controller.js";
 import { triggerWebhook } from "./helpers/webhook.js";
 import type { TydomAccessory } from "./accessories/base.js";
 import { ACCESSORY_REGISTRY } from "./accessories/registry.js";
-import { getApiClient, setShimLogger } from "./helpers/tydom.js";
 import type { TydomAccessoryContext } from "./typings/tydom.js";
 import { assert } from "./util/assert.js";
 import { styleKeyword, styleNumber, styleString } from "./util/style.js";
@@ -53,6 +52,15 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
    */
   companions = new Map<string, string[]>();
   controller?: TydomController;
+  /**
+   * The endpoint-facing API, handed to every accessory.
+   *
+   * One per platform, which is what keeps the read-dedupe window from leaking
+   * between two Tydom gateways in a single Homebridge process — it used to be a
+   * module-level cache, so the second platform to start served the first one's
+   * readings.
+   */
+  apiClient?: TydomApiClient;
   api: Homebridge;
   config!: TydomPlatformConfig;
   /** Delta Dore label lookups, bound to the configured locale. */
@@ -90,9 +98,14 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     }
     this.t = createTranslator(this.config.locale);
     this.pluginLog = createPluginLogger(log, this.config.debug);
-    setShimLogger(this.pluginLog);
 
     this.controller = new TydomController(log, this.config);
+    this.apiClient = new TydomApiClient({
+      // tydom-client's methods are generic over the response type; the
+      // transport seam deliberately is not, so it can be faked in tests.
+      transport: this.controller.client as unknown as TydomTransport,
+      logger: this.pluginLog,
+    });
     this.api.on("didFinishLaunching", () => {
       this.didFinishLaunching().catch((err: unknown) => {
         this.log.error(`Failed to finish launching: ${stringifyError(err as Error)}`);
@@ -268,7 +281,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       )} (id=${styleKeyword(id)})"`,
     );
     Object.assign(accessory.context, context);
-    assert(this.controller);
+    assert(this.apiClient);
 
     const deviceType = this.resolveDeviceType(context, accessory.category);
     if (!deviceType) {
@@ -296,7 +309,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       ACCESSORY_REGISTRY[deviceType]({
         platform: this,
         accessory,
-        api: getApiClient(this.controller.client),
+        api: this.apiClient,
         t: this.t,
         notify: (level, message) => {
           this.handleControllerNotification({ level, message });
