@@ -17,10 +17,10 @@ import type { Webhook } from "./helpers/webhook.js";
 import { triggerWebhook } from "./helpers/webhook.js";
 import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "./helpers/accessory.js";
 import type { TydomAccessoryContext } from "./typings/tydom.js";
-import { assert } from "./utils/assert.js";
-import { chalkKeyword, chalkNumber, chalkString } from "./utils/color.js";
-import { debug, enableDebug } from "./utils/debug.js";
-import { stringifyError } from "./utils/error.js";
+import { assert } from "./util/assert.js";
+import { styleKeyword, styleNumber, styleString } from "./util/style.js";
+import { debug, enableDebug } from "./platform/trace.js";
+import { stringifyError } from "./util/error.js";
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;
@@ -111,7 +111,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.cleanupAccessoriesIds.forEach((accessoryId) => {
       const accessory = this.accessories.get(accessoryId);
       if (!accessory) return;
-      this.log.warn(`Deleting missing accessory with id=${chalkNumber(accessoryId)}`);
+      this.log.warn(`Deleting missing accessory with id=${styleNumber(accessoryId)}`);
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
     });
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
@@ -120,12 +120,12 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     const { name, deviceId, category, accessoryId } = context;
     const id = this.api.hap.uuid.generate(accessoryId);
     this.log.info(
-      `Found new tydom device named=${chalkString(name)} with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(
+      `Found new tydom device named=${styleString(name)} with deviceId=${styleNumber(deviceId)} (id=${styleKeyword(
         id,
       )})`,
     );
     this.log.debug(
-      `Tydom with deviceId=${chalkNumber(deviceId)} (id=${chalkKeyword(id)}) context="${JSON.stringify(context)}"`,
+      `Tydom with deviceId=${styleNumber(deviceId)} (id=${styleKeyword(id)}) context="${JSON.stringify(context)}"`,
     );
     const existingAccessory = this.accessories.get(id);
     const hasNewCategory = existingAccessory?.category !== category;
@@ -137,7 +137,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
         await this.updateAccessory(existingAccessory, context);
         return;
       } else {
-        this.log.warn(`Deleting accessory with new category with id=${chalkNumber(accessoryId)}`);
+        this.log.warn(`Deleting accessory with new category with id=${styleNumber(accessoryId)}`);
         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
       }
     }
@@ -188,9 +188,9 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     const { group } = context;
     const accessoryName = category === Categories.WINDOW && group ? group.name || name : name;
     this.log.info(
-      `Creating accessory named=${chalkString(accessoryName)}, deviceId="${chalkNumber(
+      `Creating accessory named=${styleString(accessoryName)}, deviceId="${styleNumber(
         context.deviceId,
-      )} (id=${chalkKeyword(id)})"`,
+      )} (id=${styleKeyword(id)})"`,
     );
     const accessory = new PlatformAccessory<TydomAccessoryContext>(accessoryName, id, category);
     Object.assign(accessory.context, context);
@@ -203,9 +203,9 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   ): Promise<void> {
     const { displayName: accessoryName, UUID: id } = accessory;
     this.log.info(
-      `Updating accessory named=${chalkString(accessoryName)}, deviceId=${chalkNumber(
+      `Updating accessory named=${styleString(accessoryName)}, deviceId=${styleNumber(
         context.deviceId,
-      )} (id=${chalkKeyword(id)})"`,
+      )} (id=${styleKeyword(id)})"`,
     );
     Object.assign(accessory.context, context);
     const tydomAccessorySetup = getTydomAccessorySetup(accessory, context);

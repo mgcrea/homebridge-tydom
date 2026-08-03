@@ -26,8 +26,8 @@ import {
 } from "../config/hap.js";
 import type TydomController from "../controller.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
-import { assert } from "../utils/assert.js";
-import { debug } from "../utils/debug.js";
+import { assert } from "../util/assert.js";
+import { debug } from "../platform/trace.js";
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 

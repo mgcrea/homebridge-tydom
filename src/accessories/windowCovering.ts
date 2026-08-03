@@ -11,8 +11,8 @@ import {
 } from "../helpers/accessory.js";
 import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
 import type { TydomAccessoryContext, TydomDeviceShutterData } from "../typings/tydom.js";
-import { asNumber } from "../utils/basic.js";
-import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "../utils/color.js";
+import { asNumber } from "../util/basic.js";
+import { styleJson, styleKeyword, styleNumber, styleString } from "../util/style.js";
 import {
   debug,
   debugGet,
@@ -21,7 +21,7 @@ import {
   debugSetResult,
   debugSetUpdate,
   debugTydomPut,
-} from "../utils/debug.js";
+} from "../platform/trace.js";
 
 // const getReciprocalPositionForValue = (position: number): number => {
 //   if (position === 0 || position === 100) {
@@ -158,7 +158,7 @@ export const updateWindowCovering = (
     updates.forEach((update) => {
       const { values } = update;
       const { event } = values as { event: unknown };
-      debug(`New ${chalkKeyword("WindowCovering")} event=${chalkJson(event)}`);
+      debug(`New ${styleKeyword("WindowCovering")} event=${styleJson(event)}`);
     });
     return;
   }
@@ -170,7 +170,7 @@ export const updateWindowCovering = (
         const service = getAccessoryService(accessory, Service.WindowCovering);
         const position = asNumber(value as number);
         if (position === null) {
-          debug(`Encountered a ${chalkString("position")} update with a null value!`);
+          debug(`Encountered a ${styleString("position")} update with a null value!`);
           return;
         }
         debugSetUpdate(CurrentPosition, service, position);
@@ -178,7 +178,7 @@ export const updateWindowCovering = (
         // @NOTE ignore pending updates
         if (state.pendingUpdatedValues.includes(position)) {
           debug(
-            `Ignoring a pending ${chalkString("position")} update with value=${chalkNumber(position)} !`,
+            `Ignoring a pending ${styleString("position")} update with value=${styleNumber(position)} !`,
           );
           state.pendingUpdatedValues = [];
           return;

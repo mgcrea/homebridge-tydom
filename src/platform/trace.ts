@@ -2,7 +2,14 @@ import createDebug from "debug";
 import type { PlatformAccessory, Service } from "homebridge";
 import { blue } from "kolorist";
 import type { Characteristic } from "../config/hap.js";
-import { chalkGet, chalkKeyword, chalkSet, chalkString, chalkUpd, chalkVal } from "./color.js";
+import {
+  styleGet,
+  styleKeyword,
+  styleSet,
+  styleString,
+  styleUpd,
+  styleVal,
+} from "../util/style.js";
 
 type IdentifiableAccessoryObject = PlatformAccessory | Service;
 
@@ -16,7 +23,7 @@ export const debugGet = (
   { displayName: name, UUID: id }: IdentifiableAccessoryObject,
 ): void => {
   debug(
-    `${chalkGet("→GET")}:${blue(characteristic.name)} for accessory named=${chalkString(name)} with id=${chalkString(
+    `${styleGet("→GET")}:${blue(characteristic.name)} for accessory named=${styleString(name)} with id=${styleString(
       id,
     )} ...`,
   );
@@ -28,9 +35,9 @@ export const debugGetResult = (
   value: unknown,
 ): void => {
   debug(
-    `${chalkGet("←GET")}:${blue(characteristic.name)} value=${chalkVal(value)} for accessory named=${chalkString(
+    `${styleGet("←GET")}:${blue(characteristic.name)} value=${styleVal(value)} for accessory named=${styleString(
       name,
-    )} with id=${chalkString(id)} ...`,
+    )} with id=${styleString(id)} ...`,
   );
 };
 
@@ -40,9 +47,9 @@ export const debugSetUpdate = (
   value: unknown,
 ): void => {
   debug(
-    `${chalkUpd("←UPD")}:${blue(characteristic.name)} value=${chalkVal(value)} for accessory named=${chalkString(
+    `${styleUpd("←UPD")}:${blue(characteristic.name)} value=${styleVal(value)} for accessory named=${styleString(
       name,
-    )} with id=${chalkString(id)}`,
+    )} with id=${styleString(id)}`,
   );
 };
 
@@ -52,9 +59,9 @@ export const debugSet = (
   value: unknown,
 ): void => {
   debug(
-    `${chalkSet("→SET")}:${blue(characteristic.name)} value=${chalkVal(value)} for accessory named=${chalkString(
+    `${styleSet("→SET")}:${blue(characteristic.name)} value=${styleVal(value)} for accessory named=${styleString(
       name,
-    )} with id=${chalkString(id)} ...`,
+    )} with id=${styleString(id)} ...`,
   );
 };
 
@@ -65,9 +72,9 @@ export const debugSetResult = (
   tydomValue?: unknown,
 ): void => {
   debug(
-    `${chalkSet("←SET")}:${blue(characteristic.name)} value=${chalkVal(value)}${
-      tydomValue !== undefined ? ` (tydomValue=${chalkVal(tydomValue)})` : ""
-    } for accessory named=${chalkString(name)} with id=${chalkString(id)}`,
+    `${styleSet("←SET")}:${blue(characteristic.name)} value=${styleVal(value)}${
+      tydomValue !== undefined ? ` (tydomValue=${styleVal(tydomValue)})` : ""
+    } for accessory named=${styleString(name)} with id=${styleString(id)}`,
   );
 };
 
@@ -77,9 +84,9 @@ export const debugTydomPut = (
   value: unknown,
 ): void => {
   debug(
-    `${chalkSet("→PUT")}:${blue(property)} value=${chalkVal(value)} for accessory named=${chalkString(
+    `${styleSet("→PUT")}:${blue(property)} value=${styleVal(value)} for accessory named=${styleString(
       name,
-    )} with id=${chalkString(id)}`,
+    )} with id=${styleString(id)}`,
   );
 };
 
@@ -88,10 +95,10 @@ export const debugAddSubService = (
   { displayName: name, UUID: id }: IdentifiableAccessoryObject,
 ): void => {
   debug(
-    `Adding new sub service ${chalkKeyword(service.constructor.name)} with name=${chalkString(
+    `Adding new sub service ${styleKeyword(service.constructor.name)} with name=${styleString(
       service.displayName,
-    )}, subtype=${chalkString(service.subtype)} and id="${chalkString(service.UUID)}" for accessory named=${chalkString(
+    )}, subtype=${styleString(service.subtype)} and id="${styleString(service.UUID)}" for accessory named=${styleString(
       name,
-    )} with id=${chalkString(id)}`,
+    )} with id=${styleString(id)}`,
   );
 };

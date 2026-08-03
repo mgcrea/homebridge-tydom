@@ -16,7 +16,7 @@ import {
   debugSet,
   debugSetResult,
   debugSetUpdate,
-} from "../utils/debug.js";
+} from "../platform/trace.js";
 
 export const setupOutlet = (
   accessory: PlatformAccessory<TydomAccessoryContext>,

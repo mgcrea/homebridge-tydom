@@ -1,31 +1,31 @@
 import { EventEmitter } from "node:events";
 import type { Logging } from "homebridge";
-import { Categories } from "homebridge";
+import type { Categories } from "homebridge";
 import { blue, bold, green, yellow } from "kolorist";
-import get from "lodash/get.js";
+import { discoverDevices } from "./api/discovery.js";
+import {
+  classifyMessage,
+  getAccessoryId,
+  getUniqueId,
+  parseDeviceDataUpdate,
+} from "./api/messages.js";
+import type { TydomUpdateType } from "./api/types.js";
 import { HOMEBRIDGE_TYDOM_PASSWORD } from "./config/env.js";
 import type { TydomAccessoryUpdateType } from "./helpers/accessory.js";
-import {
-  asyncWait,
-  getEndpointDetailsFromMeta,
-  getEndpointGroupIdFromGroups,
-  resolveEndpointCategory,
-} from "./helpers/tydom.js";
+import { asyncWait } from "./helpers/tydom.js";
 import type { TydomPlatformConfig } from "./platform.js";
 import type {
   TydomAccessoryContext,
   TydomAccessoryUpdateContext,
   TydomConfigResponse,
-  TydomDeviceDataUpdateBody,
   TydomGroupsResponse,
   TydomMetaResponse,
 } from "./typings/tydom.js";
-import { assert } from "./utils/assert.js";
-import { stringIncludes } from "./utils/basic.js";
-import { chalkJson, chalkNumber, chalkString } from "./utils/color.js";
-import { debug } from "./utils/debug.js";
-import { decode } from "./utils/hash.js";
-import { stringifyError } from "./utils/error.js";
+import { assert } from "./util/assert.js";
+import { styleJson, styleNumber, styleString } from "./util/style.js";
+import { debug } from "./platform/trace.js";
+import { decode } from "./util/hash.js";
+import { stringifyError } from "./util/error.js";
 import type TydomClient from "tydom-client";
 import {
   createClient as createTydomClient,
@@ -67,7 +67,7 @@ export default class TydomController extends EventEmitter {
     const password = HOMEBRIDGE_TYDOM_PASSWORD ? decode(HOMEBRIDGE_TYDOM_PASSWORD) : configPassword;
     assert(password, 'Missing "password" config field for platform');
     this.log.info(
-      `Creating tydom client with username=${chalkString(username)} and hostname=${chalkString(hostname)}`,
+      `Creating tydom client with username=${styleString(username)} and hostname=${styleString(hostname)}`,
     );
     this.client = createTydomClient({ username, password, hostname, followUpDebounce: 500 });
     this.client.on("message", (message: TydomHttpMessage) => {
@@ -75,17 +75,17 @@ export default class TydomController extends EventEmitter {
         this.handleMessage(message);
       } catch (err) {
         this.log.error(
-          `Encountered an uncaught error=${stringifyError(err as Error)} while processing message=${chalkJson(message)}"`,
+          `Encountered an uncaught error=${stringifyError(err as Error)} while processing message=${styleJson(message)}"`,
         );
       }
     });
     this.client.on("connect", () => {
       this.log.info(
-        `Successfully connected to Tydom hostname=${chalkString(hostname)} with username=${chalkString(username)}`,
+        `Successfully connected to Tydom hostname=${styleString(hostname)} with username=${styleString(username)}`,
       );
       if (this.hasConnectedOnce) {
         this.log.warn(
-          `Reconnected to Tydom hostname=${chalkString(hostname)}, re-syncing state...`,
+          `Reconnected to Tydom hostname=${styleString(hostname)}, re-syncing state...`,
         );
         this.resync().catch((err: unknown) => {
           this.log.error(`Failed to re-sync after reconnection: ${stringifyError(err as Error)}`);
@@ -94,7 +94,7 @@ export default class TydomController extends EventEmitter {
       this.emit("connect");
     });
     this.client.on("disconnect", () => {
-      this.log.warn(`Disconnected from Tydom hostname=${chalkString(hostname)}"`);
+      this.log.warn(`Disconnected from Tydom hostname=${styleString(hostname)}"`);
       if (this.refreshInterval) {
         clearInterval(this.refreshInterval);
         this.refreshInterval = undefined;
@@ -111,7 +111,7 @@ export default class TydomController extends EventEmitter {
   }
   async connect(): Promise<void> {
     const { hostname, username } = this.config;
-    debug(`Connecting to hostname=${chalkString(hostname)}...`);
+    debug(`Connecting to hostname=${styleString(hostname)}...`);
     try {
       await this.client.connect();
       await asyncWait(250);
@@ -131,7 +131,7 @@ export default class TydomController extends EventEmitter {
     meta: TydomMetaResponse;
   }> {
     const { hostname, refreshInterval = DEFAULT_REFRESH_INTERVAL_SEC } = this.config;
-    debug(`Syncing state from hostname=${chalkString(hostname)}...`);
+    debug(`Syncing state from hostname=${styleString(hostname)}...`);
     const config = await this.client.get<TydomConfigResponse>("/configs/file");
     const groups = await this.client.get<TydomGroupsResponse>("/groups/file");
     const meta = await this.client.get<TydomMetaResponse>("/devices/meta");
@@ -141,7 +141,7 @@ export default class TydomController extends EventEmitter {
       debug(`Removing existing refresh interval`);
       clearInterval(this.refreshInterval);
     }
-    debug(`Configuring refresh interval of ${chalkNumber(Math.round(refreshInterval))}s`);
+    debug(`Configuring refresh interval of ${styleNumber(Math.round(refreshInterval))}s`);
     this.refreshInterval = setInterval(async () => {
       try {
         await this.refresh();
@@ -153,92 +153,63 @@ export default class TydomController extends EventEmitter {
     return { config, groups, meta };
   }
   async scan(): Promise<void> {
-    const { hostname } = this.config;
-    this.log.info(`Scaning devices from hostname=${chalkString(hostname)}...`);
-    const {
-      settings = {},
-      includedDevices = [],
-      excludedDevices = [],
-      includedCategories = [],
-      excludedCategories = [],
-    } = this.config;
+    const { hostname, username, settings = {} } = this.config;
+    this.log.info(`Scanning devices from hostname=${styleString(hostname)}...`);
     const { config, groups, meta } = await this.sync();
-    const { endpoints, groups: configGroups } = config;
-    endpoints.forEach((endpoint) => {
-      const {
-        id_endpoint: endpointId,
-        id_device: deviceId,
-        name: deviceName,
-        first_usage: firstUsage,
-      } = endpoint;
-      const uniqueId = this.getUniqueId(deviceId, endpointId);
-      const { metadata } = getEndpointDetailsFromMeta(endpoint, meta);
-      const groupId = getEndpointGroupIdFromGroups(endpoint, groups);
-      const group = groupId ? configGroups.find(({ id }) => id === groupId) : undefined;
-      const deviceSettings = settings[deviceId] || {};
-      const categoryFromSettings = deviceSettings.category;
-      // @TODO resolve endpoint productType
-      this.log.info(
-        `Found new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
-          deviceId,
-        )} and endpointId=${chalkNumber(endpointId)}`,
-      );
-      if (includedDevices.length && !stringIncludes(includedDevices, deviceId)) {
-        return;
-      }
-      if (excludedDevices.length && stringIncludes(excludedDevices, deviceId)) {
-        return;
-      }
-      if (categoryFromSettings) {
-        this.log.info(
-          `Using overriden category=${chalkNumber(categoryFromSettings)} from settings for deviceId=${chalkNumber(
-            deviceId,
-          )} and endpointId=${chalkNumber(endpointId)}`,
-        );
-      }
-      const category =
-        categoryFromSettings ??
-        resolveEndpointCategory({ firstUsage, metadata, settings: deviceSettings });
-      if (!category) {
-        this.log.warn(
-          `Unsupported firstUsage="${firstUsage}" for endpoint with deviceId="${deviceId}"`,
-        );
-        debug({ endpoint });
-        return;
-      }
-      if (includedCategories.length && !stringIncludes(includedCategories, category)) {
-        return;
-      }
-      if (excludedCategories.length && stringIncludes(excludedCategories, category)) {
-        return;
-      }
-      if (!this.devices.has(uniqueId)) {
-        this.log.info(
-          `Adding new device with firstUsage=${chalkString(firstUsage)}, deviceId=${chalkNumber(
-            deviceId,
-          )} and endpointId=${chalkNumber(endpointId)}`,
-        );
-        const accessoryId = this.getAccessoryId(deviceId, endpointId);
-        const nameFromSetting = get(settings, `${deviceId}.name`) as string | undefined;
-        const name = nameFromSetting ?? deviceName;
-        this.devices.set(uniqueId, category);
-        const context: TydomAccessoryContext = {
-          name,
-          category,
-          metadata,
-          settings: deviceSettings,
-          group,
-          deviceId,
-          endpointId,
-          accessoryId,
-          manufacturer: "Delta Dore",
-          serialNumber: `ID${deviceId}`,
-          // model: 'N/A',
-          state: {},
-        };
-        this.emit("device", context);
-      }
+
+    const { devices, skipped } = discoverDevices({
+      username,
+      config,
+      groups,
+      meta,
+      settings,
+      filters: {
+        includedDevices: this.config.includedDevices,
+        excludedDevices: this.config.excludedDevices,
+        includedCategories: this.config.includedCategories,
+        excludedCategories: this.config.excludedCategories,
+      },
     });
+
+    for (const skip of skipped) {
+      if (skip.reason === "unsupported") {
+        this.log.warn(
+          `Unsupported firstUsage="${skip.firstUsage}" for endpoint with deviceId="${skip.deviceId}"`,
+        );
+      }
+    }
+
+    for (const device of devices) {
+      const { uniqueId, deviceId, endpointId, firstUsage, category } = device;
+      this.log.info(
+        `Found new device with firstUsage=${styleString(firstUsage)}, deviceId=${styleNumber(
+          deviceId,
+        )} and endpointId=${styleNumber(endpointId)}`,
+      );
+      if (this.devices.has(uniqueId)) {
+        continue;
+      }
+      this.log.info(
+        `Adding new device with firstUsage=${styleString(firstUsage)}, deviceId=${styleNumber(
+          deviceId,
+        )} and endpointId=${styleNumber(endpointId)}`,
+      );
+      this.devices.set(uniqueId, category as Categories);
+      const context: TydomAccessoryContext = {
+        name: device.name,
+        category: category as Categories,
+        metadata: device.metadata,
+        settings: device.settings,
+        group: device.group,
+        deviceId,
+        endpointId,
+        accessoryId: device.accessoryId,
+        manufacturer: "Delta Dore",
+        serialNumber: `ID${deviceId}`,
+        state: {},
+      };
+      this.emit("device", context);
+    }
   }
   async refresh(): Promise<void> {
     debug(`Refreshing Tydom controller ...`);
@@ -246,7 +217,7 @@ export default class TydomController extends EventEmitter {
   }
   private async resync(): Promise<void> {
     const { hostname, refreshInterval = DEFAULT_REFRESH_INTERVAL_SEC } = this.config;
-    debug(`Re-syncing state after reconnection to hostname=${chalkString(hostname)}...`);
+    debug(`Re-syncing state after reconnection to hostname=${styleString(hostname)}...`);
     await asyncWait(250);
     await this.client.get("/ping");
     await this.refresh();
@@ -254,7 +225,7 @@ export default class TydomController extends EventEmitter {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
-    debug(`Re-configuring refresh interval of ${chalkNumber(Math.round(refreshInterval))}s`);
+    debug(`Re-configuring refresh interval of ${styleNumber(Math.round(refreshInterval))}s`);
     this.refreshInterval = setInterval(async () => {
       try {
         await this.refresh();
@@ -265,56 +236,39 @@ export default class TydomController extends EventEmitter {
   }
   handleMessage(message: TydomHttpMessage): void {
     const { uri, method, body } = message;
-    const isDeviceUpdate = uri === "/devices/data" && method === "PUT";
-    if (isDeviceUpdate) {
-      this.handleDeviceDataUpdate(body, "data");
+    const type = classifyMessage(uri, method);
+    if (type === "unknown") {
+      debug(`Unknown message from Tydom client:\n${styleJson(message)}`);
       return;
     }
-    const isDeviceCommandUpdate = uri === "/devices/cdata" && method === "PUT";
-    if (isDeviceCommandUpdate) {
-      this.handleDeviceDataUpdate(body, "cdata");
-      return;
-    }
-    debug(`Unkown message from Tydom client:\n${chalkJson(message)}`);
+    this.handleDeviceDataUpdate(body, type);
   }
-  handleDeviceDataUpdate(body: TydomResponse, type: "data" | "cdata"): void {
-    if (!Array.isArray(body)) {
-      debug("Unsupported non-array device update", body);
-      return;
-    }
-    (body as TydomDeviceDataUpdateBody).forEach((device) => {
-      const { id: deviceId, endpoints } = device;
-      for (const endpoint of endpoints) {
-        const { id: endpointId, data, cdata } = endpoint;
-        const updates = type === "data" ? data : cdata;
-        const uniqueId = this.getUniqueId(deviceId, endpointId);
-        if (!this.devices.has(uniqueId)) {
-          debug(
-            `${bold(yellow("←PUT"))}:${blue("ignored")} for device id=${chalkString(
-              deviceId,
-            )} and endpointId=${chalkNumber(endpointId)}`,
-          );
-          return;
-        }
-        const category = this.devices.get(uniqueId) ?? Categories.OTHER;
-        const accessoryId = this.getAccessoryId(deviceId, endpointId);
+
+  handleDeviceDataUpdate(body: TydomResponse, type: TydomUpdateType): void {
+    for (const update of parseDeviceDataUpdate(body, type)) {
+      const { deviceId, endpointId, updates } = update;
+      const uniqueId = getUniqueId(deviceId, endpointId);
+      const category = this.devices.get(uniqueId);
+      if (category === undefined) {
         debug(
-          `${bold(green("←PUT"))}:${blue("update")} for deviceId=${chalkNumber(deviceId)} and endpointId=${chalkNumber(
-            endpointId,
-          )}, updates:\n${chalkJson(updates)}`,
+          `${bold(yellow("\u2190PUT"))}:${blue("ignored")} for device id=${styleString(
+            deviceId,
+          )} and endpointId=${styleNumber(endpointId)}`,
         );
-        const context: TydomAccessoryUpdateContext = {
-          category,
-          deviceId,
-          endpointId,
-          accessoryId,
-        };
-        this.emit("update", {
-          type,
-          updates,
-          context,
-        } as ControllerUpdatePayload);
+        continue;
       }
-    });
+      debug(
+        `${bold(green("\u2190PUT"))}:${blue("update")} for deviceId=${styleNumber(
+          deviceId,
+        )} and endpointId=${styleNumber(endpointId)}, updates:\n${styleJson(updates)}`,
+      );
+      const context: TydomAccessoryUpdateContext = {
+        category,
+        deviceId,
+        endpointId,
+        accessoryId: getAccessoryId(this.config.username, deviceId, endpointId),
+      };
+      this.emit("update", { type, updates, context } as ControllerUpdatePayload);
+    }
   }
 }

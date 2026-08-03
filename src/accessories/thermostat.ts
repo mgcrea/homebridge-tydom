@@ -19,7 +19,7 @@ import type {
   TydomDeviceThermostatHvacMode,
   TydomDeviceThermostatThermicLevel,
 } from "../typings/tydom.js";
-import { chalkString } from "../utils/color.js";
+import { styleString } from "../util/style.js";
 import {
   debug,
   debugAddSubService,
@@ -28,7 +28,7 @@ import {
   debugSet,
   debugSetResult,
   debugSetUpdate,
-} from "../utils/debug.js";
+} from "../platform/trace.js";
 
 export const setupThermostat = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
@@ -308,7 +308,7 @@ export const updateThermostat = (
       case "thermicLevel": {
         const thermicLevel = value as TydomDeviceThermostatThermicLevel;
         if (thermicLevel === null) {
-          debug(`Encountered a ${chalkString("thermicLevel")} update with a null value!`);
+          debug(`Encountered a ${styleString("thermicLevel")} update with a null value!`);
           return;
         }
         const service = accessory.getServiceById(
@@ -333,7 +333,7 @@ export const updateThermostat = (
       case "setpoint": {
         const setpoint = value as number;
         if (setpoint === null) {
-          debug(`Encountered a ${chalkString("setpoint")} update with a null value!`);
+          debug(`Encountered a ${styleString("setpoint")} update with a null value!`);
           return;
         }
         const service = getAccessoryService(accessory, Service.Thermostat);

@@ -4,9 +4,6 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["test/**/*.spec.ts"],
-    // TODO(phase-3): drop this once the first specs land. Until then `pnpm test`
-    // and CI would fail on an empty suite.
-    passWithNoTests: true,
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],

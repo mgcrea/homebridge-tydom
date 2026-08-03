@@ -12,9 +12,9 @@ import {
 import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
 import type { TydomDeviceGarageDoorData } from "../typings/tydom.js";
-import { asNumber, waitFor } from "../utils/basic.js";
-import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "../utils/color.js";
-import { debugGet, debugGetResult, debugSet, debugSetResult } from "../utils/debug.js";
+import { asNumber, waitFor } from "../util/basic.js";
+import { styleJson, styleKeyword, styleNumber, styleString } from "../util/style.js";
+import { debugGet, debugGetResult, debugSet, debugSetResult } from "../platform/trace.js";
 import type TydomClient from "tydom-client";
 
 type GarageDoorOpenerSettings = {
@@ -52,7 +52,7 @@ const getTydomCurrentDoorState = async (
     currentDoorState = CurrentDoorState.OPEN; // 0
   } else if (tydomDeviceLevel > 0 && tydomDeviceLevel < 100) {
     // Half-Open/Closed does not seems to be assignable...
-    debug(`Encountered a ${chalkString("level")} update with value different from 0 or 100 !`);
+    debug(`Encountered a ${styleString("level")} update with value different from 0 or 100 !`);
   }
   return currentDoorState;
 };
@@ -126,7 +126,7 @@ export const setupGarageDoorOpener = (
   };
 
   const assignCurrentDoorState = (currentDoorState: number) => {
-    debug(`assignCurrentDoorState=${chalkString(getDoorStateLabel(currentDoorState))}`);
+    debug(`assignCurrentDoorState=${styleString(getDoorStateLabel(currentDoorState))}`);
     Object.assign(state, { currentDoorState });
     service.updateCharacteristic(CurrentDoorState, currentDoorState);
   };
@@ -269,12 +269,12 @@ export const setupGarageDoorOpener = (
         lastUpdatedAt: Date.now(),
         computedPosition: computeCurrentPosition(),
       });
-      debug(`computedPosition=${chalkNumber(state.computedPosition)}`);
+      debug(`computedPosition=${styleNumber(state.computedPosition)}`);
       let nextCurrentDoorState = getNextCurrentDoorState(targetDoorState);
-      debug(`nextCurrentDoorState=${chalkString(getDoorStateLabel(nextCurrentDoorState))}`);
+      debug(`nextCurrentDoorState=${styleString(getDoorStateLabel(nextCurrentDoorState))}`);
       if (nextCurrentDoorState === state.currentDoorState) {
         debug(
-          `nextCurrentDoorState=${chalkNumber(nextCurrentDoorState)} === state.currentDoorState`,
+          `nextCurrentDoorState=${styleNumber(nextCurrentDoorState)} === state.currentDoorState`,
         );
         return;
       }
@@ -290,9 +290,9 @@ export const setupGarageDoorOpener = (
           lastUpdatedAt: Date.now(),
           computedPosition: computeCurrentPosition(),
         });
-        debug(`computedPosition=${chalkNumber(state.computedPosition)}`);
+        debug(`computedPosition=${styleNumber(state.computedPosition)}`);
         nextCurrentDoorState = getNextCurrentDoorState(targetDoorState);
-        debug(`nextCurrentDoorState=${chalkString(getDoorStateLabel(nextCurrentDoorState))}`);
+        debug(`nextCurrentDoorState=${styleString(getDoorStateLabel(nextCurrentDoorState))}`);
         await toggleGarageDoor(targetDoorState);
         assignCurrentDoorState(nextCurrentDoorState);
       }
@@ -302,7 +302,7 @@ export const setupGarageDoorOpener = (
         switch (nextCurrentDoorState) {
           case CurrentDoorState.OPENING: {
             const delay = ((100 - state.computedPosition) * garageDoorDelay) / 100;
-            debug(`delay=${chalkNumber(delay)}`);
+            debug(`delay=${styleNumber(delay)}`);
             try {
               await waitFor(`${deviceId}.pending`, delay);
               assignCurrentDoorState(CurrentDoorState.OPEN);
@@ -311,18 +311,18 @@ export const setupGarageDoorOpener = (
                 assignCurrentDoorState(CurrentDoorState.CLOSED);
               }
             } catch {
-              debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
+              debug(`Aborted OPEN update with delay=${styleNumber(delay)}`);
             }
             break;
           }
           case CurrentDoorState.CLOSING: {
             const delay = (state.computedPosition * garageDoorDelay) / 100;
-            debug(`delay=${chalkNumber(delay)}`);
+            debug(`delay=${styleNumber(delay)}`);
             try {
               await waitFor(`${deviceId}.pending`, delay);
               assignCurrentDoorState(CurrentDoorState.CLOSED);
             } catch {
-              debug(`Aborted CLOSED update with delay=${chalkNumber(delay)}`);
+              debug(`Aborted CLOSED update with delay=${styleNumber(delay)}`);
             }
             break;
           }
@@ -371,7 +371,7 @@ export const updateGarageDoorOpener = (
     updates.forEach((update) => {
       const { values } = update;
       const { event } = values as { event: unknown };
-      debug(`New ${chalkKeyword("GarageDoorOpener")} event=${chalkJson(event)}`);
+      debug(`New ${styleKeyword("GarageDoorOpener")} event=${styleJson(event)}`);
     });
     return;
   }
@@ -380,7 +380,7 @@ export const updateGarageDoorOpener = (
     const { name, value } = update;
     const service = getAccessoryService(accessory, Service.GarageDoorOpener);
     debug(
-      `New ${chalkKeyword("GarageDoorOpener")} update received from Tydom, name=${String(name)} / value=${String(value)}`,
+      `New ${styleKeyword("GarageDoorOpener")} update received from Tydom, name=${String(name)} / value=${String(value)}`,
     );
     switch (name) {
       case "level": {
@@ -403,7 +403,7 @@ export const updateGarageDoorOpener = (
           computedPosition = 100;
         } else if (level > 0 && level < 100) {
           debug(
-            `Encountered a ${chalkString("level")} update with value different from 0 or 100 !`,
+            `Encountered a ${styleString("level")} update with value different from 0 or 100 !`,
           );
           return;
         }

@@ -1,0 +1,584 @@
+[
+  {
+    "source": "Armen85",
+    "firstUsage": "garage_door",
+    "metadataNames": [
+      "levelCmd",
+      "thermicDefect",
+      "level",
+      "recFav",
+      "onFavPos",
+      "localisation",
+      "modeAsso"
+    ],
+    "levelStep": 100,
+    "signature": "level|levelCmd|localisation|modeAsso|onFavPos|recFav|thermicDefect",
+    "signatureHash": "garage_door:449e2a60377094cde10224cee91d378fb0ae373ae6ceea0ac2cbc1ed011bffa7",
+    "expected": {
+      "deviceType": "garage-door",
+      "category": 4,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "Armen85",
+    "firstUsage": "light",
+    "metadataNames": [
+      "levelCmd",
+      "thermicDefect",
+      "level",
+      "recFav",
+      "onFavPos",
+      "localisation",
+      "modeAsso"
+    ],
+    "levelStep": 100,
+    "signature": "level|levelCmd|localisation|modeAsso|onFavPos|recFav|thermicDefect",
+    "signatureHash": "light:449e2a60377094cde10224cee91d378fb0ae373ae6ceea0ac2cbc1ed011bffa7",
+    "expected": {
+      "deviceType": "lightbulb-switchable",
+      "category": 5,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "Armen85",
+    "firstUsage": "shutter",
+    "metadataNames": [
+      "positionCmd",
+      "thermicDefect",
+      "position",
+      "recFav",
+      "onFavPos",
+      "obstacleDefect",
+      "intrusion",
+      "battDefect",
+      "localisation",
+      "modeAsso"
+    ],
+    "signature": "battDefect|intrusion|localisation|modeAsso|obstacleDefect|onFavPos|position|positionCmd|recFav|thermicDefect",
+    "signatureHash": "shutter:62e9d2fb1ba41ea851a7b778e0edd29162f2d31df4fbdc416e58796abc94df1d",
+    "expected": {
+      "deviceType": "window-covering",
+      "category": 14,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "Armen85",
+    "firstUsage": "hvac",
+    "metadataNames": [
+      "authorization",
+      "thermicLevel",
+      "delayThermicLevel",
+      "hvacMode",
+      "timeDelay",
+      "temperature",
+      "tempoOn",
+      "antifrostOn",
+      "loadSheddingOn",
+      "openingDetected",
+      "presenceDetected",
+      "absence",
+      "productionDefect",
+      "batteryCmdDefect",
+      "tempSensorDefect",
+      "tempSensorShortCut",
+      "tempSensorOpenCirc",
+      "boostOn",
+      "localisation",
+      "modeAsso"
+    ],
+    "signature": "absence|antifrostOn|authorization|batteryCmdDefect|boostOn|delayThermicLevel|hvacMode|loadSheddingOn|localisation|modeAsso|openingDetected|presenceDetected|productionDefect|tempSensorDefect|tempSensorOpenCirc|tempSensorShortCut|temperature|tempoOn|thermicLevel|timeDelay",
+    "signatureHash": "hvac:17f933bec8ed29f9b2a2cd5280fb5b64806cf8a1c064c83950e350f491d7cb9f",
+    "expected": {
+      "deviceType": "thermostat",
+      "category": 9,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "Armen85",
+    "firstUsage": "hvac",
+    "metadataNames": [
+      "authorization",
+      "setpoint",
+      "thermicLevel",
+      "delaySetpoint",
+      "delayThermicLevel",
+      "hvacMode",
+      "timeDelay",
+      "temperature",
+      "tempoOn",
+      "antifrostOn",
+      "loadSheddingOn",
+      "openingDetected",
+      "presenceDetected",
+      "absence",
+      "productionDefect",
+      "batteryCmdDefect",
+      "tempSensorDefect",
+      "tempSensorShortCut",
+      "tempSensorOpenCirc",
+      "boostOn",
+      "localisation",
+      "modeAsso",
+      "anticipCoeff"
+    ],
+    "signature": "absence|anticipCoeff|antifrostOn|authorization|batteryCmdDefect|boostOn|delaySetpoint|delayThermicLevel|hvacMode|loadSheddingOn|localisation|modeAsso|openingDetected|presenceDetected|productionDefect|setpoint|tempSensorDefect|tempSensorOpenCirc|tempSensorShortCut|temperature|tempoOn|thermicLevel|timeDelay",
+    "signatureHash": "hvac:9c0cc7174d0d0609c4fcc1c0d85d8e282961e801b5136aa1d2c5be45573e41e0",
+    "expected": {
+      "deviceType": "thermostat",
+      "category": 9,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "Armen85",
+    "firstUsage": "conso",
+    "metadataNames": ["energyIndexHeatWatt", "energyIndexECSWatt", "outTemperature"],
+    "signature": "energyIndexECSWatt|energyIndexHeatWatt|outTemperature",
+    "signatureHash": "conso:2f37420f80a4dc1add4e496d5aab5dfb93a198d872405259c506335891723935",
+    "expected": null
+  },
+  {
+    "source": "Benzoiiit",
+    "firstUsage": "conso",
+    "metadataNames": ["outTemperature"],
+    "signature": "outTemperature",
+    "signatureHash": "conso:16804a9994bce28275150db329a9c0b931ef7f20608c1a3d2ff248f58569f0d3",
+    "expected": {
+      "deviceType": "temperature-sensor",
+      "category": 10,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "Benzoiiit",
+    "firstUsage": "conso",
+    "metadataNames": [],
+    "signature": "",
+    "signatureHash": "conso:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "expected": null
+  },
+  {
+    "source": "Benzoiiit",
+    "firstUsage": "shutter",
+    "metadataNames": [
+      "positionCmd",
+      "thermicDefect",
+      "position",
+      "recFav",
+      "onFavPos",
+      "upDefect",
+      "downDefect",
+      "obstacleDefect",
+      "intrusion",
+      "battDefect",
+      "localisation",
+      "modeAsso",
+      "jobs",
+      "softVersion",
+      "softPlan",
+      "reset"
+    ],
+    "signature": "battDefect|downDefect|intrusion|jobs|localisation|modeAsso|obstacleDefect|onFavPos|position|positionCmd|recFav|reset|softPlan|softVersion|thermicDefect|upDefect",
+    "signatureHash": "shutter:05cada355e6a4c2cf072ef67b808b3b58c79e790001d9ec9036c1396299209ac",
+    "expected": {
+      "deviceType": "window-covering",
+      "category": 14,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "Benzoiiit",
+    "firstUsage": "garage_door",
+    "metadataNames": ["levelCmd", "thermicDefect", "localisation", "modeAsso"],
+    "signature": "levelCmd|localisation|modeAsso|thermicDefect",
+    "signatureHash": "garage_door:83b0912c6fe14622219522922ea0347dcbf86bf9cfd3346a2eca8eac70ca8260",
+    "expected": {
+      "deviceType": "garage-door",
+      "category": 4,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "D-Roch",
+    "firstUsage": "alarm",
+    "metadataNames": [
+      "alarmState",
+      "alarmMode",
+      "alarmTechnical",
+      "alarmSOS",
+      "unitAutoProtect",
+      "unitBatteryDefect",
+      "unackedEvent",
+      "systAutoProtect",
+      "systBatteryDefect",
+      "systSupervisionDefect",
+      "systOpenIssue",
+      "systSectorDefect",
+      "systTechnicalDefect",
+      "videoLinkDefect",
+      "remoteSurveyDefect",
+      "simDefect",
+      "networkDefect",
+      "inactiveProduct",
+      "liveCheckRunning",
+      "zone1State",
+      "zone2State",
+      "zone3State",
+      "zone4State",
+      "zone5State",
+      "zone6State",
+      "zone7State",
+      "zone8State",
+      "outTemperature",
+      "gsmLevel",
+      "kernelUpToDate",
+      "irv1State",
+      "irv2State",
+      "irv3State",
+      "irv4State"
+    ],
+    "signature": "alarmMode|alarmSOS|alarmState|alarmTechnical|gsmLevel|inactiveProduct|irv1State|irv2State|irv3State|irv4State|kernelUpToDate|liveCheckRunning|networkDefect|outTemperature|remoteSurveyDefect|simDefect|systAutoProtect|systBatteryDefect|systOpenIssue|systSectorDefect|systSupervisionDefect|systTechnicalDefect|unackedEvent|unitAutoProtect|unitBatteryDefect|videoLinkDefect|zone1State|zone2State|zone3State|zone4State|zone5State|zone6State|zone7State|zone8State",
+    "signatureHash": "alarm:aad768ee0367013a974276117fd5ed4834cc26e4d31acc88d35134731331b0e7",
+    "expected": {
+      "deviceType": "alarm",
+      "category": 11,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "D-Roch",
+    "firstUsage": "hvac",
+    "metadataNames": ["outTemperature"],
+    "signature": "outTemperature",
+    "signatureHash": "hvac:16804a9994bce28275150db329a9c0b931ef7f20608c1a3d2ff248f58569f0d3",
+    "expected": {
+      "deviceType": "temperature-sensor",
+      "category": 10,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "StephanH27",
+    "firstUsage": "gate",
+    "metadataNames": [
+      "levelCmd",
+      "thermicDefect",
+      "level",
+      "recFav",
+      "onFavPos",
+      "localisation",
+      "modeAsso"
+    ],
+    "levelStep": 100,
+    "signature": "level|levelCmd|localisation|modeAsso|onFavPos|recFav|thermicDefect",
+    "signatureHash": "gate:449e2a60377094cde10224cee91d378fb0ae373ae6ceea0ac2cbc1ed011bffa7",
+    "expected": {
+      "deviceType": "garage-door",
+      "category": 4,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "StephanH27",
+    "firstUsage": "",
+    "metadataNames": ["levelCmd", "thermicDefect", "localisation", "modeAsso"],
+    "signature": "levelCmd|localisation|modeAsso|thermicDefect",
+    "signatureHash": ":83b0912c6fe14622219522922ea0347dcbf86bf9cfd3346a2eca8eac70ca8260",
+    "expected": null
+  },
+  {
+    "source": "StephanH27",
+    "firstUsage": "gate",
+    "metadataNames": ["levelCmd", "thermicDefect", "localisation", "modeAsso"],
+    "signature": "levelCmd|localisation|modeAsso|thermicDefect",
+    "signatureHash": "gate:83b0912c6fe14622219522922ea0347dcbf86bf9cfd3346a2eca8eac70ca8260",
+    "expected": {
+      "deviceType": "garage-door",
+      "category": 4,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "StephanH27",
+    "firstUsage": "alarm",
+    "metadataNames": [
+      "alarmCmd",
+      "alarmMode",
+      "alarmState",
+      "alarmTechnical",
+      "alarmSOS",
+      "unitBatteryDefect",
+      "unitAutoProtect",
+      "unitInternalDefect",
+      "systAlarmDefect",
+      "systAutoProtect",
+      "systBatteryDefect",
+      "systSupervisionDefect",
+      "systOpenIssue",
+      "systSectorDefect",
+      "systTechnicalDefect",
+      "outTemperature",
+      "ackEventCmd",
+      "part1State",
+      "part2State",
+      "part3State",
+      "part4State"
+    ],
+    "signature": "ackEventCmd|alarmCmd|alarmMode|alarmSOS|alarmState|alarmTechnical|outTemperature|part1State|part2State|part3State|part4State|systAlarmDefect|systAutoProtect|systBatteryDefect|systOpenIssue|systSectorDefect|systSupervisionDefect|systTechnicalDefect|unitAutoProtect|unitBatteryDefect|unitInternalDefect",
+    "signatureHash": "alarm:6e33f7ee5e62b58f4e888c91a13fd9b9d868f3751cead5ea1252578ba86523a5",
+    "expected": {
+      "deviceType": "alarm",
+      "category": 11,
+      "impliedSettings": {
+        "legacy": true
+      }
+    }
+  },
+  {
+    "source": "StephanH27",
+    "firstUsage": "shutter",
+    "metadataNames": [
+      "positionCmd",
+      "thermicDefect",
+      "position",
+      "recFav",
+      "onFavPos",
+      "upDefect",
+      "downDefect",
+      "obstacleDefect",
+      "intrusion",
+      "battDefect",
+      "localisation",
+      "modeAsso"
+    ],
+    "signature": "battDefect|downDefect|intrusion|localisation|modeAsso|obstacleDefect|onFavPos|position|positionCmd|recFav|thermicDefect|upDefect",
+    "signatureHash": "shutter:c3fe8e2afa864e1a7a5c6676b4287a7b2f2a886a466baec3df8a1ec4f898ad6c",
+    "expected": {
+      "deviceType": "window-covering",
+      "category": 14,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "StephanH27",
+    "firstUsage": "light",
+    "metadataNames": [
+      "levelCmd",
+      "thermicDefect",
+      "level",
+      "recFav",
+      "onFavPos",
+      "loadDefect",
+      "cmdDefect",
+      "battDefect",
+      "onPresenceDetected",
+      "onDusk",
+      "localisation",
+      "modeAsso"
+    ],
+    "levelStep": 1,
+    "signature": "battDefect|cmdDefect|level|levelCmd|loadDefect|localisation|modeAsso|onDusk|onFavPos|onPresenceDetected|recFav|thermicDefect",
+    "signatureHash": "light:52b19420484787c248bf2875cb5e35d334ca80b73042d66cb354f41cb68fcc2a",
+    "expected": {
+      "deviceType": "lightbulb",
+      "category": 5,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "StephanH27",
+    "firstUsage": "belmDoor",
+    "metadataNames": ["config", "autoProtect", "battDefect", "intrusionDetect"],
+    "signature": "autoProtect|battDefect|config|intrusionDetect",
+    "signatureHash": "belmDoor:e5df602ee355f20bf4a8b03f603891c9b9a581e5be354d479e02e5c4bce04e47",
+    "expected": {
+      "deviceType": "contact-sensor",
+      "category": 12,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "StephanH27",
+    "firstUsage": "window",
+    "metadataNames": ["config", "autoProtect", "battDefect", "intrusionDetect"],
+    "signature": "autoProtect|battDefect|config|intrusionDetect",
+    "signatureHash": "window:e5df602ee355f20bf4a8b03f603891c9b9a581e5be354d479e02e5c4bce04e47",
+    "expected": {
+      "deviceType": "contact-sensor",
+      "category": 13,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "maaxleop",
+    "firstUsage": "alarm",
+    "metadataNames": [
+      "alarmState",
+      "alarmMode",
+      "alarmTechnical",
+      "alarmSOS",
+      "unitAutoProtect",
+      "unitBatteryDefect",
+      "unackedEvent",
+      "systAutoProtect",
+      "systBatteryDefect",
+      "systSupervisionDefect",
+      "systOpenIssue",
+      "systSectorDefect",
+      "systTechnicalDefect",
+      "videoLinkDefect",
+      "remoteSurveyDefect",
+      "simDefect",
+      "networkDefect",
+      "inactiveProduct",
+      "liveCheckRunning",
+      "zone1State",
+      "zone2State",
+      "zone3State",
+      "zone4State",
+      "zone5State",
+      "zone6State",
+      "zone7State",
+      "zone8State",
+      "outTemperature",
+      "gsmLevel",
+      "kernelUpToDate"
+    ],
+    "signature": "alarmMode|alarmSOS|alarmState|alarmTechnical|gsmLevel|inactiveProduct|kernelUpToDate|liveCheckRunning|networkDefect|outTemperature|remoteSurveyDefect|simDefect|systAutoProtect|systBatteryDefect|systOpenIssue|systSectorDefect|systSupervisionDefect|systTechnicalDefect|unackedEvent|unitAutoProtect|unitBatteryDefect|videoLinkDefect|zone1State|zone2State|zone3State|zone4State|zone5State|zone6State|zone7State|zone8State",
+    "signatureHash": "alarm:0c6e1d33808fa50a0a921502f80d36430dfaeda5abfed2467f9f2b07821e4842",
+    "expected": {
+      "deviceType": "alarm",
+      "category": 11,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "maaxleop",
+    "firstUsage": "hvac",
+    "metadataNames": [
+      "authorization",
+      "setpoint",
+      "thermicLevel",
+      "delaySetpoint",
+      "delayThermicLevel",
+      "hvacMode",
+      "timeDelay",
+      "temperature",
+      "tempoOn",
+      "antifrostOn",
+      "loadSheddingOn",
+      "openingDetected",
+      "presenceDetected",
+      "absence",
+      "productionDefect",
+      "batteryCmdDefect",
+      "tempSensorDefect",
+      "tempSensorShortCut",
+      "tempSensorOpenCirc",
+      "boostOn",
+      "localisation",
+      "modeAsso"
+    ],
+    "signature": "absence|antifrostOn|authorization|batteryCmdDefect|boostOn|delaySetpoint|delayThermicLevel|hvacMode|loadSheddingOn|localisation|modeAsso|openingDetected|presenceDetected|productionDefect|setpoint|tempSensorDefect|tempSensorOpenCirc|tempSensorShortCut|temperature|tempoOn|thermicLevel|timeDelay",
+    "signatureHash": "hvac:1bab47d1dd7e898b5dc2e9867b14dfb8bc9272c4cb0b5d1221da962d43a6ffb4",
+    "expected": {
+      "deviceType": "thermostat",
+      "category": 9,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "mgcrea",
+    "firstUsage": "others",
+    "metadataNames": [
+      "levelCmd",
+      "thermicDefect",
+      "level",
+      "recFav",
+      "onFavPos",
+      "localisation",
+      "modeAsso"
+    ],
+    "levelStep": 100,
+    "signature": "level|levelCmd|localisation|modeAsso|onFavPos|recFav|thermicDefect",
+    "signatureHash": "others:449e2a60377094cde10224cee91d378fb0ae373ae6ceea0ac2cbc1ed011bffa7",
+    "expected": {
+      "deviceType": "lightbulb-switchable",
+      "category": 5,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "mgcrea",
+    "firstUsage": "light",
+    "metadataNames": [
+      "levelCmd",
+      "thermicDefect",
+      "level",
+      "recFav",
+      "onFavPos",
+      "loadDefect",
+      "cmdDefect",
+      "battDefect",
+      "onPresenceDetected",
+      "onDusk",
+      "localisation",
+      "modeAsso",
+      "jobs",
+      "indexTimeOn",
+      "activationCpt",
+      "softVersion",
+      "softPlan",
+      "reset",
+      "gradType",
+      "gradLowLevel",
+      "gradLowLevelApply",
+      "gradHighLevel",
+      "gradHighLevelApply"
+    ],
+    "levelStep": 1,
+    "signature": "activationCpt|battDefect|cmdDefect|gradHighLevel|gradHighLevelApply|gradLowLevel|gradLowLevelApply|gradType|indexTimeOn|jobs|level|levelCmd|loadDefect|localisation|modeAsso|onDusk|onFavPos|onPresenceDetected|recFav|reset|softPlan|softVersion|thermicDefect",
+    "signatureHash": "light:fce45085835f4f2790ea3b17d208b5ace34935444d2535e75ba3f0a2ce86de5f",
+    "expected": {
+      "deviceType": "lightbulb",
+      "category": 5,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "mgcrea",
+    "firstUsage": "belmDoor",
+    "metadataNames": ["config", "battDefect", "supervisionMode", "intrusionDetect"],
+    "signature": "battDefect|config|intrusionDetect|supervisionMode",
+    "signatureHash": "belmDoor:fb935867933d89b3058f09384f76fd63f3defb18cfb3172f60fa9f4f237f748b",
+    "expected": {
+      "deviceType": "contact-sensor",
+      "category": 12,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "mgcrea",
+    "firstUsage": "window",
+    "metadataNames": ["config", "battDefect", "supervisionMode", "intrusionDetect"],
+    "signature": "battDefect|config|intrusionDetect|supervisionMode",
+    "signatureHash": "window:fb935867933d89b3058f09384f76fd63f3defb18cfb3172f60fa9f4f237f748b",
+    "expected": {
+      "deviceType": "contact-sensor",
+      "category": 13,
+      "impliedSettings": {}
+    }
+  },
+  {
+    "source": "quizatsaderac",
+    "firstUsage": "",
+    "metadataNames": [],
+    "signature": "",
+    "signatureHash": ":e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "expected": null
+  }
+]

@@ -1,4 +1,4 @@
-import { postJson } from "../utils/request.js";
+import { postJson } from "../util/request.js";
 
 export type Webhook = {
   url: string;

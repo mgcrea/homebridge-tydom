@@ -1,12 +1,12 @@
 #! /usr/bin/env node
 import { readFileSync } from "node:fs";
-import { getEndpointSignatureFromMetadata } from "../src/helpers/tydom.js";
+import { getEndpointSignatureFromMetadata } from "../src/api/device-type.js";
 import type {
   TydomConfigResponse,
   TydomMetaElement,
   TydomMetaResponse,
 } from "../src/typings/tydom.js";
-import { sha256, sha256Sync } from "../src/utils/hash.js";
+import { sha256, sha256Sync } from "../src/util/hash.js";
 
 const [action, ...args] = process.argv.slice(2);
 const [filename] = args;

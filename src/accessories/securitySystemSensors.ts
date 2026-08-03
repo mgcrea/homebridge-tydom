@@ -18,7 +18,7 @@ import type {
   SecuritySystemProduct,
   TydomAccessoryContext,
 } from "../typings/tydom.js";
-import { debugAddSubService, debugGet, debugGetResult, debugSetUpdate } from "../utils/debug.js";
+import { debugAddSubService, debugGet, debugGetResult, debugSetUpdate } from "../platform/trace.js";
 
 const getOpenedIssues = (commandResults: SecuritySystemHistoOpenIssuesCommandResult[]) =>
   keyBy(

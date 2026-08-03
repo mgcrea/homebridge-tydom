@@ -12,7 +12,7 @@ import {
 } from "../helpers/accessory.js";
 import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
-import { chalkNumber, chalkString } from "../utils/color.js";
+import { styleNumber, styleString } from "../util/style.js";
 import {
   debugGet,
   debugGetResult,
@@ -20,7 +20,7 @@ import {
   debugSetResult,
   debugSetUpdate,
   debugTydomPut,
-} from "../utils/debug.js";
+} from "../platform/trace.js";
 import {
   addAccessorySwitchableService,
   updateAccessorySwitchableService,
@@ -141,13 +141,13 @@ export const updateLightbulb = (
         const service = getAccessoryService(accessory, Service.Lightbulb);
         const level = value as number;
         if (level === null) {
-          debug(`Encountered a ${chalkString("level")} update with a null value!`);
+          debug(`Encountered a ${styleString("level")} update with a null value!`);
           return;
         }
         // @NOTE ignore pending updates
         if (state.pendingUpdatedValues.includes(level)) {
           debug(
-            `Ignoring a delayed ${chalkString("level")} update with value=${chalkNumber(level)}`,
+            `Ignoring a delayed ${styleString("level")} update with value=${styleNumber(level)}`,
           );
           // Reset pending updates stack
           state.pendingUpdatedValues = [];

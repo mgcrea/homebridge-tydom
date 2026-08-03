@@ -26,10 +26,10 @@ import type {
   TydomDeviceSecuritySystemData,
   TydomDeviceSecuritySystemZoneState,
 } from "../typings/tydom.js";
-import { assert } from "../utils/assert.js";
-import { asNumber, sameArrays } from "../utils/basic.js";
-import { chalkJson, chalkKeyword } from "../utils/color.js";
-import { decode } from "../utils/hash.js";
+import { assert } from "../util/assert.js";
+import { asNumber, sameArrays } from "../util/basic.js";
+import { styleJson, styleKeyword } from "../util/style.js";
+import { decode } from "../util/hash.js";
 import {
   debug,
   debugAddSubService,
@@ -38,7 +38,7 @@ import {
   debugSet,
   debugSetResult,
   debugSetUpdate,
-} from "../utils/debug.js";
+} from "../platform/trace.js";
 
 type ZoneAliases = {
   stay?: number[];
@@ -438,7 +438,7 @@ export const updateSecuritySystem = (
       switch (name) {
         case "eventAlarm": {
           const { event } = values as { event: SecuritySystemAlarmEvent };
-          debug(`New ${chalkKeyword("SecuritySystem")} alarm event=${chalkJson(event)}`);
+          debug(`New ${styleKeyword("SecuritySystem")} alarm event=${styleJson(event)}`);
           controller.emit("notification", {
             level: "warn",
             message: `SecuritySystem \`${name}\` event, name=\`${event.name}\` parameters=\`${JSON.stringify(

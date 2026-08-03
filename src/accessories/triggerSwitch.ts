@@ -7,7 +7,7 @@ import {
   setupAccessoryInformationService,
 } from "../helpers/accessory.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
-import { debugSet, debugSetResult } from "../utils/debug.js";
+import { debugSet, debugSetResult } from "../platform/trace.js";
 
 type TriggerSwitchSettings = {
   delay?: number;

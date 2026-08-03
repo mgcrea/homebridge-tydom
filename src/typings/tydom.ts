@@ -25,64 +25,25 @@ export type TydomAccessoryUpdateContext = Pick<
   "category" | "deviceId" | "endpointId" | "accessoryId"
 >;
 
-export type TydomConfigEndpoint = {
-  id_endpoint: number;
-  id_device: number;
-  picto: string;
-  name: string;
-  first_usage: string;
-  last_usage: string;
-};
+// Wire types live in the framework-free api layer. Imported for use by the
+// device-specific aliases below, and re-exported so the accessories keep a
+// single import point during the phase 6 conversion.
+import type { TydomConfigGroup, TydomDataElement, TydomMetaElement } from "../api/types.js";
 
-export type TydomConfigGroup = {
-  picto: string;
-  name: string;
-  group_all: boolean;
-  usage: string;
-  id: number;
-};
+export type {
+  AnyTydomDataValue,
+  TydomConfigEndpoint,
+  TydomConfigGroup,
+  TydomConfigResponse,
+  TydomDataElement,
+  TydomEndpointData,
+  TydomEndpointDataResponse,
+  TydomGroupsResponse,
+  TydomMetaElement,
+  TydomMetaEndpoint,
+  TydomMetaResponse,
+} from "../api/types.js";
 
-export type TydomConfigResponse = {
-  endpoints: TydomConfigEndpoint[];
-  groups: TydomConfigGroup[];
-};
-
-export type TydomGroupsResponse = {
-  groups: { id: number; devices: { id: number; endpoints: { id: number }[] }[] }[];
-};
-
-export type TydomMetaElement = {
-  enum_values?: string[];
-  max?: number;
-  min?: number;
-  name: string;
-  permission: "r" | "w" | "rw";
-  step?: number;
-  type: "boolean" | "string" | "numeric";
-  unit?: "boolean" | "%";
-};
-
-export type TydomMetaEndpoint = {
-  id: number;
-  error: number;
-  metadata: TydomMetaElement[];
-};
-
-export type TydomMetaResponse = {
-  id: number;
-  endpoints: TydomMetaEndpoint[];
-}[];
-
-export type AnyTydomDataValue = string | number | boolean;
-
-export type TydomDataElement<K = string, V = AnyTydomDataValue> = {
-  name: K;
-  validity: "expired" | "upToDate";
-  value: V;
-};
-
-export type TydomEndpointDataResponse = { error: number; data: TydomDataElement[] };
-export type TydomEndpointData = TydomDataElement[];
 export type TydomDeviceThermostatAuthorization = "STOP" | "HEATING";
 export type TydomDeviceThermostatHvacMode = "NORMAL" | "STOP" | "ANTI_FROST";
 export type TydomDeviceThermostatThermicLevel =

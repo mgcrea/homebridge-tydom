@@ -9,7 +9,7 @@ import {
 } from "../helpers/accessory.js";
 import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
-import { debugGet, debugGetResult, debugSetUpdate } from "../utils/debug.js";
+import { debugGet, debugGetResult, debugSetUpdate } from "../platform/trace.js";
 
 export const setupTemperatureSensor = (
   accessory: PlatformAccessory<TydomAccessoryContext>,
