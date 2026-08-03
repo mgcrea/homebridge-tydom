@@ -20,6 +20,8 @@ export abstract class BaseAccessory implements TydomAccessory {
   protected readonly deviceId: number;
   protected readonly endpointId: number;
   protected readonly notify: AccessoryDeps["notify"];
+  /** Delta Dore label lookups, bound to the configured locale. */
+  protected readonly t: AccessoryDeps["t"];
 
   /**
    * Resolves once asynchronous setup has finished.
@@ -38,6 +40,7 @@ export abstract class BaseAccessory implements TydomAccessory {
     this.accessory = deps.accessory;
     this.api = deps.api;
     this.notify = deps.notify;
+    this.t = deps.t;
     const { deviceId, endpointId } = deps.accessory.context;
     this.deviceId = deviceId;
     this.endpointId = endpointId;

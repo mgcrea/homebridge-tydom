@@ -1,6 +1,4 @@
 import type { CharacteristicProps, Service } from "homebridge";
-import get from "lodash/get.js";
-import locale from "../config/locale.js";
 import { getTydomDataPropValue } from "../helpers/tydom.js";
 import {
   debug,
@@ -231,11 +229,7 @@ export class ThermostatAccessory extends BaseAccessory {
 
     // A single value means the device only offers absence (anti-frost) mode.
     if (values.length === 1) {
-      this.#addLevelSwitch(
-        "ANTI_FROST",
-        "hvacMode_absence",
-        get(locale, "HVAC_INFO_ABSENCE", "N/A") as string,
-      );
+      this.#addLevelSwitch("ANTI_FROST", "hvacMode_absence", this.t("HVAC_INFO_ABSENCE"));
       return;
     }
 
@@ -243,7 +237,7 @@ export class ThermostatAccessory extends BaseAccessory {
       this.#addLevelSwitch(
         value,
         `thermicLevel_${value.toLowerCase()}`,
-        get(locale, `HVAC_LEVEL_${value}`, "N/A") as string,
+        this.t(`HVAC_LEVEL_${value}`),
       );
     }
   }

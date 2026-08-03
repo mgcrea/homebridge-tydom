@@ -2,8 +2,7 @@ import { EventEmitter } from "node:events";
 import type { Logging } from "homebridge";
 import type { Categories } from "homebridge";
 import { blue, bold, green, yellow } from "kolorist";
-import get from "lodash/get.js";
-import locale from "./config/locale.js";
+import { createTranslator, type Translator } from "./i18n/index.js";
 import { discoverDevices, expandCompanions } from "./api/discovery.js";
 import {
   classifyMessage,
@@ -59,10 +58,13 @@ export default class TydomController extends EventEmitter {
   private devices = new Map<string, Categories>();
   private refreshInterval: NodeJS.Timeout | undefined;
   private hasConnectedOnce = false;
+  /** Delta Dore label lookups, bound to the configured locale. */
+  private readonly t: Translator;
   constructor(log: Logging, config: TydomPlatformConfig) {
     super();
     this.config = config;
     this.log = log;
+    this.t = createTranslator(config.locale);
     // hostname/username/password are validated and resolved by parseConfig,
     // so there is nothing left to assert here.
     const { hostname, username, password } = config;
@@ -213,7 +215,7 @@ export default class TydomController extends EventEmitter {
       const context: TydomAccessoryContext = {
         name:
           device.deviceType === "alarm-sensors"
-            ? ((get(locale, "ALARME_ISSUES_OUVERTES", "N/A") as string) ?? device.name)
+            ? this.t("ALARME_ISSUES_OUVERTES", device.name)
             : device.name,
         category: category as Categories,
         deviceType: device.deviceType,

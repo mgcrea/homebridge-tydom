@@ -1,7 +1,5 @@
 import type { Service } from "homebridge";
-import get from "lodash/get.js";
 import type { TydomUpdateType } from "../api/types.js";
-import locale from "../config/locale.js";
 import { getTydomDataPropValue } from "../helpers/tydom.js";
 import {
   debug,
@@ -117,17 +115,15 @@ export class SecuritySystemAccessory extends BaseAccessory {
 
     this.#systOpenIssue = this.#addContactSensor(
       "systOpenIssue",
-      get(locale, "ALARME_ISSUES_OUVERTES", "N/A") as string,
+      this.t("ALARME_ISSUES_OUVERTES"),
       async () => getTydomDataPropValue<boolean>(await this.#read(), "systOpenIssue"),
     );
-    this.#alarmSOS = this.#addContactSensor(
-      "alarmSOS",
-      get(locale, "DISCRETE_ALARM_V3", "N/A") as string,
-      async () => getTydomDataPropValue<boolean>(await this.#read(), "alarmSOS"),
+    this.#alarmSOS = this.#addContactSensor("alarmSOS", this.t("DISCRETE_ALARM_V3"), async () =>
+      getTydomDataPropValue<boolean>(await this.#read(), "alarmSOS"),
     );
     // No getter: preAlarm is event-driven, set by an eventAlarm cdata push and
     // cleared when the user disarms.
-    this.#preAlarm = this.#addContactSensor("preAlarm", get(locale, "PREALARM", "N/A") as string);
+    this.#preAlarm = this.#addContactSensor("preAlarm", this.t("PREALARM"));
     this.#preAlarm.getCharacteristic(Characteristic.ContactSensorState).updateValue(false);
 
     this.#setupZones(initialData, zones);
@@ -213,9 +209,7 @@ export class SecuritySystemAccessory extends BaseAccessory {
         // that is not a reason to drop it.
         this.platform.log.warn(`Missing zone label data for index ${zoneIndex}, using a default`);
       }
-      const name =
-        zone?.nameCustom ??
-        (zone?.nameStd ? (get(locale, zone.nameStd, "N/A") as string) : `Zone ${zoneIndex}`);
+      const name = zone?.nameCustom ?? (zone?.nameStd ? this.t(zone.nameStd) : `Zone ${zoneIndex}`);
       const service = this.subService(Services.Switch, name, `zone_${zone?.id ?? zoneIndex}`);
       debugAddSubService(service, this.accessory);
       this.#service?.addLinkedService(service);

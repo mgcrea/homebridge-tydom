@@ -7,8 +7,9 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      // Entry point and constants carry no logic; the i18n tables are pure data.
-      exclude: ["src/index.ts", "src/config/env.ts", "src/config/i18n/**"],
+      // Entry point and constants carry no logic. The i18n tables are JSON and
+      // so are not matched by `include` at all.
+      exclude: ["src/index.ts", "src/config/env.ts"],
     },
   },
 });

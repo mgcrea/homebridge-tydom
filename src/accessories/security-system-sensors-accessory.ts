@@ -1,7 +1,5 @@
 import type { Service } from "homebridge";
-import get from "lodash/get.js";
 import type { TydomUpdateType } from "../api/types.js";
-import locale from "../config/locale.js";
 import { debugAddSubService, debugGet, debugGetResult, debugSetUpdate } from "../platform/trace.js";
 import type {
   SecuritySystemHistoOpenIssuesCommandResult,
@@ -57,8 +55,7 @@ export class SecuritySystemSensorsAccessory extends BaseAccessory {
 
     for (const product of this.#products) {
       const { id: productId, nameStd, nameCustom, number } = product;
-      const name =
-        nameCustom ?? `${get(locale, nameStd, "N/A") as string}${number ? ` ${number}` : ""}`;
+      const name = nameCustom ?? `${this.t(nameStd)}${number ? ` ${number}` : ""}`;
       const service = this.subService(Services.ContactSensor, name, `systOpenIssue_${productId}`);
       debugAddSubService(service, this.accessory);
       this.#sensors.set(productId, service);

@@ -2,6 +2,7 @@ import type { PlatformAccessory } from "homebridge";
 import type { TydomApiClient } from "../api/client.js";
 import type { DeviceType } from "../api/device-type.js";
 import type { TydomUpdateType } from "../api/types.js";
+import type { Translator } from "../i18n/index.js";
 import type TydomPlatform from "../platform.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
 
@@ -16,6 +17,15 @@ export type AccessoryDeps = {
   accessory: PlatformAccessory<TydomAccessoryContext>;
   /** The endpoint-facing API. Class-based accessories use this, not `controller`. */
   api: TydomApiClient;
+  /**
+   * Delta Dore label lookups, already bound to the configured locale.
+   *
+   * Injected rather than imported, because the tables used to be reached
+   * through a module-level Proxy whose target was swapped at construction — the
+   * only way to make an import evaluated before the config was read observe the
+   * user's `locale`.
+   */
+  t: Translator;
   /**
    * Raise a user-facing notification (Discord webhooks).
    *

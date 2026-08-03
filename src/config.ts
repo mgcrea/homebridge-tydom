@@ -1,6 +1,7 @@
 import type { PlatformConfig } from "homebridge";
 import type { DeviceSettings } from "./api/discovery.js";
 import type { Webhook } from "./helpers/webhook.js";
+import type { Locale } from "./i18n/index.js";
 import { decode } from "./util/hash.js";
 
 /**
@@ -15,7 +16,8 @@ export class ConfigError extends Error {
   override readonly name = "ConfigError";
 }
 
-export type TydomLocale = "en" | "fr";
+/** The locales the label tables ship. Owned by `src/i18n`, which holds them. */
+export type TydomLocale = Locale;
 
 /** The platform's configuration, parsed once and normalised. */
 export type TydomConfig = {

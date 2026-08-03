@@ -11,7 +11,7 @@ import type { PluginLogger } from "./api/client.js";
 import { CATEGORY, deviceTypeForCategory, type DeviceType } from "./api/device-type.js";
 import { ConfigError, parseConfig, type TydomConfig } from "./config.js";
 import { PLATFORM_NAME, PLUGIN_NAME } from "./config/env.js";
-import { setLocale } from "./config/locale.js";
+import { createTranslator, type Translator } from "./i18n/index.js";
 import { createPluginLogger } from "./platform/logger.js";
 import type {
   ControllerDevicePayload,
@@ -55,6 +55,8 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   controller?: TydomController;
   api: Homebridge;
   config!: TydomPlatformConfig;
+  /** Delta Dore label lookups, bound to the configured locale. */
+  t!: Translator;
   pluginLog?: PluginLogger;
   disabled = false;
   shuttingDown = false;
@@ -86,7 +88,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     if (this.config.debug) {
       enableDebug();
     }
-    setLocale(this.config.locale);
+    this.t = createTranslator(this.config.locale);
     this.pluginLog = createPluginLogger(log, this.config.debug);
     setShimLogger(this.pluginLog);
 
@@ -295,6 +297,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
         platform: this,
         accessory,
         api: getApiClient(this.controller.client),
+        t: this.t,
         notify: (level, message) => {
           this.handleControllerNotification({ level, message });
         },
