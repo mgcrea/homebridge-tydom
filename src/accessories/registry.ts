@@ -6,6 +6,7 @@ import { createLightbulbAccessory } from "./lightbulb-accessory.js";
 import { createOutletAccessory } from "./outlet-accessory.js";
 import { createSmokeDetectorAccessory } from "./smoke-detector-accessory.js";
 import { createTemperatureSensorAccessory } from "./temperature-sensor-accessory.js";
+import { createThermostatAccessory } from "./thermostat-accessory.js";
 import { createTriggerSwitchAccessory } from "./trigger-switch-accessory.js";
 import { createWindowCoveringAccessory } from "./window-covering-accessory.js";
 import {
@@ -18,7 +19,6 @@ import {
   setupSecuritySystemSensors,
   updateSecuritySystemSensors,
 } from "./securitySystemSensors.js";
-import { setupThermostat, updateThermostat } from "./thermostat.js";
 
 /**
  * The one place a device type is mapped to an implementation.
@@ -45,7 +45,7 @@ export const ACCESSORY_REGISTRY: AccessoryRegistry = {
   "smoke-detector": createSmokeDetectorAccessory,
   switch: createSwitchAccessory,
   "temperature-sensor": createTemperatureSensorAccessory,
-  thermostat: fromFunctionPair(setupThermostat, updateThermostat),
+  thermostat: createThermostatAccessory,
   "trigger-switch": createTriggerSwitchAccessory,
   "window-covering": createWindowCoveringAccessory,
 };
