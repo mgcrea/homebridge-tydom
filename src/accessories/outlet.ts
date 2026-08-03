@@ -9,8 +9,14 @@ import {
   setupAccessoryInformationService,
 } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import type { TydomAccessoryContext } from "src/typings";
-import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils";
+import type { TydomAccessoryContext } from "src/typings/tydom";
+import {
+  debugGet,
+  debugGetResult,
+  debugSet,
+  debugSetResult,
+  debugSetUpdate,
+} from "src/utils/debug";
 
 export const setupOutlet = (
   accessory: PlatformAccessory<TydomAccessoryContext>,

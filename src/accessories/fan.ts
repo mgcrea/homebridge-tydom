@@ -5,7 +5,7 @@ import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
 } from "src/helpers/accessory";
-import type { TydomAccessoryContext } from "src/typings";
+import type { TydomAccessoryContext } from "src/typings/tydom";
 import {
   addAccessorySwitchableService,
   updateAccessorySwitchableService,

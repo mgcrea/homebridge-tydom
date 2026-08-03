@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "promise", "import", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn"
+  },
+  "env": {
+    "node": true,
+    "es2023": true
+  },
+  "rules": {
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-explicit-any": "error",
+    "unicorn/prefer-node-protocol": "error",
+    "no-console": "error",
+    // Connect retry backoff, the discovery handshake (/ping then /configs/file
+    // then /groups/file then /devices/meta) and command pacing are all
+    // inherently sequential — parallelising them would be wrong, not faster.
+    "no-await-in-loop": "off"
+  },
+  "overrides": [
+    {
+      "files": ["test/**/*.ts", "scripts/**/*.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ],
+  "ignorePatterns": ["dist/", "node_modules/", "coverage/"]
+}

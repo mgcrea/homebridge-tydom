@@ -2,28 +2,19 @@ import debug from "debug";
 import type { PlatformAccessory } from "homebridge";
 import { Characteristic, Service } from "src/config/hap";
 import type TydomController from "src/controller";
-import type { TydomAccessoryUpdateType } from "src/helpers";
+import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers";
+} from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import type { TydomAccessoryContext } from "src/typings";
+import type { TydomAccessoryContext } from "src/typings/tydom";
 import type { TydomDeviceGarageDoorData } from "src/typings/tydom";
-import {
-  asNumber,
-  chalkJson,
-  chalkKeyword,
-  chalkNumber,
-  chalkString,
-  debugGet,
-  debugGetResult,
-  debugSet,
-  debugSetResult,
-  waitFor,
-} from "src/utils";
+import { asNumber, waitFor } from "src/utils/basic";
+import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "src/utils/color";
+import { debugGet, debugGetResult, debugSet, debugSetResult } from "src/utils/debug";
 import type TydomClient from "tydom-client";
 
 type GarageDoorOpenerSettings = {

@@ -1,0 +1,63 @@
+name: release
+
+# Versioning, tagging and the GitHub release are done locally by release-it
+# (`pnpm release`). This workflow only publishes the tag to npm.
+#
+# Tags in this repo are `v`-prefixed semver (`v0.29.0`). The unprefixed form is
+# accepted too so a hand-cut tag still publishes.
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+      - "[0-9]+.[0-9]+.[0-9]+*"
+
+# Trusted publishing: npm verifies this workflow's OIDC identity, so there is no
+# NPM_TOKEN to store or rotate. Do not set NODE_AUTH_TOKEN — it takes precedence
+# over OIDC and would silently fall back to token auth.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1+, which is newer than the version
+      # bundled with some runner images.
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - run: pnpm install --frozen-lockfile
+
+      # A tag that disagrees with package.json would publish the wrong version
+      # under the right name, which is not something npm lets you take back.
+      - name: Verify tag matches package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $pkg"
+            exit 1
+          fi
+          echo "Publishing version $pkg"
+
+      - run: pnpm run lint
+      - run: pnpm run check
+      - run: pnpm run format:check
+      - run: pnpm run spec
+      - run: pnpm run build
+
+      # --provenance links the published tarball to this workflow run.
+      - name: Publish to npm
+        run: npm publish --provenance

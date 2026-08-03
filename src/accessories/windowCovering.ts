@@ -11,7 +11,7 @@ import {
 } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type { TydomAccessoryContext, TydomDeviceShutterData } from "src/typings/tydom";
-import { asNumber } from "src/utils";
+import { asNumber } from "src/utils/basic";
 import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "src/utils/color";
 import {
   debug,

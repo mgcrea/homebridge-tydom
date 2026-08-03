@@ -8,8 +8,7 @@ export default defineConfig({
   clean: true,
   splitting: false,
   sourcemap: true,
-  target: "node20",
-  tsconfig: "tsconfig.build.json",
+  target: "node22",
   esbuildOptions(options) {
     options.packages = "external";
   },

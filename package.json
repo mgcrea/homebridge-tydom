@@ -1,63 +1,74 @@
 {
   "name": "homebridge-tydom",
+  "displayName": "Tydom",
   "version": "0.29.0",
   "description": "Homebridge plugin to manage Tydom devices by Delta Dore",
+  "author": "Olivier Louvignes <olivier@mgcrea.io>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mgcrea/homebridge-tydom.git"
+  },
+  "homepage": "https://github.com/mgcrea/homebridge-tydom#readme",
+  "bugs": "https://github.com/mgcrea/homebridge-tydom/issues",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "homebridge-tydom": "./dist/bin/cli.js"
-  },
-  "author": "Olivier Louvignes <olivier@mgcrea.io>",
-  "repository": "github:mgcrea/homebridge-tydom",
-  "license": "MIT",
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "homebridge",
+    "homekit",
+    "tydom",
+    "delta-dore",
+    "tyxal",
+    "tyxia",
+    "domotics",
+    "home-automation"
   ],
   "engines": {
-    "node": "^18.20.4 || ^20.15.1 || ^22 || ^24",
-    "homebridge": "^1.6.0 || ^2.0.0-beta.0"
+    "node": "^22 || ^24 || ^26",
+    "homebridge": "^2.0.0"
   },
   "scripts": {
-    "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 homebridge -D -U ./.homebridge -P .",
-    "start:node": "NODE_TLS_REJECT_UNAUTHORIZED=0 NODE_PATH=src/ tsx .",
-    "start:watch": "nodemon --ext \"ts,tsx\" --watch \"lib/\" --exec \"npm run start\"",
-    "start:prod": "npm run spec:watch",
-    "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
-    "lint": "eslint src/",
-    "format": "prettier --write src/",
-    "format:check": "prettier --check src/",
-    "check": "tsc --noEmit",
-    "test": "npm run lint && npm run format && npm run check",
     "build": "tsup",
-    "prepublishOnly": "npm run build"
+    "dev": "tsup --watch",
+    "lint": "oxlint src/ test/ scripts/",
+    "lint:fix": "oxlint --fix src/ test/ scripts/",
+    "format": "oxfmt --write src/ test/ scripts/",
+    "format:check": "oxfmt --check src/ test/ scripts/",
+    "check": "tsc --noEmit",
+    "spec": "vitest --run",
+    "coverage": "vitest --run --coverage",
+    "watch": "vitest",
+    "hash": "tsx scripts/hash.ts",
+    "dev:homebridge": "homebridge -D -U ./.homebridge -P . --strict-plugin-resolution",
+    "dev:homebridge:insecure": "NODE_TLS_REJECT_UNAUTHORIZED=0 homebridge -D -U ./.homebridge -P . --strict-plugin-resolution",
+    "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
+    "test": "pnpm run lint && pnpm run check && pnpm run spec && pnpm run format:check",
+    "release": "release-it",
+    "prepublishOnly": "pnpm run test && pnpm run build"
   },
   "dependencies": {
     "debug": "^4.4.3",
-    "fakegato-history": "^0.6.7",
     "kolorist": "^1.8.0",
     "lodash": "^4.17.23",
     "source-map-support": "^0.5.21",
     "tydom-client": "^0.16.0"
   },
   "devDependencies": {
-    "@mgcrea/eslint-config-node": "^0.14.1",
-    "@tsconfig/node20": "^20.1.9",
+    "@tsconfig/node-lts": "^24.0.0",
+    "@tsconfig/strictest": "^2.0.8",
     "@types/debug": "^4.1.12",
-    "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.23",
     "@types/node": "^25.2.3",
-    "@types/node-persist": "^3.1.8",
-    "@types/ws": "^8.18.1",
-    "eslint": "^9.39.2",
+    "@vitest/coverage-v8": "^4.1.10",
     "homebridge": "^2.0.0-beta.0",
-    "jest": "^30.2.0",
-    "nock": "^14.0.11",
-    "prettier": "^3.8.1",
-    "prettier-plugin-organize-imports": "^4.3.0",
-    "tsc-alias": "^1.8.16",
+    "oxfmt": "^0.61.0",
+    "oxlint": "^1.76.0",
+    "release-it": "^21.0.1",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
   },
   "packageManager": "pnpm@10.29.3"
 }

@@ -10,8 +10,11 @@ import type {
   TydomMetaElement,
   TydomMetaEndpoint,
   TydomMetaResponse,
-} from "src/typings";
-import { assert, chalkNumber, chalkString, debug, sha256Sync } from "src/utils";
+} from "src/typings/tydom";
+import { assert } from "src/utils/assert";
+import { chalkNumber, chalkString } from "src/utils/color";
+import { debug } from "src/utils/debug";
+import { sha256Sync } from "src/utils/hash";
 import type TydomClient from "tydom-client";
 import { URLSearchParams } from "node:url";
 

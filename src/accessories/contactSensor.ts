@@ -8,7 +8,7 @@ import {
   setupAccessoryInformationService,
 } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import type { TydomAccessoryContext } from "src/typings";
+import type { TydomAccessoryContext } from "src/typings/tydom";
 import { debugGet, debugGetResult, debugSetUpdate } from "src/utils/debug";
 
 export const setupContactSensor = (

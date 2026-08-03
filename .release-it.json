@@ -1,8 +1,18 @@
 {
+  "hooks": {
+    "before:init": ["pnpm run test", "pnpm run build"]
+  },
+  "npm": {
+    "publish": false
+  },
   "git": {
-    "commitMessage": "chore(release): cut the v${version} release"
+    "commitMessage": "chore(release): cut the v${version} release",
+    "tagAnnotation": "v${version} release",
+    "requireBranch": "master",
+    "requireCleanWorkingDir": true
   },
   "github": {
-    "release": true
+    "release": true,
+    "releaseName": "v${version}"
   }
 }

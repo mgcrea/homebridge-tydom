@@ -1,15 +1,35 @@
 {
-  "extends": "@tsconfig/node20/tsconfig.json",
+  "extends": ["@tsconfig/node-lts/tsconfig.json", "@tsconfig/strictest/tsconfig.json"],
   "compilerOptions": {
+    "lib": ["ES2023"],
+    "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "outDir": "./dist",
     "noEmit": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "outDir": "./dist",
+
+    // Removed in phase 2b, once the `src/*` alias imports become relative
+    // `.js` specifiers.
     "baseUrl": ".",
     "paths": {
       "src/*": ["./src/*"],
       "test/*": ["./test/*"]
-    }
+    },
+
+    // --- Relaxations of @tsconfig/strictest, each tagged with the phase that flips it ---
+    // TODO(phase-4b): hap-nodejs declares `Categories`, `Formats` and
+    // `AccessoryEventTypes` as ambient `const enum`s, which isolatedModules
+    // forbids referencing (ts2748). Phase 4b replaces them with a local numeric
+    // table and string literals, after which this can go.
+    "isolatedModules": false,
+    // TODO(phase-6): needs the accessories converted to classes first.
+    "noUncheckedIndexedAccess": false,
+    // TODO(phase-6): blocked on TydomAccessoryContext's optional fields.
+    "exactOptionalPropertyTypes": false,
+    // TODO(phase-9): the i18n tables are indexed by dynamic Delta Dore keys.
+    "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src/", "test/", "*.config.js", "*.config.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts", "*.config.ts"]
 }

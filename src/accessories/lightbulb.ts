@@ -8,19 +8,18 @@ import {
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers";
+} from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import type { TydomAccessoryContext } from "src/typings";
+import type { TydomAccessoryContext } from "src/typings/tydom";
+import { chalkNumber, chalkString } from "src/utils/color";
 import {
-  chalkNumber,
-  chalkString,
   debugGet,
   debugGetResult,
   debugSet,
   debugSetResult,
   debugSetUpdate,
   debugTydomPut,
-} from "src/utils";
+} from "src/utils/debug";
 import {
   addAccessorySwitchableService,
   updateAccessorySwitchableService,

@@ -13,11 +13,13 @@ import type {
   ControllerUpdatePayload,
 } from "src/controller";
 import TydomController from "src/controller";
-import type { Webhook } from "src/helpers";
-import { triggerWebhook } from "src/helpers";
+import type { Webhook } from "src/helpers/webhook";
+import { triggerWebhook } from "src/helpers/webhook";
 import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "src/helpers/accessory";
 import type { TydomAccessoryContext } from "src/typings/tydom";
-import { assert, chalkKeyword, chalkNumber, chalkString, debug, enableDebug } from "src/utils";
+import { assert } from "src/utils/assert";
+import { chalkKeyword, chalkNumber, chalkString } from "src/utils/color";
+import { debug, enableDebug } from "src/utils/debug";
 import { stringifyError } from "src/utils/error";
 
 export type TydomPlatformConfig = PlatformConfig & {

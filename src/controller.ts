@@ -4,7 +4,7 @@ import { Categories } from "homebridge";
 import { blue, bold, green, yellow } from "kolorist";
 import { get } from "lodash";
 import { HOMEBRIDGE_TYDOM_PASSWORD } from "src/config/env";
-import type { TydomAccessoryUpdateType } from "src/helpers";
+import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
 import {
   asyncWait,
   getEndpointDetailsFromMeta,
@@ -20,15 +20,11 @@ import type {
   TydomGroupsResponse,
   TydomMetaResponse,
 } from "src/typings/tydom";
-import {
-  assert,
-  chalkJson,
-  chalkNumber,
-  chalkString,
-  debug,
-  decode,
-  stringIncludes,
-} from "src/utils";
+import { assert } from "src/utils/assert";
+import { stringIncludes } from "src/utils/basic";
+import { chalkJson, chalkNumber, chalkString } from "src/utils/color";
+import { debug } from "src/utils/debug";
+import { decode } from "src/utils/hash";
 import { stringifyError } from "src/utils/error";
 import type TydomClient from "tydom-client";
 import {
