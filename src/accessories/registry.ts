@@ -1,9 +1,13 @@
 import type { AccessoryRegistry } from "./base.js";
 import { setupContactSensor, updateContactSensor } from "./contactSensor.js";
-import { setupFan, updateFan } from "./fan.js";
 import { setupGarageDoorOpener, updateGarageDoorOpener } from "./garageDoorOpener.js";
 import { fromFunctionPair } from "./legacy-adapter.js";
 import { setupLightbulb, updateLightbulb } from "./lightbulb.js";
+import {
+  createFanAccessory,
+  createSwitchableLightbulbAccessory,
+  createSwitchAccessory,
+} from "./switchable-accessory.js";
 import { setupOutlet, updateOutlet } from "./outlet.js";
 import { setupSecuritySystem, updateSecuritySystem } from "./securitySystem.js";
 import {
@@ -11,7 +15,6 @@ import {
   updateSecuritySystemSensors,
 } from "./securitySystemSensors.js";
 import { setupSmokeDetector, updateSmokeDetector } from "./smokeDetector.js";
-import { setupSwitch, updateSwitch } from "./switch.js";
 import { setupTemperatureSensor, updateTemperatureSensor } from "./temperatureSensor.js";
 import { setupThermostat, updateThermostat } from "./thermostat.js";
 import { setupTriggerSwitch, updateTriggerSwitch } from "./triggerSwitch.js";
@@ -34,15 +37,13 @@ export const ACCESSORY_REGISTRY: AccessoryRegistry = {
   alarm: fromFunctionPair(setupSecuritySystem, updateSecuritySystem),
   "alarm-sensors": fromFunctionPair(setupSecuritySystemSensors, updateSecuritySystemSensors),
   "contact-sensor": fromFunctionPair(setupContactSensor, updateContactSensor),
-  fan: fromFunctionPair(setupFan, updateFan),
+  fan: createFanAccessory,
   "garage-door": fromFunctionPair(setupGarageDoorOpener, updateGarageDoorOpener),
   lightbulb: fromFunctionPair(setupLightbulb, updateLightbulb),
-  // Dimmable and switchable lights still share one module, which branches
-  // internally on level.step. Phase 6.1 splits them.
-  "lightbulb-switchable": fromFunctionPair(setupLightbulb, updateLightbulb),
+  "lightbulb-switchable": createSwitchableLightbulbAccessory,
   outlet: fromFunctionPair(setupOutlet, updateOutlet),
   "smoke-detector": fromFunctionPair(setupSmokeDetector, updateSmokeDetector),
-  switch: fromFunctionPair(setupSwitch, updateSwitch),
+  switch: createSwitchAccessory,
   "temperature-sensor": fromFunctionPair(setupTemperatureSensor, updateTemperatureSensor),
   thermostat: fromFunctionPair(setupThermostat, updateThermostat),
   "trigger-switch": fromFunctionPair(setupTriggerSwitch, updateTriggerSwitch),

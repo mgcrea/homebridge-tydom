@@ -1,4 +1,5 @@
 import type { PlatformAccessory } from "homebridge";
+import type { TydomApiClient } from "../api/client.js";
 import type { DeviceType } from "../api/device-type.js";
 import type { TydomUpdateType } from "../api/types.js";
 import type TydomController from "../controller.js";
@@ -14,6 +15,8 @@ import type { TydomAccessoryContext } from "../typings/tydom.js";
 export type AccessoryDeps = {
   platform: TydomPlatform;
   accessory: PlatformAccessory<TydomAccessoryContext>;
+  /** The endpoint-facing API. Class-based accessories use this, not `controller`. */
+  api: TydomApiClient;
   /**
    * The controller.
    *

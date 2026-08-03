@@ -22,7 +22,7 @@ import TydomController from "./controller.js";
 import { triggerWebhook } from "./helpers/webhook.js";
 import type { TydomAccessory } from "./accessories/base.js";
 import { ACCESSORY_REGISTRY } from "./accessories/registry.js";
-import { setShimLogger } from "./helpers/tydom.js";
+import { getApiClient, setShimLogger } from "./helpers/tydom.js";
 import type { TydomAccessoryContext } from "./typings/tydom.js";
 import { assert } from "./util/assert.js";
 import { styleKeyword, styleNumber, styleString } from "./util/style.js";
@@ -271,7 +271,12 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.handlers.get(id)?.dispose();
     this.handlers.set(
       id,
-      ACCESSORY_REGISTRY[deviceType]({ platform: this, accessory, controller: this.controller }),
+      ACCESSORY_REGISTRY[deviceType]({
+        platform: this,
+        accessory,
+        api: getApiClient(this.controller.client),
+        controller: this.controller,
+      }),
     );
 
     this.api.updatePlatformAccessories([accessory]);

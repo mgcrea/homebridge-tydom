@@ -1,7 +1,6 @@
 import debug from "debug";
 import type { PlatformAccessory } from "homebridge";
 import debounce from "lodash/debounce.js";
-import find from "lodash/find.js";
 import { Characteristic, Service } from "../config/hap.js";
 import type TydomController from "../controller.js";
 import {
@@ -21,10 +20,6 @@ import {
   debugSetUpdate,
   debugTydomPut,
 } from "../platform/trace.js";
-import {
-  addAccessorySwitchableService,
-  updateAccessorySwitchableService,
-} from "./services/switchableService.js";
 
 type LightbulbSettings = Record<string, never>;
 
@@ -44,7 +39,7 @@ export const setupLightbulb = (
   const { client } = controller;
   const { On, Brightness } = Characteristic;
 
-  const { deviceId, endpointId, metadata, state } = context;
+  const { deviceId, endpointId, state } = context;
   setupAccessoryInformationService(accessory, controller);
   setupAccessoryIdentifyHandler(accessory, controller);
   Object.assign(state, {
@@ -53,15 +48,9 @@ export const setupLightbulb = (
     lastUpdatedAt: 0,
   });
 
-  const levelMeta = find(metadata, { name: "level" });
-
-  // Not dimmable
-  if (levelMeta?.step === 100) {
-    addAccessorySwitchableService(accessory, controller, Service.Lightbulb);
-    return;
-  }
-
-  // Dimmable
+  // Dimmability is decided during discovery: a driver reporting
+  // `level.step === 100` resolves to "lightbulb-switchable" and is handled by
+  // SwitchableAccessory instead, so this module is always the dimmable case.
   const service = addAccessoryService(accessory, Service.Lightbulb, accessory.displayName, true);
   const debouncedSetLevel = debounce(
     async (value: number) => {
@@ -121,19 +110,12 @@ export const setupLightbulb = (
 
 export const updateLightbulb = (
   accessory: PlatformAccessory<LightbulbContext>,
-  controller: TydomController,
+  _controller: TydomController,
   updates: Record<string, unknown>[],
 ): void => {
   const { context } = accessory;
-  const { metadata, state } = context;
+  const { state } = context;
   const { On, Brightness } = Characteristic;
-  const levelMeta = find(metadata, { name: "level" });
-  // Not dimmable
-  if (levelMeta?.step === 100) {
-    updateAccessorySwitchableService(accessory, controller, updates, Service.Lightbulb);
-    return;
-  }
-  // Dimmable
   updates.forEach((update) => {
     const { name, value } = update;
     switch (name) {

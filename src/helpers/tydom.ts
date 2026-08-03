@@ -34,7 +34,14 @@ export const setShimLogger = (logger: PluginLogger): void => {
 
 const apiClients = new WeakMap<TydomClient, TydomApiClient>();
 
-const apiFor = (client: TydomClient): TydomApiClient => {
+/**
+ * The api client paired with a raw tydom-client.
+ *
+ * One per transport, so the class-based accessories and the function pairs
+ * still going through the shim share a single read-dedupe window rather than
+ * each keeping their own.
+ */
+export const getApiClient = (client: TydomClient): TydomApiClient => {
   let api = apiClients.get(client);
   if (!api) {
     api = new TydomApiClient({
@@ -60,7 +67,7 @@ export type GetTydomDeviceDataOptions = {
 export const getTydomDeviceData = async <T extends TydomEndpointData = TydomEndpointData>(
   client: TydomClient,
   { deviceId, endpointId }: GetTydomDeviceDataOptions,
-): Promise<T> => apiFor(client).getDeviceData<T>(deviceId, endpointId);
+): Promise<T> => getApiClient(client).getDeviceData<T>(deviceId, endpointId);
 
 export type RunTydomDeviceCommandOptions = {
   deviceId: number;
@@ -74,7 +81,7 @@ export const runTydomDeviceCommand = async <
   client: TydomClient,
   name: string,
   { deviceId, endpointId, searchParams }: RunTydomDeviceCommandOptions,
-): Promise<T[]> => apiFor(client).runCommand<T>(deviceId, endpointId, name, searchParams);
+): Promise<T[]> => getApiClient(client).runCommand<T>(deviceId, endpointId, name, searchParams);
 
 export const getTydomDataPropValue = <
   V extends AnyTydomDataValue = AnyTydomDataValue,
