@@ -209,7 +209,25 @@ export class SecuritySystemAccessory extends BaseAccessory {
       const name = zone?.nameCustom ?? (zone?.nameStd ? this.t(zone.nameStd) : `Zone ${zoneIndex}`);
       const service = this.subService(Services.Switch, name, `zone_${zone?.id ?? zoneIndex}`);
       debugAddSubService(service, this.accessory);
-      this.#service?.addLinkedService(service);
+      // EXPERIMENT (0.30.0-beta.3): the zone switches render as unlabeled tiles
+      // in the Home app even though their `Name` characteristic is set — and
+      // always has been, this is not a regression. `linked` is what tells a
+      // controller a service is subordinate to another (it is how a
+      // Television's InputSource services render inside the parent), so it is
+      // the prime suspect for the missing captions.
+      //
+      // Unlinked here and *only* here. The three contact sensors below and the
+      // thermostat's mode switches stay linked, on purpose: they are the
+      // control group. If the zones gain captions and those do not, `linked` is
+      // the cause and the fix generalises. If nothing gains a caption, the Home
+      // app simply does not label sub-services, and each zone has to become its
+      // own accessory to be nameable at all.
+      //
+      // `removeLinkedService`, not a deleted `addLinkedService`: the link is
+      // persisted in cachedAccessories and restored by Accessory.deserialize
+      // before any of this runs, so dropping the call would change nothing for
+      // an existing install.
+      this.#service?.removeLinkedService(service);
       this.#zones.set(zoneIndex, service);
 
       service

@@ -24,6 +24,7 @@ No accessory is re-registered by this release: rooms, names and automations are 
 - **config:** a bad configuration no longer takes the bridge down. The platform reports the problem once and stays dormant.
 - **multi-gateway:** two Tydom platforms in one Homebridge process no longer interfere. The request cache, the garage door's timer table, and the alarm's detector list were all module-level, so a second gateway overwrote the first's state.
 - **alarm:** the zone switches turn off when the system is disarmed from the main selector. They only ever moved because the panel volunteered that zone's state, and it does not always do so on a whole-system mode change — it can report `alarmMode: "OFF"` and nothing else, and the `arret` event carries no zone state at all. A switch that did move then flipped back, because reads still resolved the stale per-zone property. The panel's mode now settles every switch and outranks the property: a disarmed system has no armed zones, a fully armed one has nothing but.
+- **alarm:** the opening-detectors companion accessory is registered again. It shares its panel's gateway endpoint by design, and the announce loop deduplicated on the endpoint rather than on the accessory, so the panel always claimed the key first and the companion was silently dropped. Affects anyone who has not set `sensors: false`.
 - **alarm:** two alarms no longer report against each other's detectors.
 - **alarm:** an in-use zone the panel did not describe now logs a warning instead of aborting setup with an assertion.
 - **outlet:** state pushed by the gateway now reaches HomeKit. The update handler compared a numeric `level` against the string `"ON"`, which was never true.
@@ -39,10 +40,13 @@ No accessory is re-registered by this release: rooms, names and automations are 
 ### Features
 
 - **reads:** device readings are held in memory and served straight to HomeKit instead of re-reading the gateway on every query. A reading older than `staleAfter` (default 5 minutes) is still returned immediately, with a background re-read pushing the corrected value out when it lands — so nothing waits on the gateway except the first read of each device, and staleness stays bounded despite there being no polling loop. Set `staleAfter` to `0` for the previous read-through behaviour.
-- **accessories:** sub-services are labelled in the Home app. Alarm zone switches, opening detectors and thermostat mode switches now carry `ConfiguredName`, which is what iOS renders as the caption — without it a panel's eight zone switches were indistinguishable. Applies to existing accessories on upgrade, and a name you have typed in the Home app is left alone.
 - **config UI:** the schema now offers every supported option. `webhooks`, `refreshInterval`, `pin`, `locale` and the four include/exclude filters were previously reachable only by hand-editing `config.json`. Passwords and PINs are masked.
 - **shutdown:** the plugin now releases its timers, closes the gateway connection and disposes every accessory when Homebridge shuts down.
 - **discovery:** the three gateway endpoints discovery depends on are validated on arrival, so a protocol change is reported clearly instead of surfacing later as an unrelated failure. Device data stays unvalidated by design — unknown hardware is exactly what this plugin exists to onboard.
+
+### Known issues
+
+- **Alarm zone switches are unlabeled in the Home app.** Their `Name` characteristic is set, and always has been — 0.29 behaved identically — but Apple's Home app does not render it for a sub-service. `0.30.0-beta.2` added `ConfiguredName` intending to fix this; that was a mistake, since `ConfiguredName` is not a declared characteristic of `Switch` or `ContactSensor` and Home does not appear to read it there. `beta.3` unlinks the zone switches from the panel service to test whether `linked` is what suppresses the captions, leaving the alarm's contact sensors and the thermostat's mode switches linked as a control. If that comes back negative, the fix is to publish each zone as its own accessory — which is also the only way a zone can have a room or be an automation target.
 
 ### Internals
 
