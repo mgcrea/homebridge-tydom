@@ -73,9 +73,9 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   constructor(log: Logging, config: PlatformConfig, api: Homebridge) {
     this.log = log;
     this.api = api;
-    // Injected rather than reached for through the module-level globals in
-    // config/hap.ts. Both are the same process-singleton objects, which is what
-    // lets converted and unconverted accessories coexist during phase 6.
+    // Injected rather than reached for through module-level globals, so an
+    // accessory's HAP dependency arrives through its constructor like
+    // everything else it needs.
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
 
