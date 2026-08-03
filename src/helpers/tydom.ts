@@ -1,6 +1,6 @@
 import type { PlatformAccessory } from "homebridge";
 import { find } from "lodash";
-import { Categories } from "src/config/hap";
+import { Categories } from "../config/hap.js";
 import type {
   AnyTydomDataValue,
   TydomConfigEndpoint,
@@ -10,11 +10,11 @@ import type {
   TydomMetaElement,
   TydomMetaEndpoint,
   TydomMetaResponse,
-} from "src/typings/tydom";
-import { assert } from "src/utils/assert";
-import { chalkNumber, chalkString } from "src/utils/color";
-import { debug } from "src/utils/debug";
-import { sha256Sync } from "src/utils/hash";
+} from "../typings/tydom.js";
+import { assert } from "../utils/assert.js";
+import { chalkNumber, chalkString } from "../utils/color.js";
+import { debug } from "../utils/debug.js";
+import { sha256Sync } from "../utils/hash.js";
 import type TydomClient from "tydom-client";
 import { URLSearchParams } from "node:url";
 

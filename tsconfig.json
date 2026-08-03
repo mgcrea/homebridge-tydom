@@ -10,14 +10,6 @@
     "types": ["node"],
     "outDir": "./dist",
 
-    // Removed in phase 2b, once the `src/*` alias imports become relative
-    // `.js` specifiers.
-    "baseUrl": ".",
-    "paths": {
-      "src/*": ["./src/*"],
-      "test/*": ["./test/*"]
-    },
-
     // --- Relaxations of @tsconfig/strictest, each tagged with the phase that flips it ---
     // TODO(phase-4b): hap-nodejs declares `Categories`, `Formats` and
     // `AccessoryEventTypes` as ambient `const enum`s, which isolatedModules

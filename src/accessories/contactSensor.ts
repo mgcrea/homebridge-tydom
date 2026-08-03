@@ -1,15 +1,15 @@
 import type { PlatformAccessory } from "homebridge";
-import { Characteristic, Service } from "src/config/hap";
-import type TydomController from "src/controller";
+import { Characteristic, Service } from "../config/hap.js";
+import type TydomController from "../controller.js";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import type { TydomAccessoryContext } from "src/typings/tydom";
-import { debugGet, debugGetResult, debugSetUpdate } from "src/utils/debug";
+} from "../helpers/accessory.js";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
+import type { TydomAccessoryContext } from "../typings/tydom.js";
+import { debugGet, debugGetResult, debugSetUpdate } from "../utils/debug.js";
 
 export const setupContactSensor = (
   accessory: PlatformAccessory<TydomAccessoryContext>,

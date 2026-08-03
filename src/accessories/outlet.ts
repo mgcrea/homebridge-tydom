@@ -1,22 +1,22 @@
 import type { PlatformAccessory } from "homebridge";
 import { toNumber } from "lodash";
-import { Characteristic, Service } from "src/config/hap";
-import type TydomController from "src/controller";
+import { Characteristic, Service } from "../config/hap.js";
+import type TydomController from "../controller.js";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import type { TydomAccessoryContext } from "src/typings/tydom";
+} from "../helpers/accessory.js";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
+import type { TydomAccessoryContext } from "../typings/tydom.js";
 import {
   debugGet,
   debugGetResult,
   debugSet,
   debugSetResult,
   debugSetUpdate,
-} from "src/utils/debug";
+} from "../utils/debug.js";
 
 export const setupOutlet = (
   accessory: PlatformAccessory<TydomAccessoryContext>,

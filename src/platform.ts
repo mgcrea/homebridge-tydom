@@ -5,22 +5,22 @@ import type {
   PlatformAccessory,
   PlatformConfig,
 } from "homebridge";
-import { PLATFORM_NAME, PLUGIN_NAME } from "src/config/env";
-import { Categories } from "src/config/hap";
+import { PLATFORM_NAME, PLUGIN_NAME } from "./config/env.js";
+import { Categories } from "./config/hap.js";
 import type {
   ControllerDevicePayload,
   ControllerNotificationPayload,
   ControllerUpdatePayload,
-} from "src/controller";
-import TydomController from "src/controller";
-import type { Webhook } from "src/helpers/webhook";
-import { triggerWebhook } from "src/helpers/webhook";
-import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "src/helpers/accessory";
-import type { TydomAccessoryContext } from "src/typings/tydom";
-import { assert } from "src/utils/assert";
-import { chalkKeyword, chalkNumber, chalkString } from "src/utils/color";
-import { debug, enableDebug } from "src/utils/debug";
-import { stringifyError } from "src/utils/error";
+} from "./controller.js";
+import TydomController from "./controller.js";
+import type { Webhook } from "./helpers/webhook.js";
+import { triggerWebhook } from "./helpers/webhook.js";
+import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "./helpers/accessory.js";
+import type { TydomAccessoryContext } from "./typings/tydom.js";
+import { assert } from "./utils/assert.js";
+import { chalkKeyword, chalkNumber, chalkString } from "./utils/color.js";
+import { debug, enableDebug } from "./utils/debug.js";
+import { stringifyError } from "./utils/error.js";
 
 export type TydomPlatformConfig = PlatformConfig & {
   hostname: string;

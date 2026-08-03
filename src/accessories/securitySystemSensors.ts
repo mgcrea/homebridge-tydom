@@ -1,23 +1,23 @@
 import type { PlatformAccessory } from "homebridge";
 import { get, keyBy } from "lodash";
-import { Characteristic, Service } from "src/config/hap";
-import locale from "src/config/locale";
-import type TydomController from "src/controller";
-import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
+import { Characteristic, Service } from "../config/hap.js";
+import locale from "../config/locale.js";
+import type TydomController from "../controller.js";
+import type { TydomAccessoryUpdateType } from "../helpers/accessory.js";
 import {
   addAccessoryServiceWithSubtype,
   getAccessoryServiceWithSubtype,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import { runTydomDeviceCommand } from "src/helpers/tydom";
+} from "../helpers/accessory.js";
+import { runTydomDeviceCommand } from "../helpers/tydom.js";
 import type {
   SecuritySystemHistoOpenIssuesCommandResult,
   SecuritySystemLabelCommandResult,
   SecuritySystemProduct,
   TydomAccessoryContext,
-} from "src/typings/tydom";
-import { debugAddSubService, debugGet, debugGetResult, debugSetUpdate } from "src/utils/debug";
+} from "../typings/tydom.js";
+import { debugAddSubService, debugGet, debugGetResult, debugSetUpdate } from "../utils/debug.js";
 
 const getOpenedIssues = (commandResults: SecuritySystemHistoOpenIssuesCommandResult[]) =>
   keyBy(

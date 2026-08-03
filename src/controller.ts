@@ -3,15 +3,15 @@ import type { Logging } from "homebridge";
 import { Categories } from "homebridge";
 import { blue, bold, green, yellow } from "kolorist";
 import { get } from "lodash";
-import { HOMEBRIDGE_TYDOM_PASSWORD } from "src/config/env";
-import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
+import { HOMEBRIDGE_TYDOM_PASSWORD } from "./config/env.js";
+import type { TydomAccessoryUpdateType } from "./helpers/accessory.js";
 import {
   asyncWait,
   getEndpointDetailsFromMeta,
   getEndpointGroupIdFromGroups,
   resolveEndpointCategory,
-} from "src/helpers/tydom";
-import type { TydomPlatformConfig } from "src/platform";
+} from "./helpers/tydom.js";
+import type { TydomPlatformConfig } from "./platform.js";
 import type {
   TydomAccessoryContext,
   TydomAccessoryUpdateContext,
@@ -19,13 +19,13 @@ import type {
   TydomDeviceDataUpdateBody,
   TydomGroupsResponse,
   TydomMetaResponse,
-} from "src/typings/tydom";
-import { assert } from "src/utils/assert";
-import { stringIncludes } from "src/utils/basic";
-import { chalkJson, chalkNumber, chalkString } from "src/utils/color";
-import { debug } from "src/utils/debug";
-import { decode } from "src/utils/hash";
-import { stringifyError } from "src/utils/error";
+} from "./typings/tydom.js";
+import { assert } from "./utils/assert.js";
+import { stringIncludes } from "./utils/basic.js";
+import { chalkJson, chalkNumber, chalkString } from "./utils/color.js";
+import { debug } from "./utils/debug.js";
+import { decode } from "./utils/hash.js";
+import { stringifyError } from "./utils/error.js";
 import type TydomClient from "tydom-client";
 import {
   createClient as createTydomClient,

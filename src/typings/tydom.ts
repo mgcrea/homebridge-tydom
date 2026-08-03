@@ -1,4 +1,4 @@
-import type { Categories } from "src/config/hap";
+import type { Categories } from "../config/hap.js";
 
 type UnknownObject = Record<string, unknown>;
 

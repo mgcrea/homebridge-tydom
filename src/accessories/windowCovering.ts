@@ -1,18 +1,18 @@
 import type { PlatformAccessory } from "homebridge";
 import { debounce } from "lodash";
-import { Characteristic, Service } from "src/config/hap";
-import type TydomController from "src/controller";
-import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
+import { Characteristic, Service } from "../config/hap.js";
+import type TydomController from "../controller.js";
+import type { TydomAccessoryUpdateType } from "../helpers/accessory.js";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import type { TydomAccessoryContext, TydomDeviceShutterData } from "src/typings/tydom";
-import { asNumber } from "src/utils/basic";
-import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "src/utils/color";
+} from "../helpers/accessory.js";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
+import type { TydomAccessoryContext, TydomDeviceShutterData } from "../typings/tydom.js";
+import { asNumber } from "../utils/basic.js";
+import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "../utils/color.js";
 import {
   debug,
   debugGet,
@@ -21,7 +21,7 @@ import {
   debugSetResult,
   debugSetUpdate,
   debugTydomPut,
-} from "src/utils/debug";
+} from "../utils/debug.js";
 
 // const getReciprocalPositionForValue = (position: number): number => {
 //   if (position === 0 || position === 100) {

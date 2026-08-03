@@ -1,17 +1,17 @@
 import debug from "debug";
 import type { PlatformAccessory } from "homebridge";
 import { debounce, find } from "lodash";
-import { Characteristic, Service } from "src/config/hap";
-import type TydomController from "src/controller";
+import { Characteristic, Service } from "../config/hap.js";
+import type TydomController from "../controller.js";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import type { TydomAccessoryContext } from "src/typings/tydom";
-import { chalkNumber, chalkString } from "src/utils/color";
+} from "../helpers/accessory.js";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
+import type { TydomAccessoryContext } from "../typings/tydom.js";
+import { chalkNumber, chalkString } from "../utils/color.js";
 import {
   debugGet,
   debugGetResult,
@@ -19,11 +19,11 @@ import {
   debugSetResult,
   debugSetUpdate,
   debugTydomPut,
-} from "src/utils/debug";
+} from "../utils/debug.js";
 import {
   addAccessorySwitchableService,
   updateAccessorySwitchableService,
-} from "./services/switchableService";
+} from "./services/switchableService.js";
 
 type LightbulbSettings = Record<string, never>;
 

@@ -1,8 +1,8 @@
 import createDebug from "debug";
 import type { PlatformAccessory, Service } from "homebridge";
 import { blue } from "kolorist";
-import type { Characteristic } from "src/config/hap";
-import { chalkGet, chalkKeyword, chalkSet, chalkString, chalkUpd, chalkVal } from "./color";
+import type { Characteristic } from "../config/hap.js";
+import { chalkGet, chalkKeyword, chalkSet, chalkString, chalkUpd, chalkVal } from "./color.js";
 
 type IdentifiableAccessoryObject = PlatformAccessory | Service;
 

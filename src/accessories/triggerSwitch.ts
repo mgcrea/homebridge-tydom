@@ -1,13 +1,13 @@
 import type { PlatformAccessory } from "homebridge";
-import { Characteristic, Service } from "src/config/hap";
-import type TydomController from "src/controller";
+import { Characteristic, Service } from "../config/hap.js";
+import type TydomController from "../controller.js";
 import {
   addAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import type { TydomAccessoryContext } from "src/typings/tydom";
-import { debugSet, debugSetResult } from "src/utils/debug";
+} from "../helpers/accessory.js";
+import type { TydomAccessoryContext } from "../typings/tydom.js";
+import { debugSet, debugSetResult } from "../utils/debug.js";
 
 type TriggerSwitchSettings = {
   delay?: number;

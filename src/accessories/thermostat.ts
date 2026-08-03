@@ -1,25 +1,25 @@
 import type { PlatformAccessory } from "homebridge";
 import { get } from "lodash";
-import type { CharacteristicProps } from "src/config/hap";
-import { Characteristic, Service } from "src/config/hap";
-import locale from "src/config/locale";
-import type TydomController from "src/controller";
+import type { CharacteristicProps } from "../config/hap.js";
+import { Characteristic, Service } from "../config/hap.js";
+import locale from "../config/locale.js";
+import type TydomController from "../controller.js";
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
+} from "../helpers/accessory.js";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
 import type {
   TydomAccessoryContext,
   TydomDeviceThermostatAuthorization,
   TydomDeviceThermostatData,
   TydomDeviceThermostatHvacMode,
   TydomDeviceThermostatThermicLevel,
-} from "src/typings/tydom";
-import { chalkString } from "src/utils/color";
+} from "../typings/tydom.js";
+import { chalkString } from "../utils/color.js";
 import {
   debug,
   debugAddSubService,
@@ -28,7 +28,7 @@ import {
   debugSet,
   debugSetResult,
   debugSetUpdate,
-} from "src/utils/debug";
+} from "../utils/debug.js";
 
 export const setupThermostat = (
   accessory: PlatformAccessory<TydomAccessoryContext>,

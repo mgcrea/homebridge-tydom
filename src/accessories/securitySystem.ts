@@ -1,11 +1,11 @@
 import type { PlatformAccessory } from "homebridge";
 import { get } from "lodash";
-import { HOMEBRIDGE_TYDOM_PIN } from "src/config/env";
-import { Characteristic, Service } from "src/config/hap";
-import locale from "src/config/locale";
-import type { ControllerDevicePayload, ControllerUpdatePayload } from "src/controller";
-import type TydomController from "src/controller";
-import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
+import { HOMEBRIDGE_TYDOM_PIN } from "../config/env.js";
+import { Characteristic, Service } from "../config/hap.js";
+import locale from "../config/locale.js";
+import type { ControllerDevicePayload, ControllerUpdatePayload } from "../controller.js";
+import type TydomController from "../controller.js";
+import type { TydomAccessoryUpdateType } from "../helpers/accessory.js";
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
@@ -14,8 +14,8 @@ import {
   SECURITY_SYSTEM_SENSORS,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
+} from "../helpers/accessory.js";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
 import type {
   SecuritySystemAlarmEvent,
   SecuritySystemLabelCommandResult,
@@ -25,11 +25,11 @@ import type {
   TydomDeviceSecuritySystemAlarmMode,
   TydomDeviceSecuritySystemData,
   TydomDeviceSecuritySystemZoneState,
-} from "src/typings/tydom";
-import { assert } from "src/utils/assert";
-import { asNumber, sameArrays } from "src/utils/basic";
-import { chalkJson, chalkKeyword } from "src/utils/color";
-import { decode } from "src/utils/hash";
+} from "../typings/tydom.js";
+import { assert } from "../utils/assert.js";
+import { asNumber, sameArrays } from "../utils/basic.js";
+import { chalkJson, chalkKeyword } from "../utils/color.js";
+import { decode } from "../utils/hash.js";
 import {
   debug,
   debugAddSubService,
@@ -38,7 +38,7 @@ import {
   debugSet,
   debugSetResult,
   debugSetUpdate,
-} from "src/utils/debug";
+} from "../utils/debug.js";
 
 type ZoneAliases = {
   stay?: number[];

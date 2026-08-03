@@ -1,15 +1,15 @@
 import type { PlatformAccessory } from "homebridge";
-import { Service } from "src/config/hap";
-import type TydomController from "src/controller";
+import { Service } from "../config/hap.js";
+import type TydomController from "../controller.js";
 import {
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import type { TydomAccessoryContext } from "src/typings/tydom";
+} from "../helpers/accessory.js";
+import type { TydomAccessoryContext } from "../typings/tydom.js";
 import {
   addAccessorySwitchableService,
   updateAccessorySwitchableService,
-} from "./services/switchableService";
+} from "./services/switchableService.js";
 
 export const setupFan = (
   accessory: PlatformAccessory<TydomAccessoryContext>,

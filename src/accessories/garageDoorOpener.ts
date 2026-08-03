@@ -1,20 +1,20 @@
 import debug from "debug";
 import type { PlatformAccessory } from "homebridge";
-import { Characteristic, Service } from "src/config/hap";
-import type TydomController from "src/controller";
-import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
+import { Characteristic, Service } from "../config/hap.js";
+import type TydomController from "../controller.js";
+import type { TydomAccessoryUpdateType } from "../helpers/accessory.js";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
   setupAccessoryInformationService,
-} from "src/helpers/accessory";
-import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import type { TydomAccessoryContext } from "src/typings/tydom";
-import type { TydomDeviceGarageDoorData } from "src/typings/tydom";
-import { asNumber, waitFor } from "src/utils/basic";
-import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "src/utils/color";
-import { debugGet, debugGetResult, debugSet, debugSetResult } from "src/utils/debug";
+} from "../helpers/accessory.js";
+import { getTydomDataPropValue, getTydomDeviceData } from "../helpers/tydom.js";
+import type { TydomAccessoryContext } from "../typings/tydom.js";
+import type { TydomDeviceGarageDoorData } from "../typings/tydom.js";
+import { asNumber, waitFor } from "../utils/basic.js";
+import { chalkJson, chalkKeyword, chalkNumber, chalkString } from "../utils/color.js";
+import { debugGet, debugGetResult, debugSet, debugSetResult } from "../utils/debug.js";
 import type TydomClient from "tydom-client";
 
 type GarageDoorOpenerSettings = {

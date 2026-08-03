@@ -1,30 +1,33 @@
 import type { PlatformAccessory, Service, WithUUID } from "homebridge";
-import { setupContactSensor, updateContactSensor } from "src/accessories/contactSensor";
-import { setupFan, updateFan } from "src/accessories/fan";
-import { setupGarageDoorOpener, updateGarageDoorOpener } from "src/accessories/garageDoorOpener";
-import { setupLightbulb, updateLightbulb } from "src/accessories/lightbulb";
-import { setupOutlet, updateOutlet } from "src/accessories/outlet";
-import { setupSecuritySystem, updateSecuritySystem } from "src/accessories/securitySystem";
+import { setupContactSensor, updateContactSensor } from "../accessories/contactSensor.js";
+import { setupFan, updateFan } from "../accessories/fan.js";
+import { setupGarageDoorOpener, updateGarageDoorOpener } from "../accessories/garageDoorOpener.js";
+import { setupLightbulb, updateLightbulb } from "../accessories/lightbulb.js";
+import { setupOutlet, updateOutlet } from "../accessories/outlet.js";
+import { setupSecuritySystem, updateSecuritySystem } from "../accessories/securitySystem.js";
 import {
   setupSecuritySystemSensors,
   updateSecuritySystemSensors,
-} from "src/accessories/securitySystemSensors";
-import { setupSmokeDetector, updateSmokeDetector } from "src/accessories/smokeDetector";
-import { setupSwitch, updateSwitch } from "src/accessories/switch";
-import { setupTemperatureSensor, updateTemperatureSensor } from "src/accessories/temperatureSensor";
-import { setupThermostat, updateThermostat } from "src/accessories/thermostat";
-import { setupTriggerSwitch, updateTriggerSwitch } from "src/accessories/triggerSwitch";
-import { setupWindowCovering, updateWindowCovering } from "src/accessories/windowCovering";
+} from "../accessories/securitySystemSensors.js";
+import { setupSmokeDetector, updateSmokeDetector } from "../accessories/smokeDetector.js";
+import { setupSwitch, updateSwitch } from "../accessories/switch.js";
+import {
+  setupTemperatureSensor,
+  updateTemperatureSensor,
+} from "../accessories/temperatureSensor.js";
+import { setupThermostat, updateThermostat } from "../accessories/thermostat.js";
+import { setupTriggerSwitch, updateTriggerSwitch } from "../accessories/triggerSwitch.js";
+import { setupWindowCovering, updateWindowCovering } from "../accessories/windowCovering.js";
 import {
   AccessoryEventTypes,
   Categories,
   Characteristic,
   Service as ServiceStatics,
-} from "src/config/hap";
-import type TydomController from "src/controller";
-import type { TydomAccessoryContext } from "src/typings/tydom";
-import { assert } from "src/utils/assert";
-import { debug } from "src/utils/debug";
+} from "../config/hap.js";
+import type TydomController from "../controller.js";
+import type { TydomAccessoryContext } from "../typings/tydom.js";
+import { assert } from "../utils/assert.js";
+import { debug } from "../utils/debug.js";
 
 export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`);
 
