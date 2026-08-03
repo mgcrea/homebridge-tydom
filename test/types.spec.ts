@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { TydomEndpointData } from "../src/api/types.js";
 import {
+  getTydomDataPropValue,
   parseDiscoveryResponse,
   TydomSchemaError,
   tydomConfigResponseSchema,
@@ -132,5 +134,27 @@ describe("discovery schemas", () => {
       }
     })();
     expect(thrown?.message.length).toBeLessThan(400);
+  });
+});
+
+const setpointData = (value: unknown): TydomEndpointData => [
+  { name: "setpoint", value: value as never, validity: "upToDate" },
+];
+
+describe("getTydomDataPropValue", () => {
+  it("returns the value", () => {
+    expect(getTydomDataPropValue(setpointData(21.5), "setpoint")).toBe(21.5);
+  });
+
+  it("returns null rather than throwing when the gateway sends one", () => {
+    // Not hypothetical: a thermostat driven by thermic levels — a towel rail —
+    // reports `setpoint: null` on every read. The property is present, so this
+    // must not be treated as a missing property; the caller needs the null in
+    // order to substitute something HomeKit will accept.
+    expect(getTydomDataPropValue(setpointData(null), "setpoint")).toBeNull();
+  });
+
+  it("throws when the property is genuinely absent", () => {
+    expect(() => getTydomDataPropValue(setpointData(21.5), "nope")).toThrow('name="nope"');
   });
 });

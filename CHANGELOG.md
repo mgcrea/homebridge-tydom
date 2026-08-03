@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [0.30.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.29.0...master)
 
-> Currently in prerelease as `0.30.0-beta.0`, published under the `beta` dist-tag. Install it with `npm install homebridge-tydom@beta`; nobody is upgraded to it automatically.
+> Currently in prerelease as `0.30.0-beta.1`, published under the `beta` dist-tag. Install it with `npm install homebridge-tydom@beta`; nobody is upgraded to it automatically.
+>
+> `beta.1` fixes the dimmer writing the same `level` twice per gesture, reverts a leading write added to the shutter that the released version never had, and makes debug-log lines name the device they are about.
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. See [Migrating to v0.30](https://github.com/mgcrea/homebridge-tydom#migrating-to-v030).
 

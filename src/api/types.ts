@@ -101,7 +101,12 @@ export const tydomMetaResponseSchema = z.array(
 );
 export type TydomMetaResponse = z.infer<typeof tydomMetaResponseSchema>;
 
-export type AnyTydomDataValue = string | number | boolean;
+/**
+ * `null` is not defensive padding — the gateway really sends it. A thermostat
+ * driven by thermic levels reports `setpoint: null` on every single read, and
+ * omitting it here is what let a null reach a HomeKit characteristic.
+ */
+export type AnyTydomDataValue = string | number | boolean | null;
 
 export type TydomDataElement<K = string, V = AnyTydomDataValue> = {
   name: K;

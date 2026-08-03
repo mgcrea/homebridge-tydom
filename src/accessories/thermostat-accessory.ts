@@ -110,7 +110,19 @@ export class ThermostatAccessory extends BaseAccessory {
       .getCharacteristic(TargetTemperature)
       .onGet(async () => {
         debugGet(TargetTemperature, this.#service);
-        const setpoint = getTydomDataPropValue<number>(await this.#read(), "setpoint");
+        const data = await this.#read();
+        // A device driven by thermic levels rather than a temperature — a towel
+        // rail, typically — reports `setpoint: null` permanently. The push path
+        // has always guarded that; this one did not, so every read handed HomeKit
+        // a null and HAP logged "supplied illegal value: null".
+        //
+        // Falling back to the measured temperature reads as "no demand", which
+        // is what a device with no setpoint actually means. Returning the
+        // characteristic's own value instead would just replay whatever null
+        // HomeKit was given first.
+        const setpoint =
+          getTydomDataPropValue<number | null>(data, "setpoint") ??
+          getTydomDataPropValue<number>(data, "temperature");
         debugGetResult(TargetTemperature, this.#service, setpoint);
         return setpoint;
       })
