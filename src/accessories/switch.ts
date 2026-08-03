@@ -1,8 +1,8 @@
 import type { PlatformAccessory } from "homebridge";
 import { Service } from "src/config/hap";
-import TydomController from "src/controller";
+import type TydomController from "src/controller";
 import { setupAccessoryIdentifyHandler, setupAccessoryInformationService } from "src/helpers";
-import { TydomAccessoryContext } from "src/typings";
+import type { TydomAccessoryContext } from "src/typings";
 import { addAccessorySwitchableService, updateAccessorySwitchableService } from "./services/switchableService";
 
 export const setupSwitch = (

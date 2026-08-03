@@ -7,14 +7,16 @@ import type {
 } from "homebridge";
 import { PLATFORM_NAME, PLUGIN_NAME } from "src/config/env";
 import { Categories } from "src/config/hap";
-import TydomController, {
+import type {
   ControllerDevicePayload,
   ControllerNotificationPayload,
   ControllerUpdatePayload,
 } from "src/controller";
-import { triggerWebhook, Webhook } from "src/helpers";
+import TydomController from "src/controller";
+import type { Webhook } from "src/helpers";
+import { triggerWebhook } from "src/helpers";
 import { getTydomAccessoryDataUpdate, getTydomAccessorySetup } from "src/helpers/accessory";
-import { TydomAccessoryContext } from "src/typings/tydom";
+import type { TydomAccessoryContext } from "src/typings/tydom";
 import { assert, chalkKeyword, chalkNumber, chalkString, debug, enableDebug } from "src/utils";
 import { stringifyError } from "src/utils/error";
 

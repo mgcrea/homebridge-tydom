@@ -1,7 +1,7 @@
 import type { PlatformAccessory } from "homebridge";
 import { find } from "lodash";
 import { Categories } from "src/config/hap";
-import {
+import type {
   AnyTydomDataValue,
   TydomConfigEndpoint,
   TydomEndpointData,
@@ -12,8 +12,8 @@ import {
   TydomMetaResponse,
 } from "src/typings";
 import { assert, chalkNumber, chalkString, debug, sha256Sync } from "src/utils";
-import TydomClient from "tydom-client";
-import { URLSearchParams } from "url";
+import type TydomClient from "tydom-client";
+import { URLSearchParams } from "node:url";
 
 type DataOperation = {
   promise: Promise<unknown> | null;
@@ -120,7 +120,10 @@ export const getEndpointGroupIdFromGroups = (
   groups: TydomGroupsResponse,
 ): number | null => {
   const group = groups.groups.find(({ devices }) =>
-    devices.some(({ id, endpoints }) => id === deviceId && endpoints.some(({ id }) => id === endpointId)),
+    devices.some(
+      ({ id, endpoints }) =>
+        id === deviceId && endpoints.some((endpoint) => endpoint.id === endpointId),
+    ),
   );
   return group ? group.id : null;
 };
@@ -128,7 +131,7 @@ export const getEndpointGroupIdFromGroups = (
 export const getEndpointSignatureFromMetadata = (metadata: TydomMetaElement[]): string =>
   metadata
     .map((value) => value.name)
-    .sort()
+    .toSorted()
     .join("|");
 
 const LEGACY_SUPPORTED_CATEGORIES_MAP: Record<string, Categories> = {

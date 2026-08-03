@@ -2,7 +2,7 @@ import debug from "debug";
 import type { PlatformAccessory } from "homebridge";
 import { debounce, find } from "lodash";
 import { Characteristic, Service } from "src/config/hap";
-import TydomController from "src/controller";
+import type TydomController from "src/controller";
 import {
   addAccessoryService,
   getAccessoryService,
@@ -10,7 +10,7 @@ import {
   setupAccessoryInformationService,
 } from "src/helpers";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import { TydomAccessoryContext } from "src/typings";
+import type { TydomAccessoryContext } from "src/typings";
 import {
   chalkNumber,
   chalkString,

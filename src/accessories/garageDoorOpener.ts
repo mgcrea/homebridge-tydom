@@ -1,16 +1,17 @@
 import debug from "debug";
 import type { PlatformAccessory } from "homebridge";
 import { Characteristic, Service } from "src/config/hap";
-import TydomController from "src/controller";
+import type TydomController from "src/controller";
+import type {
+  TydomAccessoryUpdateType} from "src/helpers";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  TydomAccessoryUpdateType,
+  setupAccessoryInformationService
 } from "src/helpers";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
-import { TydomAccessoryContext } from "src/typings";
+import type { TydomAccessoryContext } from "src/typings";
 import type { TydomDeviceGarageDoorData } from "src/typings/tydom";
 import {
   asNumber,
@@ -24,7 +25,7 @@ import {
   debugSetResult,
   waitFor,
 } from "src/utils";
-import TydomClient from "tydom-client";
+import type TydomClient from "tydom-client";
 
 type GarageDoorOpenerSettings = {
   delay?: number;
@@ -305,7 +306,7 @@ export const setupGarageDoorOpener = (
                 await waitFor(`${deviceId}.pending`, autoCloseDelay);
                 assignCurrentDoorState(CurrentDoorState.CLOSED);
               }
-            } catch (err) {
+            } catch {
               debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
             }
             break;
@@ -316,7 +317,7 @@ export const setupGarageDoorOpener = (
             try {
               await waitFor(`${deviceId}.pending`, delay);
               assignCurrentDoorState(CurrentDoorState.CLOSED);
-            } catch (err) {
+            } catch {
               debug(`Aborted CLOSED update with delay=${chalkNumber(delay)}`);
             }
             break;
@@ -372,7 +373,7 @@ export const updateGarageDoorOpener = (
   }
 
   updates.forEach((update) => {
-    const { name, value: value } = update;
+    const { name, value } = update;
     const service = getAccessoryService(accessory, Service.GarageDoorOpener);
     debug(
       `New ${chalkKeyword("GarageDoorOpener")} update received from Tydom, name=${String(name)} / value=${String(value)}`,

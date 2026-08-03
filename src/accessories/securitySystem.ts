@@ -3,7 +3,10 @@ import { get } from "lodash";
 import { HOMEBRIDGE_TYDOM_PIN } from "src/config/env";
 import { Characteristic, Service } from "src/config/hap";
 import locale from "src/config/locale";
-import TydomController, { ControllerDevicePayload, ControllerUpdatePayload } from "src/controller";
+import type { ControllerDevicePayload, ControllerUpdatePayload } from "src/controller";
+import type TydomController from "src/controller";
+import type {
+  TydomAccessoryUpdateType} from "src/helpers/accessory";
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
@@ -11,8 +14,7 @@ import {
   getAccessoryServiceWithSubtype,
   SECURITY_SYSTEM_SENSORS,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  TydomAccessoryUpdateType,
+  setupAccessoryInformationService
 } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type {
@@ -128,20 +130,21 @@ export const setupSecuritySystem = async (
     endpointId,
   });
 
-  const setTydomZones = async (zones: number[], value: "ON" | "OFF") => {
+  const setTydomZones = async (zoneIds: number[], value: "ON" | "OFF") => {
     if (!isLegacy) {
-      return await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=zoneCmd`, {
         value,
         pwd: pin,
-        zones,
+        zones: zoneIds,
       });
-    } else {
-      for (const zone of zones) {
-        await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=partCmd`, {
-          value,
-          part: zone,
-        });
-      }
+      return;
+    }
+    // Legacy alarms have no bulk zone command; they address one part at a time.
+    for (const zone of zoneIds) {
+      await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=partCmd`, {
+        value,
+        part: zone,
+      });
     }
   };
 
@@ -151,7 +154,7 @@ export const setupSecuritySystem = async (
         `/devices/${deviceId}/endpoints/${endpointId}/cdata?name=label`,
       );
       zones = labelResults[0].zones;
-    } catch (err) {
+    } catch {
       log.warn(`Failed to query labels for security system`);
       zones = [];
     }
@@ -343,8 +346,8 @@ export const setupSecuritySystem = async (
           deviceId,
           endpointId,
         });
-        const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(data, zoneProp);
-        const nextValue = zoneState === "ON";
+        const currentZoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(data, zoneProp);
+        const nextValue = currentZoneState === "ON";
         debugGetResult(On, zoneService, nextValue);
         return nextValue;
       })

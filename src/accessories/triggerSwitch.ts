@@ -1,6 +1,6 @@
 import type { PlatformAccessory } from "homebridge";
 import { Characteristic, Service } from "src/config/hap";
-import TydomController from "src/controller";
+import type TydomController from "src/controller";
 import {
   addAccessoryService,
   setupAccessoryIdentifyHandler,

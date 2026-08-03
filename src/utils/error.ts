@@ -1,4 +1,4 @@
-const errorReplacer = (key: string, value: unknown) => {
+const errorReplacer = (_key: string, value: unknown) => {
   if (value instanceof Error) {
     return {
       name: value.name,

@@ -1,4 +1,4 @@
-import { AssertionError } from "assert";
+import { AssertionError } from "node:assert";
 
 export const assert: (value: unknown, message?: string) => asserts value = (
   value: unknown,

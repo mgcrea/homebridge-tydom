@@ -1,8 +1,9 @@
 import type { PlatformAccessory } from "homebridge";
 import { get } from "lodash";
-import { Characteristic, CharacteristicProps, Service } from "src/config/hap";
+import type { CharacteristicProps} from "src/config/hap";
+import { Characteristic, Service } from "src/config/hap";
 import locale from "src/config/locale";
-import TydomController from "src/controller";
+import type TydomController from "src/controller";
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
@@ -176,9 +177,9 @@ export const setupThermostat = (
   // Multiple thermic levels
   // "enum_values": ["ECO", "MODERATO", "MEDIO", "COMFORT", "STOP", "ANTI_FROST"]
   if (thermicLevelValues.length > 1) {
-    const THERMIC_LEVELS_WHITELIST = ["ANTI_FROST", "ECO", "COMFORT"];
+    const THERMIC_LEVELS_WHITELIST = new Set(["ANTI_FROST", "ECO", "COMFORT"]);
     const thermicLevelServices = thermicLevelValues
-      .filter((value) => THERMIC_LEVELS_WHITELIST.includes(value))
+      .filter((value) => THERMIC_LEVELS_WHITELIST.has(value))
       .map((thermicLevelValue) => {
         const thermicLevelId = `thermicLevel_${thermicLevelValue.toLowerCase()}`;
         const thermicLevelName = get(locale, `HVAC_LEVEL_${thermicLevelValue}`, "N/A") as string;
@@ -219,9 +220,9 @@ export const setupThermostat = (
             debugSetResult(On, thermicLevelService, tydomValue);
             // @NOTE disable any other existing thermicLevel
             thermicLevelServices
-              .filter(({ value }) => value !== thermicLevelValue)
-              .forEach(({ service }) => {
-                service.updateCharacteristic(On, false);
+              .filter((entry) => entry.value !== thermicLevelValue)
+              .forEach((entry) => {
+                entry.service.updateCharacteristic(On, false);
               });
           });
         return { value: thermicLevelValue, service: thermicLevelService };
@@ -267,10 +268,10 @@ export const updateThermostat = (
         service.updateCharacteristic(TargetHeatingCoolingState, CurrentHeatingCoolingState.OFF);
         if (hvacMode === "ANTI_FROST") {
           const subtype = "hvacMode_absence";
-          const service = accessory.getServiceById(Service.Switch, subtype);
-          if (service) {
-            debugSetUpdate(On, service, true);
-            service.updateCharacteristic(On, true);
+          const absenceService = accessory.getServiceById(Service.Switch, subtype);
+          if (absenceService) {
+            debugSetUpdate(On, absenceService, true);
+            absenceService.updateCharacteristic(On, true);
             return;
           }
         }

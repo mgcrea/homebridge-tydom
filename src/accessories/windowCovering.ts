@@ -1,13 +1,14 @@
 import type { PlatformAccessory } from "homebridge";
 import { debounce } from "lodash";
 import { Characteristic, Service } from "src/config/hap";
-import TydomController from "src/controller";
+import type TydomController from "src/controller";
+import type {
+  TydomAccessoryUpdateType} from "src/helpers/accessory";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  TydomAccessoryUpdateType,
+  setupAccessoryInformationService
 } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type { TydomAccessoryContext, TydomDeviceShutterData } from "src/typings/tydom";

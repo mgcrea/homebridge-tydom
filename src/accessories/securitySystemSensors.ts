@@ -2,13 +2,14 @@ import type { PlatformAccessory } from "homebridge";
 import { get, keyBy } from "lodash";
 import { Characteristic, Service } from "src/config/hap";
 import locale from "src/config/locale";
-import TydomController from "src/controller";
+import type TydomController from "src/controller";
+import type {
+  TydomAccessoryUpdateType} from "src/helpers/accessory";
 import {
   addAccessoryServiceWithSubtype,
   getAccessoryServiceWithSubtype,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService,
-  TydomAccessoryUpdateType,
+  setupAccessoryInformationService
 } from "src/helpers/accessory";
 import { runTydomDeviceCommand } from "src/helpers/tydom";
 import type {

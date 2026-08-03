@@ -1,7 +1,8 @@
 import type { PlatformAccessory, Service } from "homebridge";
 import { Characteristic } from "src/config/hap";
-import TydomController from "src/controller";
-import { addAccessoryService, getAccessoryService, ServiceClass } from "src/helpers/accessory";
+import type TydomController from "src/controller";
+import type { ServiceClass } from "src/helpers/accessory";
+import { addAccessoryService, getAccessoryService } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type { TydomAccessoryContext } from "src/typings/tydom";
 import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils/debug";

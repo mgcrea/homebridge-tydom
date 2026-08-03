@@ -1,6 +1,7 @@
-import { IncomingMessage } from "http";
-import { request, RequestOptions } from "https";
-import { URL } from "url";
+import type { IncomingMessage } from "node:http";
+import type { RequestOptions } from "node:https";
+import { request } from "node:https";
+import { URL } from "node:url";
 
 export type PostJsonOptions = Omit<RequestOptions, "hostname" | "path"> & {
   url: string;

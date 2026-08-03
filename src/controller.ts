@@ -1,17 +1,18 @@
-import { EventEmitter } from "events";
-import { Categories, Logging } from "homebridge";
+import { EventEmitter } from "node:events";
+import type { Logging } from "homebridge";
+import { Categories } from "homebridge";
 import { blue, bold, green, yellow } from "kolorist";
 import { get } from "lodash";
 import { HOMEBRIDGE_TYDOM_PASSWORD } from "src/config/env";
-import { TydomAccessoryUpdateType } from "src/helpers";
+import type { TydomAccessoryUpdateType } from "src/helpers";
 import {
   asyncWait,
   getEndpointDetailsFromMeta,
   getEndpointGroupIdFromGroups,
   resolveEndpointCategory,
 } from "src/helpers/tydom";
-import { TydomPlatformConfig } from "src/platform";
-import {
+import type { TydomPlatformConfig } from "src/platform";
+import type {
   TydomAccessoryContext,
   TydomAccessoryUpdateContext,
   TydomConfigResponse,
@@ -21,7 +22,8 @@ import {
 } from "src/typings/tydom";
 import { assert, chalkJson, chalkNumber, chalkString, debug, decode, stringIncludes } from "src/utils";
 import { stringifyError } from "src/utils/error";
-import TydomClient, {
+import type TydomClient from "tydom-client";
+import {
   createClient as createTydomClient,
   type TydomHttpMessage,
   type TydomResponse,
