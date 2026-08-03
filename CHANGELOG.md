@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [0.30.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.29.0...master)
 
-> Currently in prerelease as `0.30.0-beta.3`, published under the `beta` dist-tag. Install it with `npm install homebridge-tydom@beta`; nobody is upgraded to it automatically.
+> Currently in prerelease as `0.30.0-beta.4`, published under the `beta` dist-tag. Install it with `npm install homebridge-tydom@beta`; nobody is upgraded to it automatically.
 >
-> `beta.3` restores the alarm opening-detectors companion accessory and unlinks the zone switches as a caption experiment (see Known issues). `beta.2` settled the alarm zone switches from the panel mode. `beta.1` fixed the dimmer writing the same `level` twice per gesture, reverted a leading write added to the shutter that the released version never had, made debug-log lines name the device they are about, and stopped a thermostat with no setpoint handing HomeKit a null target temperature.
+> `beta.4` reverts the beta.3 zone-switch unlink — see Notes on why the captions were never a plugin problem. `beta.3` restored the alarm opening-detectors companion accessory. `beta.2` settled the alarm zone switches from the panel mode. `beta.1` fixed the dimmer writing the same `level` twice per gesture, reverted a leading write added to the shutter that the released version never had, made debug-log lines name the device they are about, and stopped a thermostat with no setpoint handing HomeKit a null target temperature.
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. See [Migrating to v0.30](https://github.com/mgcrea/homebridge-tydom#migrating-to-v030).
 
