@@ -55,7 +55,23 @@ export default class TydomController extends EventEmitter {
   public client: TydomClient;
   public config: TydomPlatformConfig;
   public log: Logging;
+  /**
+   * Known endpoints, by `deviceId:endpointId`.
+   *
+   * Only a gate for inbound pushes — `handleDeviceDataUpdate` uses it to tell a
+   * device it discovered from one it did not. Companions share their primary's
+   * endpoint, so only the primary ever writes here.
+   */
   private devices = new Map<string, Categories>();
+  /**
+   * Accessories already announced to the platform, by `accessoryId`.
+   *
+   * Separate from `devices` because a companion shares the primary's endpoint
+   * but is a distinct accessory. Deduping the announcement on the endpoint
+   * instead — which is what this used to do — silently swallowed every
+   * companion, since the primary always claimed the key first.
+   */
+  private emitted = new Set<string>();
   private refreshInterval: NodeJS.Timeout | undefined;
   private hasConnectedOnce = false;
   /** Delta Dore label lookups, bound to the configured locale. */
@@ -203,15 +219,20 @@ export default class TydomController extends EventEmitter {
           deviceId,
         )} and endpointId=${styleNumber(endpointId)}`,
       );
-      if (this.devices.has(uniqueId)) {
+      if (this.emitted.has(device.accessoryId)) {
         continue;
       }
+      this.emitted.add(device.accessoryId);
       this.log.info(
         `Adding new device with firstUsage=${styleString(firstUsage)}, deviceId=${styleNumber(
           deviceId,
         )} and endpointId=${styleNumber(endpointId)}`,
       );
-      this.devices.set(uniqueId, category as Categories);
+      // A companion carries a synthetic category that must not overwrite the
+      // real one its primary registered for the same endpoint.
+      if (!device.companionOf) {
+        this.devices.set(uniqueId, category as Categories);
+      }
       const context: TydomAccessoryContext = {
         name:
           device.deviceType === "alarm-sensors"

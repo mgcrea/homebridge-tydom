@@ -175,6 +175,20 @@ describe("expandCompanions", () => {
     expect(companion?.companionOf).toBe(alarm.accessoryId);
   });
 
+  it("gives the companion the primary's endpoint but its own accessory id", () => {
+    // Load-bearing, and the source of a real bug: the companion deliberately
+    // shares `uniqueId`, because it is the same endpoint on the gateway and
+    // inbound pushes are addressed to it. Only `accessoryId` tells the two
+    // apart. A consumer that dedupes announcements on `uniqueId` — which the
+    // controller did — drops every companion on the floor, because the primary
+    // is emitted first and claims the key.
+    const [primary, companion] = expandCompanions(alarm);
+    expect(companion?.uniqueId).toBe(primary?.uniqueId);
+    expect(companion?.deviceId).toBe(primary?.deviceId);
+    expect(companion?.endpointId).toBe(primary?.endpointId);
+    expect(companion?.accessoryId).not.toBe(primary?.accessoryId);
+  });
+
   it("omits the companion when sensors are disabled", () => {
     expect(expandCompanions({ ...alarm, settings: { sensors: false } })).toEqual([
       { ...alarm, settings: { sensors: false } },
