@@ -1,6 +1,6 @@
 import type { PlatformAccessory } from "homebridge";
 import { get } from "lodash";
-import type { CharacteristicProps} from "src/config/hap";
+import type { CharacteristicProps } from "src/config/hap";
 import { Characteristic, Service } from "src/config/hap";
 import locale from "src/config/locale";
 import type TydomController from "src/controller";
@@ -36,8 +36,13 @@ export const setupThermostat = (
 ): void => {
   const { context } = accessory;
   const { client } = controller;
-  const { TargetHeatingCoolingState, CurrentHeatingCoolingState, TargetTemperature, CurrentTemperature, On } =
-    Characteristic;
+  const {
+    TargetHeatingCoolingState,
+    CurrentHeatingCoolingState,
+    TargetTemperature,
+    CurrentTemperature,
+    On,
+  } = Characteristic;
 
   const { deviceId, endpointId, metadata } = context;
   setupAccessoryInformationService(accessory, controller);
@@ -51,8 +56,14 @@ export const setupThermostat = (
     .setProps({ validValues: [0, 1] } as Partial<CharacteristicProps>) // [OFF, HEAT, COOL]
     .onGet(async () => {
       debugGet(CurrentHeatingCoolingState, service);
-      const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
-      const authorization = getTydomDataPropValue<TydomDeviceThermostatAuthorization>(data, "authorization");
+      const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {
+        deviceId,
+        endpointId,
+      });
+      const authorization = getTydomDataPropValue<TydomDeviceThermostatAuthorization>(
+        data,
+        "authorization",
+      );
       const setpoint = getTydomDataPropValue<number>(data, "setpoint");
       const temperature = getTydomDataPropValue<number>(data, "temperature");
       const nextValue =
@@ -68,7 +79,10 @@ export const setupThermostat = (
     .setProps({ validValues: [0, 1] } as Partial<CharacteristicProps>) // [OFF, HEAT, COOL, AUTO]
     .onGet(async () => {
       debugGet(TargetHeatingCoolingState, service);
-      const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
+      const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {
+        deviceId,
+        endpointId,
+      });
       const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, "hvacMode");
       const authorization = getTydomDataPropValue<"STOP" | "HEATING">(data, "authorization");
       const nextValue =
@@ -99,7 +113,10 @@ export const setupThermostat = (
 
   service.getCharacteristic(CurrentTemperature).onGet(async () => {
     debugGet(CurrentTemperature, service);
-    const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
+    const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {
+      deviceId,
+      endpointId,
+    });
     const temperature = getTydomDataPropValue<number>(data, "temperature");
     debugGetResult(CurrentTemperature, service, temperature);
     return temperature;
@@ -109,7 +126,10 @@ export const setupThermostat = (
     .getCharacteristic(TargetTemperature)
     .onGet(async () => {
       debugGet(TargetTemperature, service);
-      const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
+      const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {
+        deviceId,
+        endpointId,
+      });
       const setpoint = getTydomDataPropValue<number>(data, "setpoint");
       debugGetResult(TargetTemperature, service, setpoint);
       return setpoint;
@@ -153,7 +173,10 @@ export const setupThermostat = (
       .getCharacteristic(On)
       .onGet(async () => {
         debugGet(On, absenceModeService);
-        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, { deviceId, endpointId });
+        const data = await getTydomDeviceData<TydomDeviceThermostatData>(client, {
+          deviceId,
+          endpointId,
+        });
         const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, "hvacMode");
         // const antifrostOn = getTydomDataPropValue<boolean>(data, 'antifrostOn');
         // const nextValue = hvacMode === 'ANTI_FROST' && antifrostOn;
@@ -235,8 +258,13 @@ export const updateThermostat = (
   _controller: TydomController,
   updates: Record<string, unknown>[],
 ): void => {
-  const { TargetHeatingCoolingState, CurrentHeatingCoolingState, TargetTemperature, CurrentTemperature, On } =
-    Characteristic;
+  const {
+    TargetHeatingCoolingState,
+    CurrentHeatingCoolingState,
+    TargetTemperature,
+    CurrentTemperature,
+    On,
+  } = Characteristic;
 
   updates.forEach((update) => {
     const { name, value } = update;
@@ -283,7 +311,10 @@ export const updateThermostat = (
           debug(`Encountered a ${chalkString("thermicLevel")} update with a null value!`);
           return;
         }
-        const service = accessory.getServiceById(Service.Switch, `thermicLevel_${thermicLevel.toLowerCase()}`);
+        const service = accessory.getServiceById(
+          Service.Switch,
+          `thermicLevel_${thermicLevel.toLowerCase()}`,
+        );
         if (service) {
           debugSetUpdate(On, service, true);
           service.updateCharacteristic(On, true);

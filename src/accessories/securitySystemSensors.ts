@@ -3,13 +3,12 @@ import { get, keyBy } from "lodash";
 import { Characteristic, Service } from "src/config/hap";
 import locale from "src/config/locale";
 import type TydomController from "src/controller";
-import type {
-  TydomAccessoryUpdateType} from "src/helpers/accessory";
+import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
 import {
   addAccessoryServiceWithSubtype,
   getAccessoryServiceWithSubtype,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
+  setupAccessoryInformationService,
 } from "src/helpers/accessory";
 import { runTydomDeviceCommand } from "src/helpers/tydom";
 import type {
@@ -47,7 +46,11 @@ export const setupSecuritySystemSensors = async (
   );
   const { products } = labelResults[0];
   contactSensorProducts = products.filter((product) => ["MDO"].includes(product.typeLong));
-  histoSearchParams = { type: "OPEN_ISSUES", indexStart: "0", nbElem: `${contactSensorProducts.length}` };
+  histoSearchParams = {
+    type: "OPEN_ISSUES",
+    indexStart: "0",
+    nbElem: `${contactSensorProducts.length}`,
+  };
 
   const initialOpenedIssues = getOpenedIssues(
     await runTydomDeviceCommand<SecuritySystemHistoOpenIssuesCommandResult>(client, "histo", {
@@ -115,22 +118,34 @@ export const updateSecuritySystemSensors = (
         if (!systOpenIssue) {
           contactSensorProducts.forEach(({ id: productId }) => {
             const subDeviceId = `systOpenIssue_${productId}`;
-            const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, subDeviceId);
+            const service = getAccessoryServiceWithSubtype(
+              accessory,
+              Service.ContactSensor,
+              subDeviceId,
+            );
             const nextValue = 0;
             debugSetUpdate(ContactSensorState, service, nextValue);
             service.updateCharacteristic(ContactSensorState, nextValue);
           });
         } else {
           const openedIssues = getOpenedIssues(
-            await runTydomDeviceCommand<SecuritySystemHistoOpenIssuesCommandResult>(client, "histo", {
-              deviceId,
-              endpointId,
-              searchParams: histoSearchParams,
-            }),
+            await runTydomDeviceCommand<SecuritySystemHistoOpenIssuesCommandResult>(
+              client,
+              "histo",
+              {
+                deviceId,
+                endpointId,
+                searchParams: histoSearchParams,
+              },
+            ),
           );
           contactSensorProducts.forEach(({ id: productId }) => {
             const subDeviceId = `systOpenIssue_${productId}`;
-            const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, subDeviceId);
+            const service = getAccessoryServiceWithSubtype(
+              accessory,
+              Service.ContactSensor,
+              subDeviceId,
+            );
             const nextValue = openedIssues[productId] ? 1 : 0;
             debugSetUpdate(ContactSensorState, service, nextValue);
             service.updateCharacteristic(ContactSensorState, nextValue);

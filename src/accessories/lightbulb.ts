@@ -21,7 +21,10 @@ import {
   debugSetUpdate,
   debugTydomPut,
 } from "src/utils";
-import { addAccessorySwitchableService, updateAccessorySwitchableService } from "./services/switchableService";
+import {
+  addAccessorySwitchableService,
+  updateAccessorySwitchableService,
+} from "./services/switchableService";
 
 type LightbulbSettings = Record<string, never>;
 
@@ -143,7 +146,9 @@ export const updateLightbulb = (
         }
         // @NOTE ignore pending updates
         if (state.pendingUpdatedValues.includes(level)) {
-          debug(`Ignoring a delayed ${chalkString("level")} update with value=${chalkNumber(level)}`);
+          debug(
+            `Ignoring a delayed ${chalkString("level")} update with value=${chalkNumber(level)}`,
+          );
           // Reset pending updates stack
           state.pendingUpdatedValues = [];
           return;

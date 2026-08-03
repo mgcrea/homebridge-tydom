@@ -2,13 +2,12 @@ import debug from "debug";
 import type { PlatformAccessory } from "homebridge";
 import { Characteristic, Service } from "src/config/hap";
 import type TydomController from "src/controller";
-import type {
-  TydomAccessoryUpdateType} from "src/helpers";
+import type { TydomAccessoryUpdateType } from "src/helpers";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
+  setupAccessoryInformationService,
 } from "src/helpers";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type { TydomAccessoryContext } from "src/typings";
@@ -37,11 +36,18 @@ type GarageDoorOpenerState = {
   lastUpdatedAt: number;
   computedPosition: number;
 };
-type GarageDoorOpenerContext = TydomAccessoryContext<GarageDoorOpenerSettings, GarageDoorOpenerState>;
+type GarageDoorOpenerContext = TydomAccessoryContext<
+  GarageDoorOpenerSettings,
+  GarageDoorOpenerState
+>;
 
 const DEFAULT_GARAGE_DOOR_DELAY = 20 * 1000;
 
-const getTydomCurrentDoorState = async (client: TydomClient, deviceId: number, endpointId: number) => {
+const getTydomCurrentDoorState = async (
+  client: TydomClient,
+  deviceId: number,
+  endpointId: number,
+) => {
   const { CurrentDoorState } = Characteristic;
   const tydomDeviceData = await getTydomDeviceData<TydomDeviceGarageDoorData>(client, {
     deviceId,
@@ -219,7 +225,12 @@ export const setupGarageDoorOpener = (
   if (legacyService) {
     accessory.removeService(legacyService);
   }
-  const service = addAccessoryService(accessory, Service.GarageDoorOpener, accessory.displayName, true);
+  const service = addAccessoryService(
+    accessory,
+    Service.GarageDoorOpener,
+    accessory.displayName,
+    true,
+  );
 
   service.getCharacteristic(CurrentDoorState).onGet(async () => {
     debugGet(CurrentDoorState, service);
@@ -271,7 +282,9 @@ export const setupGarageDoorOpener = (
       let nextCurrentDoorState = getNextCurrentDoorState(targetDoorState);
       debug(`nextCurrentDoorState=${chalkString(getDoorStateLabel(nextCurrentDoorState))}`);
       if (nextCurrentDoorState === state.currentDoorState) {
-        debug(`nextCurrentDoorState=${chalkNumber(nextCurrentDoorState)} === state.currentDoorState`);
+        debug(
+          `nextCurrentDoorState=${chalkNumber(nextCurrentDoorState)} === state.currentDoorState`,
+        );
         return;
       }
       await toggleGarageDoor(targetDoorState);
@@ -398,7 +411,9 @@ export const updateGarageDoorOpener = (
           doorState = CurrentDoorState.OPEN; // 0
           computedPosition = 100;
         } else if (level > 0 && level < 100) {
-          debug(`Encountered a ${chalkString("level")} update with value different from 0 or 100 !`);
+          debug(
+            `Encountered a ${chalkString("level")} update with value different from 0 or 100 !`,
+          );
           return;
         }
         // Update CurrentDoorState

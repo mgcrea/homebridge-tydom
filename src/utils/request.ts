@@ -38,7 +38,9 @@ export const postJson = async <T>(
           statusCode: res.statusCode,
           statusMessage: res.statusMessage,
           headers: res.headers,
-          body: chunks.length ? (JSON.parse(Buffer.concat(chunks).toString()) as T) : (undefined as T),
+          body: chunks.length
+            ? (JSON.parse(Buffer.concat(chunks).toString()) as T)
+            : (undefined as T),
         });
       });
     });

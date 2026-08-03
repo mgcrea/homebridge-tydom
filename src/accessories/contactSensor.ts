@@ -24,7 +24,12 @@ export const setupContactSensor = (
   setupAccessoryIdentifyHandler(accessory, controller);
 
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.ContactSensor, accessory.displayName, true);
+  const service = addAccessoryService(
+    accessory,
+    Service.ContactSensor,
+    accessory.displayName,
+    true,
+  );
 
   service.getCharacteristic(ContactSensorState).onGet(async () => {
     debugGet(ContactSensorState, service);

@@ -72,7 +72,9 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     // this.controller.on('connect', () => {});
     this.controller.on("device", (context: ControllerDevicePayload) => {
       this.handleControllerDevice(context).catch((err: unknown) => {
-        this.log.error(`Failed to handle device ${context.deviceId}: ${stringifyError(err as Error)}`);
+        this.log.error(
+          `Failed to handle device ${context.deviceId}: ${stringifyError(err as Error)}`,
+        );
       });
     });
     this.controller.on("update", this.handleControllerDataUpdate.bind(this));
@@ -96,7 +98,9 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
           return;
         }
         const delay = Math.min(5000 * Math.pow(2, attempt), maxDelay);
-        this.log.warn(`Connection attempt ${attempt + 1} failed, retrying in ${Math.round(delay / 1000)}s...`);
+        this.log.warn(
+          `Connection attempt ${attempt + 1} failed, retrying in ${Math.round(delay / 1000)}s...`,
+        );
         await new Promise<void>((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -155,7 +159,9 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
           });
         }
       } catch (err) {
-        this.log.error(`Failed to update accessory ${context.accessoryId}: ${stringifyError(err as Error)}`);
+        this.log.error(
+          `Failed to update accessory ${context.accessoryId}: ${stringifyError(err as Error)}`,
+        );
       }
     }
   }

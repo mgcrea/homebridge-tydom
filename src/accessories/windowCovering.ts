@@ -2,13 +2,12 @@ import type { PlatformAccessory } from "homebridge";
 import { debounce } from "lodash";
 import { Characteristic, Service } from "src/config/hap";
 import type TydomController from "src/controller";
-import type {
-  TydomAccessoryUpdateType} from "src/helpers/accessory";
+import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
 import {
   addAccessoryService,
   getAccessoryService,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
+  setupAccessoryInformationService,
 } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type { TydomAccessoryContext, TydomDeviceShutterData } from "src/typings/tydom";
@@ -61,7 +60,12 @@ export const setupWindowCovering = (
   });
 
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.WindowCovering, accessory.displayName, true);
+  const service = addAccessoryService(
+    accessory,
+    Service.WindowCovering,
+    accessory.displayName,
+    true,
+  );
 
   const debouncedSetPosition = debounce(
     async (value: number) => {
@@ -118,7 +122,10 @@ export const setupWindowCovering = (
     .getCharacteristic(TargetPosition)
     .onGet(async () => {
       debugGet(TargetPosition, service);
-      const data = await getTydomDeviceData<TydomDeviceShutterData>(client, { deviceId, endpointId });
+      const data = await getTydomDeviceData<TydomDeviceShutterData>(client, {
+        deviceId,
+        endpointId,
+      });
       const position = getTydomDataPropValue<number>(data, "position") || 0;
       const nextValue = asNumber(position);
       debugGetResult(CurrentPosition, service, nextValue);
@@ -170,7 +177,9 @@ export const updateWindowCovering = (
         service.updateCharacteristic(CurrentPosition, position);
         // @NOTE ignore pending updates
         if (state.pendingUpdatedValues.includes(position)) {
-          debug(`Ignoring a pending ${chalkString("position")} update with value=${chalkNumber(position)} !`);
+          debug(
+            `Ignoring a pending ${chalkString("position")} update with value=${chalkNumber(position)} !`,
+          );
           state.pendingUpdatedValues = [];
           return;
         }

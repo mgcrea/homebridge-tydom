@@ -20,7 +20,15 @@ import type {
   TydomGroupsResponse,
   TydomMetaResponse,
 } from "src/typings/tydom";
-import { assert, chalkJson, chalkNumber, chalkString, debug, decode, stringIncludes } from "src/utils";
+import {
+  assert,
+  chalkJson,
+  chalkNumber,
+  chalkString,
+  debug,
+  decode,
+  stringIncludes,
+} from "src/utils";
 import { stringifyError } from "src/utils/error";
 import type TydomClient from "tydom-client";
 import {
@@ -80,7 +88,9 @@ export default class TydomController extends EventEmitter {
         `Successfully connected to Tydom hostname=${chalkString(hostname)} with username=${chalkString(username)}`,
       );
       if (this.hasConnectedOnce) {
-        this.log.warn(`Reconnected to Tydom hostname=${chalkString(hostname)}, re-syncing state...`);
+        this.log.warn(
+          `Reconnected to Tydom hostname=${chalkString(hostname)}, re-syncing state...`,
+        );
         this.resync().catch((err: unknown) => {
           this.log.error(`Failed to re-sync after reconnection: ${stringifyError(err as Error)}`);
         });
@@ -191,9 +201,12 @@ export default class TydomController extends EventEmitter {
         );
       }
       const category =
-        categoryFromSettings ?? resolveEndpointCategory({ firstUsage, metadata, settings: deviceSettings });
+        categoryFromSettings ??
+        resolveEndpointCategory({ firstUsage, metadata, settings: deviceSettings });
       if (!category) {
-        this.log.warn(`Unsupported firstUsage="${firstUsage}" for endpoint with deviceId="${deviceId}"`);
+        this.log.warn(
+          `Unsupported firstUsage="${firstUsage}" for endpoint with deviceId="${deviceId}"`,
+        );
         debug({ endpoint });
         return;
       }

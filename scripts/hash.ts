@@ -1,5 +1,5 @@
 #! /usr/bin/env node
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import { getEndpointSignatureFromMetadata } from "src/helpers/tydom";
 import type { TydomConfigResponse, TydomMetaElement, TydomMetaResponse } from "src/typings";
 import { sha256, sha256Sync } from "src/utils";
@@ -27,7 +27,12 @@ const main = async () => {
             (item) => item.id_device === deviceMeta.id && item.id_endpoint === endpointMeta.id,
           );
           const hash = `${config?.first_usage}:${await sha256(signature)}`;
-          console.dir({ id: `${deviceMeta.id}.${endpointMeta.id}`, name: config?.name, signature, hash });
+          console.dir({
+            id: `${deviceMeta.id}.${endpointMeta.id}`,
+            name: config?.name,
+            signature,
+            hash,
+          });
         }
       }
       break;

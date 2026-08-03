@@ -5,7 +5,13 @@ import type { ServiceClass } from "src/helpers/accessory";
 import { addAccessoryService, getAccessoryService } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type { TydomAccessoryContext } from "src/typings/tydom";
-import { debugGet, debugGetResult, debugSet, debugSetResult, debugSetUpdate } from "src/utils/debug";
+import {
+  debugGet,
+  debugGetResult,
+  debugSet,
+  debugSetResult,
+  debugSetUpdate,
+} from "src/utils/debug";
 
 export const addAccessorySwitchableService = (
   accessory: PlatformAccessory<TydomAccessoryContext>,

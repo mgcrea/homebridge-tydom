@@ -24,7 +24,12 @@ export const setupTemperatureSensor = (
   setupAccessoryIdentifyHandler(accessory, controller);
 
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.TemperatureSensor, accessory.displayName, true);
+  const service = addAccessoryService(
+    accessory,
+    Service.TemperatureSensor,
+    accessory.displayName,
+    true,
+  );
 
   service
     .getCharacteristic(CurrentTemperature)

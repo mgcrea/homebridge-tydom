@@ -3,7 +3,10 @@ import { Service } from "src/config/hap";
 import type TydomController from "src/controller";
 import { setupAccessoryIdentifyHandler, setupAccessoryInformationService } from "src/helpers";
 import type { TydomAccessoryContext } from "src/typings";
-import { addAccessorySwitchableService, updateAccessorySwitchableService } from "./services/switchableService";
+import {
+  addAccessorySwitchableService,
+  updateAccessorySwitchableService,
+} from "./services/switchableService";
 
 export const setupSwitch = (
   accessory: PlatformAccessory<TydomAccessoryContext>,

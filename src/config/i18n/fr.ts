@@ -38,7 +38,8 @@ export default {
   ABOUT_URL_MEDIATION: "URL médiation",
   ACTIVE_ALERTS_INTRUSION:
     "En activant cette fonction, votre système d’alarme vous alertera des détections d’intrusion.",
-  ACTIVE_ALERT_WITH_TYXAL_PLUS: "Pour activer ces alertes, vous devez disposer d’un système d’alarme",
+  ACTIVE_ALERT_WITH_TYXAL_PLUS:
+    "Pour activer ces alertes, vous devez disposer d’un système d’alarme",
   ADD_DETECTOR: "Ajouter un détecteur",
   ALARME_ACCESS_CODE: "Code d'accès",
   ALARME_ARRET: "Arrêt",
@@ -55,7 +56,8 @@ export default {
   ALARME_NO_RESPONSE: "Pas de réponse de la centrale",
   ALARME_ON_PARTIAL: "Marche partielle",
   ALARME_PARTIAL: "Partielle",
-  ALARME_PASSAGE_MODE_MAINTENANCE: "Pour changer le code d'accès, passez la centrale en mode maintenance.",
+  ALARME_PASSAGE_MODE_MAINTENANCE:
+    "Pour changer le code d'accès, passez la centrale en mode maintenance.",
   ALARM_CODE_INSTALLER_TEXT: "Cette action requiert le code installateur.",
   ALARM_DEFAULTS_AUTOPROTECTION: "Équipements en autoprotection",
   ALARM_DEFAULTS_CLEAR_DIALOG: "Voulez-vous effacer les défauts non acquittés ?",
@@ -93,7 +95,8 @@ export default {
   ARM_FAULT: "Refus de mise en marche",
   ARM_FAULT_RF: "Refus défaut réception RF",
   ASSOCIATION_CURRENT_STEP_LABEL: "Étape %d",
-  ASSOCIATION_DISCONNECTED_ADD_EQUIPMENT: "Vous êtes déconnecté, vous ne pouvez pas associer d'équipements",
+  ASSOCIATION_DISCONNECTED_ADD_EQUIPMENT:
+    "Vous êtes déconnecté, vous ne pouvez pas associer d'équipements",
   ASSOCIATION_ERROR: "Association impossible. Vérifier qu'une association n'est pas déjà en cours",
   ASSOCIATION_FINISHED: "Terminé",
   ASSOCIATION_FOUND_EQUIPMENT_PLURAL: "%d équipements trouvés",
@@ -184,7 +187,8 @@ export default {
   CG_DD_LED_GREEN_REC: "La LED verte clignote, maintenant appuyez sur «ASSOCIER».",
   CG_DD_LED_RED_REC: "La LED rouge clignote, maintenant appuyez sur «ASSOCIER».",
   CG_DD_MINOR1000_STEP1: "Assurez-vous d'avoir associé le ou les récepteurs au MINOR 1000.",
-  CG_DD_NOVOFERM_WPS_STEP1: "Assurez vous que le module Delta Dore est correctement connecté au moteur.",
+  CG_DD_NOVOFERM_WPS_STEP1:
+    "Assurez vous que le module Delta Dore est correctement connecté au moteur.",
   CG_DD_NOVOFERM_WPS_STEP2: "Ouvrez la porte du garage.",
   CG_DD_OPEN_TRAP:
     "Ouvrez la trappe de la centrale, vous disposez d'une minute pour l'ouvrir.\nAu-delà, recommencez à l'étape 1.",
@@ -197,7 +201,8 @@ export default {
   CG_DD_PRESS_1_TIME_ON_R: "Appuyez 1 fois sur la touche R au dos de la télécommande.",
   CG_DD_PRESS_ADD_DOMOTIC: "Appuyez sur «Ajouter un lien domotique».",
   CG_DD_PRESS_ADVANCED_SETTINGS: "Appuyez sur «Réglages avancés».",
-  CG_DD_PRESS_AGAIN_BUTTON: "Appuyez à nouveau brièvement sur la touche.\nLe clignotement est plus rapide.",
+  CG_DD_PRESS_AGAIN_BUTTON:
+    "Appuyez à nouveau brièvement sur la touche.\nLe clignotement est plus rapide.",
   CG_DD_PRESS_ASSOCIATE: "Maintenant appuyez sur “ASSOCIER“.",
   CG_DD_PRESS_BUTTON_1_INT_3: "Appuyez 3 secondes sur la touche 1 du récepteur.",
   CG_DD_PRESS_BUTTON_5: "Appuyez 5 secondes sur le bouton.",
@@ -225,7 +230,8 @@ export default {
   CG_DD_PRESS_BUTTON_ON_OFF_5_LED_RED_GREEN:
     "Appuyer 5 secondes simultanément sur les touches ON et OFF.\nLe voyant s'allume rouge puis vert pour valider l'action.\nLa centrale emet un BIP et son voyant clignote.\nRelâchez.",
   CG_DD_PRESS_BUTTON_O_3: "Appuyez 3 secondes sur la touche «O».",
-  CG_DD_PRESS_BUTTON_PLUS: "Appuyez sur la touche «+» pour afficher «1».\nAppuyez sur OK pour afficher rAd.",
+  CG_DD_PRESS_BUTTON_PLUS:
+    "Appuyez sur la touche «+» pour afficher «1».\nAppuyez sur OK pour afficher rAd.",
   CG_DD_PRESS_BUTTON_R: "Appuyez sur la touche «R» une fois.",
   CG_DD_PRESS_BUTTON_REC_3: "Appuyez 3 secondes sur la touche du récepteur.",
   CG_DD_PRESS_DOMOTIC: "Appuyez sur «Domotique».",
@@ -238,8 +244,10 @@ export default {
     "Le voyant de la télécommande s'allume, et au moins un équipement réagit.\nMaintenant appuyez sur ASSOCIER.",
   CG_DD_SOMMER_WPS_STEP1: "Coupez le courant, puis réactivez-le.",
   CG_DD_STORE_WELLCOM: "STORE Well’Com®",
-  CG_DD_TURN_SETTINGS_BUTTON_OK: "Tournez la molette sur «Réglages», appuyez 3 secondes sur la touche «OK».",
-  CG_DD_TURN_STOP_BUTTON_I: "Tournez la molette sur «Arrêt».\nEnsuite appuyez 5 secondes sur la touche «i».",
+  CG_DD_TURN_SETTINGS_BUTTON_OK:
+    "Tournez la molette sur «Réglages», appuyez 3 secondes sur la touche «OK».",
+  CG_DD_TURN_STOP_BUTTON_I:
+    "Tournez la molette sur «Arrêt».\nEnsuite appuyez 5 secondes sur la touche «i».",
   CG_DD_TYXAL_PLUS_COMPACT: "TYXAL + COMPACT",
   CG_DD_USAGE_ALARM: "Alarme",
   CG_DD_USAGE_ALARM_NEW: "Alarme",
@@ -290,7 +298,8 @@ export default {
   COMMAND_CLIM: "Clim",
   COMMAND_FAVOURITE_ADD_MESSAGE:
     "Votre équipement est\ndésormais directement accessible\ndepuis la page d'accueil.",
-  COMMAND_FAVOURITE_DELETE_MESSAGE: "Votre équipement ne sera plus accessible depuis la page d'accueil.",
+  COMMAND_FAVOURITE_DELETE_MESSAGE:
+    "Votre équipement ne sera plus accessible depuis la page d'accueil.",
   COMMAND_FAVOURITE_TITLE: "Favoris",
   COMMAND_HYGROMETRY: "Humidité",
   COMMAND_PERIPHERALS_DELETION: "Eff. des éléments de commandes",
@@ -350,7 +359,8 @@ export default {
   CONSO_EURO: "en €",
   CONSO_GAZ: "Gaz",
   CONSO_INSTANT_UNIT: "Unité instantanée",
-  CONSO_INSTANT_UNIT_DETAIL: "Modifier l'unité utilisée pour l'affichage de la consommation instantanée",
+  CONSO_INSTANT_UNIT_DETAIL:
+    "Modifier l'unité utilisée pour l'affichage de la consommation instantanée",
   CONSO_KWH: "en kWh ou m3",
   CONSO_UNDEF: "Indéfini",
   CONSO_UNIT_CHOICE: "Choix de l'unité",
@@ -394,7 +404,8 @@ export default {
     "Vous entrez dans le mode démo.\n Pour quitter, retournez dans le menu général et sélectionnez Quitter le mode démo.",
   DEPOT: "Dépôt",
   DETECTORS: "Détecteurs",
-  DETECT_DOOR_ALERT_TEXT: "Confirmez-vous l'ouverture de la porte ?\n(Porte non refermable à distance)",
+  DETECT_DOOR_ALERT_TEXT:
+    "Confirmez-vous l'ouverture de la porte ?\n(Porte non refermable à distance)",
   DETECT_DOOR_ALERT_TITLE: "Attention",
   DETECT_DOOR_CONTROLCLOSE: "Fermé",
   DETECT_DOOR_CONTROLLOCK: "Verrouillé",
@@ -451,7 +462,8 @@ export default {
   EXISTING_PERIPHERAL: "Point existant",
   FAULTS_ACKNOWLEDGMENT: "Acquittement utilisateur",
   FAULTS_ACKNOWLEDGMENT_V3: "Acquittement",
-  FIND_OPTIONS_ALERTS_IN_SETTINGS: "Retrouvez cette option dans le menu de réglages, section Alertes.",
+  FIND_OPTIONS_ALERTS_IN_SETTINGS:
+    "Retrouvez cette option dans le menu de réglages, section Alertes.",
   FIRE_ALARM: "Défaut incendie",
   FIRE_ALARM_V3: "Alarme incendie",
   FIRST_CONNEXION_TEXT:
@@ -538,7 +550,8 @@ export default {
   INCOMING_VOICE_CALL_V3: "Com. entr. vocale validée",
   INIT_GENERAL: "Initialisation alarme",
   INTRUSION: "Intrusion",
-  INTRUSION_DETECTION_NOTIFICATION_MESSAGE: "Vous recevrez une notification à chaque détection d’intrusion.",
+  INTRUSION_DETECTION_NOTIFICATION_MESSAGE:
+    "Vous recevrez une notification à chaque détection d’intrusion.",
   IP_FAULT: "Début défaut IP",
   KILOWATT: "kWh",
   KITCHEN: "Cuisine",
@@ -671,7 +684,8 @@ export default {
   ON_ZONE: "Marche par zone",
   OPEN_ENTRANCE: "Porte ouverte",
   OPERATION_REFUSED: "Opération refusée",
-  OPERATION_REFUSED_INSTALLER: "La centrale ne peut pas être mise en arrêt avec un code d'accès installateur.",
+  OPERATION_REFUSED_INSTALLER:
+    "La centrale ne peut pas être mise en arrêt avec un code d'accès installateur.",
   OUTBUILDING: "Dépendance",
   OUTGOING_CONNECTION_FAILURE: "Echec de connexion sortante",
   OUTGOING_CONNECTION_FAILURE_DIGITAL: "echec com. sort. digitale",
@@ -754,7 +768,8 @@ export default {
   PROG_MOMENT_NAME_TITLE: "Nom",
   PROG_MOMENT_NOT_PLAY: "Ce moment ne sera plus joué.",
   PROG_MOMENT_NO_EQUIPMENTS: "Aucun équipement",
-  PROG_MOMENT_POPUP_DAY_LIMIT_MESSAGE: "Vous avez atteint le nombre maximum de 24 moments sur cette journée.",
+  PROG_MOMENT_POPUP_DAY_LIMIT_MESSAGE:
+    "Vous avez atteint le nombre maximum de 24 moments sur cette journée.",
   PROG_MOMENT_POPUP_LIMIT_TITLE: "Impossible de créer le moment",
   PROG_MOMENT_POPUP_SAME_HOUR_LIMIT_MESSAGE:
     "Vous avez atteint le nombre maximum de 2 moments à la même heure la journée du %s.",
@@ -792,12 +807,14 @@ export default {
   SELF_PROTECTION_FAULT: "Autoprotection",
   SELF_TEST_REQUEST: "Demande d'autotest",
   SERVER_ACCESS: "Accès serveur",
-  SETTINGS_ABANDON_WITHOUT_SAVE_MESSAGE: "Souhaitez-vous abandonner sans sauvegarder vos modifications ?",
+  SETTINGS_ABANDON_WITHOUT_SAVE_MESSAGE:
+    "Souhaitez-vous abandonner sans sauvegarder vos modifications ?",
   SETTINGS_ABOUT: "A propos",
   SETTINGS_ACCOUNT: "Compte",
   SETTINGS_ADD: "Ajouter",
   SETTINGS_ADD_PRODUCT: "Ajouter un équipement",
-  SETTINGS_ALARM_DELETE: "Pour pouvoir supprimer la centrale, il faut d'abord la placer en maintenance",
+  SETTINGS_ALARM_DELETE:
+    "Pour pouvoir supprimer la centrale, il faut d'abord la placer en maintenance",
   SETTINGS_ALERTS_ACTIVATED: "Notifications évènements activées",
   SETTINGS_ALERTS_ACTIVATED_DETAILS: "Vous serez notifié des évènements de votre domicile.",
   SETTINGS_ALERTS_DESCRIPTION: "Soyez alerté des évènements de votre domicile.",
@@ -814,7 +831,8 @@ export default {
   SETTINGS_ASSOCIATE_WIFI_TITLE: "Connexion réseau",
   SETTINGS_CGU: "Conditions Générales d'utilisation",
   SETTINGS_CGU_CANCEL: "Refuser",
-  SETTINGS_CONNECT_DONGLE: "Connectez le dongle USB Zigbee au port USB de votre box domotique TYDOM.",
+  SETTINGS_CONNECT_DONGLE:
+    "Connectez le dongle USB Zigbee au port USB de votre box domotique TYDOM.",
   SETTINGS_CONTACT: "Nous contacter",
   SETTINGS_CONTACT_US: "Nous contacter",
   SETTINGS_COPYRIGHT: "Copyright",
@@ -847,7 +865,8 @@ export default {
   SETTINGS_INSTALL_ON_GOING: "Installation en cours",
   SETTINGS_INSTALL_ZIGBEE:
     "Avant d'associer ces équipements, vous devez installer le protocole Zigbee.\n\nAppuyer sur INSTALLER pour continuer.",
-  SETTINGS_INSTALL_ZIGBEE_FAILED_TEXT: "Le protocol Zigbee n'a pas pu être installé, veuillez réessayer.",
+  SETTINGS_INSTALL_ZIGBEE_FAILED_TEXT:
+    "Le protocol Zigbee n'a pas pu être installé, veuillez réessayer.",
   SETTINGS_INSTALL_ZIGBEE_FAILED_TITLE: "Échec d'installation",
   SETTINGS_LEGAL_NOTICES: "Mentions légales",
   SETTINGS_MENU_SECTION_CUSTOMIZATION: "Personnalisation",
@@ -863,7 +882,8 @@ export default {
   SETTINGS_MY_SITES: "Mes domiciles",
   SETTINGS_NAME: "Nom",
   SETTINGS_NEW: "Nouveau",
-  SETTINGS_NOTIFICATIONS_ALERTS_DESCRIPTION: "Soyez alerté des évenements de votre domicile par notification.",
+  SETTINGS_NOTIFICATIONS_ALERTS_DESCRIPTION:
+    "Soyez alerté des évenements de votre domicile par notification.",
   SETTINGS_PHOTOS_ADD_TIP_TEXT: "Ajouter une commmande d'équipement",
   SETTINGS_PHOTOS_APPEARANCE_ALPHA: "Transparence",
   SETTINGS_PHOTOS_APPEARANCE_SCALE: "Échelle",
@@ -871,7 +891,8 @@ export default {
   SETTINGS_PHOTOS_APPEARANCE_TEXT: "Ajustez les touches de commandes à vos photos.",
   SETTINGS_PHOTOS_CANCEL_MESSAGE: "Ajouter la nouvelle photo avant de quitter ?",
   SETTINGS_PHOTOS_CREATE: "Ajouter une photo",
-  SETTINGS_PHOTOS_CREATE_TEXT: "Commandez vos équipements directement depuis les photos de votre intérieur.",
+  SETTINGS_PHOTOS_CREATE_TEXT:
+    "Commandez vos équipements directement depuis les photos de votre intérieur.",
   SETTINGS_PHOTOS_DEFAULT_NAME: "Nouvelle photo",
   SETTINGS_PHOTOS_DELETE: "Supprimer la photo",
   SETTINGS_PHOTOS_DELETE_AREA_TEXT: "Glisser ici pour supprimer une touche",
@@ -891,7 +912,8 @@ export default {
   SETTINGS_QR_CODE_SERIAL_ADD_TEXT:
     "Saisissez le numéro de série situé sous le pied de votre caméra (ex : 730180186).",
   SETTINGS_ROOMS: "Pièces",
-  SETTINGS_SCAN_ZIGBEE: "Appuyer sur COMMENCER pour découvrir les équipements Zigbee de votre installation.",
+  SETTINGS_SCAN_ZIGBEE:
+    "Appuyer sur COMMENCER pour découvrir les équipements Zigbee de votre installation.",
   SETTINGS_SCENARIOS: "Scénarios",
   SETTINGS_SCENARIOS_CANCEL_MESSAGE: "Ajouter le nouveau scénario avant de quitter ?",
   SETTINGS_SCENARIOS_CREATE: "Créer un scénario",
@@ -905,7 +927,8 @@ export default {
   SETTINGS_SCENARIOS_MENU_ACTIONS: "Actions",
   SETTINGS_SCENARIOS_MENU_EQUIPMENTS: "Équipements",
   SETTINGS_SCENARIOS_SELECT_EQUIPMENTS: "Sélectionner les équipements",
-  SETTINGS_SCENARIOS_SELECT_EQUIPMENTS_TEXT: "Sélectionnez les équipements à jouer au lancement du scénario.",
+  SETTINGS_SCENARIOS_SELECT_EQUIPMENTS_TEXT:
+    "Sélectionnez les équipements à jouer au lancement du scénario.",
   SETTINGS_SCENARIOS_SET_ACTIONS: "Régler les actions",
   SETTINGS_SCENARIOS_SET_ACTIONS_TEXT:
     "Réglez les actions sur chaque équipement qui seront jouées au lancement du scénario.",
@@ -946,7 +969,8 @@ export default {
   SETTINGS_SITE_REPLACE: "Remplacer TYDOM",
   SETTINGS_SITE_REPLACE_IDENTIFIER_TEXT:
     "Une fois branchée, entrez l'identifiant de la nouvelle box TYDOM.\nL'identifiant du site correspond aux 6 derniers caractères de l'adresse MAC qui se trouve à l'arrière de votre box TYDOM (ex: 00801E).",
-  SETTINGS_SITE_REPLACE_PASSWORD_ALERT: "Votre mot de passe doit être identique entre les deux saisies.",
+  SETTINGS_SITE_REPLACE_PASSWORD_ALERT:
+    "Votre mot de passe doit être identique entre les deux saisies.",
   SETTINGS_SITE_REPLACE_PASSWORD_NEW: "Nouveau mot de passe",
   SETTINGS_SITE_REPLACE_PASSWORD_OLD: "Ancien mot de passe",
   SETTINGS_SITE_REPLACE_RESET: "Remise à zéro",
@@ -974,7 +998,8 @@ export default {
   SETTING_ASSOCIATE_CAMERA_NETWORK: "Connexion au réseau",
   SETTING_ASSOCIATE_CAMERA_POE_ACTION_MSG:
     "Branchez l’alimentation électrique\nde la caméra.\nPuis appuyez sur CONTINUER.",
-  SETTING_ASSOCIATE_CAMERA_SCANQRCODE_INDICATION: "Placez le QR Code de la caméra\nau centre du carré",
+  SETTING_ASSOCIATE_CAMERA_SCANQRCODE_INDICATION:
+    "Placez le QR Code de la caméra\nau centre du carré",
   SETTING_ASSOCIATE_CAMERA_SCANQRCODE_MANUAL_INPUT: "Saisie manuelle",
   SETTING_ASSOCIATE_CAMERA_SCANQRCODE_TITLE: "Scanner le QR Code",
   SETTING_ASSOCIATE_CAMERA_TO_SERVER: "Enregistrement sur le serveur",
@@ -993,8 +1018,10 @@ export default {
   SETTING_EXPERT_MODE_NETWORK_DEFAULT: "Par défaut",
   SETTING_EXPERT_MODE_TUTO:
     "Assurez-vous que l'équipement\n est en attente d'association\n avant de continuer",
-  SETTING_GROUP_FAVOURITE_ADD_MESSAGE: "Votre groupe est directement accessible depuis la page d'accueil.",
-  SETTING_GROUP_FAVOURITE_DELETE_MESSAGE: "Votre groupe ne sera plus accessible depuis la page d'accueil.",
+  SETTING_GROUP_FAVOURITE_ADD_MESSAGE:
+    "Votre groupe est directement accessible depuis la page d'accueil.",
+  SETTING_GROUP_FAVOURITE_DELETE_MESSAGE:
+    "Votre groupe ne sera plus accessible depuis la page d'accueil.",
   SETTING_GROUP_MODE_ASSO_MESSAGE: "Les équipements du groupe sont en attente d'association.",
   SETTING_GROUP_SUPPRIMER_MESSAGE: "Ce groupe va être supprimé de votre installation",
   SETTING_LABEL: "Création étiquette",
@@ -1011,7 +1038,8 @@ export default {
   SETTING_PRODUCT_CAMERA_STATE: "ÉTAT",
   SETTING_PRODUCT_CAMERA_STORAGE: "Stockage",
   SETTING_PRODUCT_LOCALISER: "Localiser",
-  SETTING_PRODUCT_LOCALISER_MESSAGE: "Pour vous aider à le localiser, votre équipement clignote ou s'actionne",
+  SETTING_PRODUCT_LOCALISER_MESSAGE:
+    "Pour vous aider à le localiser, votre équipement clignote ou s'actionne",
   SETTING_PRODUCT_MASKED: "Masquer",
   SETTING_PRODUCT_MASKED_MESSAGE:
     "Cet équipement est désormais masqué.\n Il ne sera plus visible,\n et ne pourra plus être piloté.",
@@ -1029,8 +1057,10 @@ export default {
   SETTING_SCENARIO_SUPPRIMER_MESSAGE:
     "Ce scénario sera supprimé de la liste des scénarios et des moments s'il avait été ajouté à la programmation.",
   SETTING_TIME: "Mise à l'heure",
-  SETTING_WINDOW_FAVOURITE_ADD_MESSAGE: "Votre fenêtre est directement accessible depuis la page d'accueil.",
-  SETTING_WINDOW_FAVOURITE_DELETE_MESSAGE: "Votre fenêtre ne sera plus accessible depuis la page d'accueil.",
+  SETTING_WINDOW_FAVOURITE_ADD_MESSAGE:
+    "Votre fenêtre est directement accessible depuis la page d'accueil.",
+  SETTING_WINDOW_FAVOURITE_DELETE_MESSAGE:
+    "Votre fenêtre ne sera plus accessible depuis la page d'accueil.",
   SETTING_WINDOW_SUPPRIMER_MESSAGE: "Cette fenêtre va être supprimée de votre installation.",
   SHOP: "Magasin",
   SHOPWINDOW: "Vitrine",
@@ -1064,7 +1094,8 @@ export default {
     "Pour profiter de tous les services, vous devez activer le service de localisation.\nVoulez-vous activer ce service ?",
   SITE_LOCALISATION_POPUP_TITLE: "Service de localisation désactivé",
   SITE_MAC_ADDRESS_DIALOG_HEADER: "Identifiant déjà utilisé",
-  SITE_MAC_ADDRESS_DIALOG_MESSAGE: "L'identifiant saisi est déjà utilisé pour un autre de vos domiciles",
+  SITE_MAC_ADDRESS_DIALOG_MESSAGE:
+    "L'identifiant saisi est déjà utilisé pour un autre de vos domiciles",
   SITE_MODE_DEMO: "Mode Démo",
   SITE_MODE_DEMO_ON: "Quittez le mode démo",
   SITE_NAME_DIALOG_HEADER: "Nom déjà utilisé",

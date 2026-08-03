@@ -55,7 +55,8 @@ export default {
   ALARME_NO_RESPONSE: "No response from the control unit",
   ALARME_ON_PARTIAL: "Partial activation",
   ALARME_PARTIAL: "Partial",
-  ALARME_PASSAGE_MODE_MAINTENANCE: "To change the access code, switch the control unit to maintenance mode",
+  ALARME_PASSAGE_MODE_MAINTENANCE:
+    "To change the access code, switch the control unit to maintenance mode",
   ALARM_CODE_INSTALLER_TEXT: "The installer code is required for this action",
   ALARM_DEFAULTS_AUTOPROTECTION: "Devices in tamper alarm mode",
   ALARM_DEFAULTS_CLEAR_DIALOG: "Do you want to clear unacknowledged errors",
@@ -76,7 +77,8 @@ export default {
   ALERTS_FAILED_DETAILS: "The notifications could not be sent, try again later",
   ALERTS_INTRUSION_ACTIVATED: "Intruder alerts activated",
   ALERTS_NOT_AVAILABLE: "Alerts unavailable",
-  ALERT_CGU: "To continue using the Tydom application, please read and accept the General Terms of Use",
+  ALERT_CGU:
+    "To continue using the Tydom application, please read and accept the General Terms of Use",
   ALERT_CGU1:
     "To continue using the Tydom application, please restart the application and accept the General Terms of Use",
   ALERT_INTRUSION_DETECTION: "Intruder detection alert",
@@ -202,9 +204,11 @@ export default {
     "Press the RH button on the receiver for 3 seconds until LED 2 flashes, then release",
   CG_DD_PRESS_BUTTON_INT_3: "Press the switch button for 3 seconds",
   CG_DD_PRESS_BUTTON_MODE: "Press 'mode' and '+' together for 3 seconds",
-  CG_DD_PRESS_BUTTON_MODE_AGAIN: "The unit is associated.\nBriefly press 'mode' and '+' to exit the mode",
+  CG_DD_PRESS_BUTTON_MODE_AGAIN:
+    "The unit is associated.\nBriefly press 'mode' and '+' to exit the mode",
   CG_DD_PRESS_BUTTON_OK_STEP: "Repeatedly press the OK button to progress to the next step",
-  CG_DD_PRESS_BUTTON_ONE_OR_ALL: "Press the receiver buttons for 3 seconds.\nThe red LED will flash",
+  CG_DD_PRESS_BUTTON_ONE_OR_ALL:
+    "Press the receiver buttons for 3 seconds.\nThe red LED will flash",
   CG_DD_PRESS_BUTTON_ON_5:
     "Press the remote control ON button for 5 seconds until the control unit emits a beep.\nThen press “ASSOCIATE“",
   CG_DD_PRESS_BUTTON_ON_5_LED_RED:
@@ -233,7 +237,8 @@ export default {
   CG_DD_STORE_WELLCOM: "Well’Com® BLIND",
   CG_DD_TURN_SETTINGS_BUTTON_OK:
     "Turn the selector knob to “Settings“, then press the “OK“button for 3 seconds",
-  CG_DD_TURN_STOP_BUTTON_I: "Turn the selector knob to “off“.\nThen press the “i“button for 5 seconds",
+  CG_DD_TURN_STOP_BUTTON_I:
+    "Turn the selector knob to “off“.\nThen press the “i“button for 5 seconds",
   CG_DD_TYXAL_PLUS_COMPACT: "TYXAL + COMPACT",
   CG_DD_USAGE_ALARM: "Alarm",
   CG_DD_USAGE_ALARM_NEW: "Alarm",
@@ -386,7 +391,8 @@ export default {
     "You are now in demo mode.\n To quit this mode, go back to the main menu and select 'Quit demo mode",
   DEPOT: "Depot",
   DETECTORS: "Detectors",
-  DETECT_DOOR_ALERT_TEXT: "Do you confirm you want to open the door?\n(Door cannot be closed remotely",
+  DETECT_DOOR_ALERT_TEXT:
+    "Do you confirm you want to open the door?\n(Door cannot be closed remotely",
   DETECT_DOOR_ALERT_TITLE: "Caution",
   DETECT_DOOR_CONTROLCLOSE: "Closed",
   DETECT_DOOR_CONTROLLOCK: "Locked",
@@ -610,11 +616,13 @@ export default {
   MAINTENANCE_STEP: "Step",
   MAINTENANCE_SYNTHESE: "Synthesis",
   MAINTENANCE_UPDATE: "Update",
-  MAINTENANCE_UPDATE_ENDPOINT_MESSAGE: "Update the product? Caution: this operation is irreversible",
+  MAINTENANCE_UPDATE_ENDPOINT_MESSAGE:
+    "Update the product? Caution: this operation is irreversible",
   MAINTENANCE_UPDATE_MESSAGE_ERROR: "The update failed",
   MAINTENANCE_UPDATE_MESSAGE_SUCCESS: "The update was done correctly",
   MAINTENANCE_UPDATE_TITLE: "Update",
-  MAINTENANCE_UPDATE_USAGES_MESSAGE: "Applying the new usage ? Attention, this operation is irreversible",
+  MAINTENANCE_UPDATE_USAGES_MESSAGE:
+    "Applying the new usage ? Attention, this operation is irreversible",
   MAINTENANCE_USAGE: "Usage",
   MAINTENANCE_VARIATION: "Variation",
   MANAGEMENT: "Management",
@@ -623,7 +631,8 @@ export default {
   MEETING_ROOM: "Meeting room",
   MESSAGE_ALARME_VIDE:
     "Secure your home with a wireless Delta Dore alarm system.\n\nUse the settings menu to associate your alarm or consult our website for further information",
-  MESSAGE_BELEM_DOOR_EMPTY: "Open your front door remotely.\n\nUse the setting menu to associate a device",
+  MESSAGE_BELEM_DOOR_EMPTY:
+    "Open your front door remotely.\n\nUse the setting menu to associate a device",
   MESSAGE_CONSO_EMPTY:
     "View and control your energy consumption on a daily basis.\n\nUse the settings menu to associate equipment or visit our website for further information",
   MESSAGE_DETECT_EMPTY:
@@ -660,7 +669,8 @@ export default {
   ON_ZONE: "Operation by zone",
   OPEN_ENTRANCE: "Door open",
   OPERATION_REFUSED: "Operation denied",
-  OPERATION_REFUSED_INSTALLER: "The control unit cannot be switched off with an installer access code",
+  OPERATION_REFUSED_INSTALLER:
+    "The control unit cannot be switched off with an installer access code",
   OUTBUILDING: "Outbuilding",
   OUTGOING_CONNECTION_FAILURE: "Outgoing connection failure",
   OUTGOING_CONNECTION_FAILURE_DIGITAL: "digital com. output error",
@@ -736,13 +746,15 @@ export default {
   PROG_MOMENT_CELL_SELECT_EQUIPMENTS: "Select devices",
   PROG_MOMENT_COLORS: "Colours",
   PROG_MOMENT_DEACTIVATE: "Moment deactivated",
-  PROG_MOMENT_EQUIPMENTS_EXPLICATION: "Select the devices that you want to activate during this moment",
+  PROG_MOMENT_EQUIPMENTS_EXPLICATION:
+    "Select the devices that you want to activate during this moment",
   PROG_MOMENT_EQUIPMENTS_TITLE: "List of devices",
   PROG_MOMENT_NAME_DEFAULT: "New moment",
   PROG_MOMENT_NAME_TITLE: "Name",
   PROG_MOMENT_NOT_PLAY: "This moment will no longer be played",
   PROG_MOMENT_NO_EQUIPMENTS: "No device",
-  PROG_MOMENT_POPUP_DAY_LIMIT_MESSAGE: "You have reached the maximum number of 24 moments for the day",
+  PROG_MOMENT_POPUP_DAY_LIMIT_MESSAGE:
+    "You have reached the maximum number of 24 moments for the day",
   PROG_MOMENT_POPUP_LIMIT_TITLE: "Moment could not be created",
   PROG_MOMENT_POPUP_SAME_HOUR_LIMIT_MESSAGE:
     "You have reached the maximum number of 2 moments at the same time of the day for %s",
@@ -785,7 +797,8 @@ export default {
   SETTINGS_ACCOUNT: "Account",
   SETTINGS_ADD: "Add",
   SETTINGS_ADD_PRODUCT: "Add a device",
-  SETTINGS_ALARM_DELETE: "To be able to remove the control unit, you must first switch it to maintenance mode",
+  SETTINGS_ALARM_DELETE:
+    "To be able to remove the control unit, you must first switch it to maintenance mode",
   SETTINGS_ALERTS_ACTIVATED: "Event notifications activated",
   SETTINGS_ALERTS_ACTIVATED_DETAILS: "You will be notified about events occurring in your home",
   SETTINGS_ALERTS_DESCRIPTION: "Be alerted about events occurring in your home",
@@ -801,7 +814,8 @@ export default {
   SETTINGS_ASSOCIATE_WIFI_TITLE: "SETTINGS_ASSOCIATE_WIFI_TITLE",
   SETTINGS_CGU: "General conditions of use",
   SETTINGS_CGU_CANCEL: "Refuse",
-  SETTINGS_CONNECT_DONGLE: "Connect the USB Zigbee dongle to the USB port of your TYDOM home automation unit",
+  SETTINGS_CONNECT_DONGLE:
+    "Connect the USB Zigbee dongle to the USB port of your TYDOM home automation unit",
   SETTINGS_CONTACT: "Contact us",
   SETTINGS_CONTACT_US: "Contact us",
   SETTINGS_COPYRIGHT: "Copyright",
@@ -814,7 +828,8 @@ export default {
   SETTINGS_GROUPS_ADD_BEFORE_CANCEL_TEXT: "Add the new group prior to quitting",
   SETTINGS_GROUPS_ALL_NAME: "TOTAL",
   SETTINGS_GROUPS_CREATE: "Add a group",
-  SETTINGS_GROUPS_CREATE_TEXT: "A group allows a single command to be made to multiple devices simultaneously",
+  SETTINGS_GROUPS_CREATE_TEXT:
+    "A group allows a single command to be made to multiple devices simultaneously",
   SETTINGS_GROUPS_DEFAULT_NAME: "New group",
   SETTINGS_GROUPS_DELETE: "Delete the group",
   SETTINGS_GROUPS_DELETE_MESSAGE: "This group will be removed from the group list",
@@ -849,7 +864,8 @@ export default {
   SETTINGS_MY_SITES: "My homes",
   SETTINGS_NAME: "Name",
   SETTINGS_NEW: "New",
-  SETTINGS_NOTIFICATIONS_ALERTS_DESCRIPTION: "Be alerted by notifications about events occurring in your home",
+  SETTINGS_NOTIFICATIONS_ALERTS_DESCRIPTION:
+    "Be alerted by notifications about events occurring in your home",
   SETTINGS_PHOTOS_ADD_TIP_TEXT: "Add equipment control",
   SETTINGS_PHOTOS_APPEARANCE_ALPHA: "Transparency",
   SETTINGS_PHOTOS_APPEARANCE_SCALE: "Scale",
@@ -865,7 +881,8 @@ export default {
   SETTINGS_PHOTOS_ITEMS_APPEARANCE: "Button design",
   SETTINGS_PHOTOS_MANAGE_ITEMS: "Manage buttons",
   SETTINGS_PHOTOS_SELECT_TARGET: "Select a unit, group or scenario",
-  SETTINGS_PHOTOS_SELECT_TARGET_TEXT: "Select a unit, group or scenario you want to pair with the button",
+  SETTINGS_PHOTOS_SELECT_TARGET_TEXT:
+    "Select a unit, group or scenario you want to pair with the button",
   SETTINGS_PHOTOS_ZOOM: "Blocks the zoom",
   SETTINGS_PHOTOS_ZOOM_TEXT:
     "Block the resize function on your photo.\n\nIf this feature is disabled, you will no longer be able to pinch with two fingers to resize the photo",
@@ -904,7 +921,8 @@ export default {
   SETTINGS_SITE_DELETE: "Delete home",
   SETTINGS_SITE_DELETE_DIALOG_TITLE:
     "This home will be removed from the application and will not longer be available",
-  SETTINGS_SITE_DELETE_IMPOSSIBLE_DIALOG_TEXT: "You cannot delete this home because you are connected to it",
+  SETTINGS_SITE_DELETE_IMPOSSIBLE_DIALOG_TEXT:
+    "You cannot delete this home because you are connected to it",
   SETTINGS_SITE_DELETE_IMPOSSIBLE_DIALOG_TITLE: "Deletion impossible",
   SETTINGS_SITE_DELETE_TEXT:
     "Select the home or homes you want to delete from the application and press delete",
@@ -914,7 +932,8 @@ export default {
   SETTINGS_SITE_IDENDIFIER_TEXT:
     "The site login is the last 6 characters of the MAC address on the back of your TYDOM box (e.g.: 00801E",
   SETTINGS_SITE_IDENTIFIER: "Identifier",
-  SETTINGS_SITE_LOCALISATION_TEXT: "Locate your home on the map by pressing and holding the desired location",
+  SETTINGS_SITE_LOCALISATION_TEXT:
+    "Locate your home on the map by pressing and holding the desired location",
   SETTINGS_SITE_LOCATION: "Localisation",
   SETTINGS_SITE_MAIN_SITE: "Main home",
   SETTINGS_SITE_PASSWORD: "Password",
@@ -950,7 +969,8 @@ export default {
   SETTING_ASSOCIATE_CAMERA_NETWORK: "SETTING_ASSOCIATE_CAMERA_NETWORK",
   SETTING_ASSOCIATE_CAMERA_POE_ACTION_MSG: "SETTING_ASSOCIATE_CAMERA_POE_ACTION_MSG",
   SETTING_ASSOCIATE_CAMERA_SCANQRCODE_INDICATION: "SETTING_ASSOCIATE_CAMERA_SCANQRCODE_INDICATION",
-  SETTING_ASSOCIATE_CAMERA_SCANQRCODE_MANUAL_INPUT: "SETTING_ASSOCIATE_CAMERA_SCANQRCODE_MANUAL_INPUT",
+  SETTING_ASSOCIATE_CAMERA_SCANQRCODE_MANUAL_INPUT:
+    "SETTING_ASSOCIATE_CAMERA_SCANQRCODE_MANUAL_INPUT",
   SETTING_ASSOCIATE_CAMERA_SCANQRCODE_TITLE: "SETTING_ASSOCIATE_CAMERA_SCANQRCODE_TITLE",
   SETTING_ASSOCIATE_CAMERA_TO_SERVER: "SETTING_ASSOCIATE_CAMERA_TO_SERVER",
   SETTING_ASSOCIATE_CAMERA_TO_YOUR_ACCOUNT: "SETTING_ASSOCIATE_CAMERA_TO_YOUR_ACCOUNT",
@@ -963,9 +983,11 @@ export default {
   SETTING_EXPERT_MODE_NETWORK: "Network %s",
   SETTING_EXPERT_MODE_NETWORK_CHOICE: "Network selection",
   SETTING_EXPERT_MODE_NETWORK_DEFAULT: "By default",
-  SETTING_EXPERT_MODE_TUTO: "Ensure that the device\n is waiting to be associated\n before continuing",
+  SETTING_EXPERT_MODE_TUTO:
+    "Ensure that the device\n is waiting to be associated\n before continuing",
   SETTING_GROUP_FAVOURITE_ADD_MESSAGE: "Your group is directly accessible from the homepage",
-  SETTING_GROUP_FAVOURITE_DELETE_MESSAGE: "Your group will no longer be accessible from the homepage",
+  SETTING_GROUP_FAVOURITE_DELETE_MESSAGE:
+    "Your group will no longer be accessible from the homepage",
   SETTING_GROUP_MODE_ASSO_MESSAGE: "The devices in the group are waiting to be associated",
   SETTING_GROUP_SUPPRIMER_MESSAGE: "This group will be deleted from your installation",
   SETTING_LABEL: "Label creation",
@@ -982,7 +1004,8 @@ export default {
   SETTING_PRODUCT_CAMERA_STATE: "SETTING_PRODUCT_CAMERA_STATE",
   SETTING_PRODUCT_CAMERA_STORAGE: "SETTING_PRODUCT_CAMERA_STORAGE",
   SETTING_PRODUCT_LOCALISER: "Locate",
-  SETTING_PRODUCT_LOCALISER_MESSAGE: "Your device is now flashing where this is performed to help you find it",
+  SETTING_PRODUCT_LOCALISER_MESSAGE:
+    "Your device is now flashing where this is performed to help you find it",
   SETTING_PRODUCT_MASKED: "Hide",
   SETTING_PRODUCT_MASKED_MESSAGE:
     "This device is now hidden.\n It will not be visible any more,\n and can no longer be controlled",
@@ -1001,7 +1024,8 @@ export default {
     "This scenario will be deleted from the list of scenarios and moments if it had been added to programming",
   SETTING_TIME: "Setting the time",
   SETTING_WINDOW_FAVOURITE_ADD_MESSAGE: "Your window is directly accessible from the homepage",
-  SETTING_WINDOW_FAVOURITE_DELETE_MESSAGE: "Your window will no longer be available from the homepage",
+  SETTING_WINDOW_FAVOURITE_DELETE_MESSAGE:
+    "Your window will no longer be available from the homepage",
   SETTING_WINDOW_SUPPRIMER_MESSAGE: "This window will be deleted from your setup",
   SHOP: "Shop",
   SHOPWINDOW: "Window",
@@ -1044,7 +1068,8 @@ export default {
   SITE_NEW_ERROR: "Please fill in all fields",
   SITE_NEW_TEXT:
     "Fill out the following fields and press 'Add' to complete the installation of your TYDOM box",
-  SMS_VIDEO_MESSAGE: "An SMS with a link to the video will shortly be sent to the authorised numbers",
+  SMS_VIDEO_MESSAGE:
+    "An SMS with a link to the video will shortly be sent to the authorised numbers",
   SMS_VIDEO_TITLE: "Request sent",
   SOFT_UPDATED: "Update",
   SPA: "Spa",
@@ -1072,7 +1097,8 @@ export default {
     "The update of your home automation box may take a few minutes.\nClose the application and restart it",
   UPDATE_TYDOM_INPROGRESS_TITLE: "Update in progress",
   UPDATE_TYDOM_LATER: "Later",
-  UPDATE_TYDOM_MESSAGE: "An update for your TYDOM home automation box is available.\nDo you want to update",
+  UPDATE_TYDOM_MESSAGE:
+    "An update for your TYDOM home automation box is available.\nDo you want to update",
   UPDATE_TYDOM_TITLE: "Update",
   UTILITY_ROOM: "Utility room",
   VALID: "Confirm",

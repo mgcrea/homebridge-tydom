@@ -34,7 +34,10 @@ export const setupSmokeDetector = (
     })
     .onGet(async () => {
       debugGet(SmokeDetected, service);
-      const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, { deviceId, endpointId });
+      const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, {
+        deviceId,
+        endpointId,
+      });
       const smokeDefect = getTydomDataPropValue<boolean>(data, "techSmokeDefect");
       debugGetResult(SmokeDetected, service, smokeDefect);
       return smokeDefect;
@@ -42,7 +45,10 @@ export const setupSmokeDetector = (
 
   service.getCharacteristic(StatusLowBattery).onGet(async () => {
     debugGet(StatusLowBattery, service);
-    const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, { deviceId, endpointId });
+    const data = await getTydomDeviceData<TydomDeviceSmokeDetectorData>(client, {
+      deviceId,
+      endpointId,
+    });
     const battDefect = getTydomDataPropValue<boolean>(data, "battDefect");
     debugGetResult(StatusLowBattery, service, battDefect);
     return battDefect ? StatusLowBattery.BATTERY_LEVEL_LOW : StatusLowBattery.BATTERY_LEVEL_NORMAL;

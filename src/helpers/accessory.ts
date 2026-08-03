@@ -15,7 +15,12 @@ import { setupTemperatureSensor, updateTemperatureSensor } from "src/accessories
 import { setupThermostat, updateThermostat } from "src/accessories/thermostat";
 import { setupTriggerSwitch, updateTriggerSwitch } from "src/accessories/triggerSwitch";
 import { setupWindowCovering, updateWindowCovering } from "src/accessories/windowCovering";
-import { AccessoryEventTypes, Categories, Characteristic, Service as ServiceStatics } from "src/config/hap";
+import {
+  AccessoryEventTypes,
+  Categories,
+  Characteristic,
+  Service as ServiceStatics,
+} from "src/config/hap";
 import type TydomController from "src/controller";
 import type { TydomAccessoryContext } from "src/typings/tydom";
 import { assert, debug } from "src/utils";
@@ -24,7 +29,10 @@ export const SECURITY_SYSTEM_SENSORS = parseInt(`${Categories.SECURITY_SYSTEM}0`
 
 export type ServiceClass = WithUUID<typeof Service>;
 
-export const getAccessoryService = (accessory: PlatformAccessory, ServiceClass: ServiceClass): Service => {
+export const getAccessoryService = (
+  accessory: PlatformAccessory,
+  ServiceClass: ServiceClass,
+): Service => {
   const service = accessory.getService(ServiceClass);
   assert(service, `Unexpected missing service "${ServiceClass.name}" in accessory`);
   return service;
@@ -36,7 +44,10 @@ export const getAccessoryServiceWithSubtype = (
   subtype: string,
 ): Service => {
   const service = accessory.getServiceById(ServiceClass, subtype);
-  assert(service, `Unexpected missing service "${ServiceClass.name}" with subtype="${subtype}" in accessory`);
+  assert(
+    service,
+    `Unexpected missing service "${ServiceClass.name}" with subtype="${subtype}" in accessory`,
+  );
   return service;
 };
 
@@ -53,7 +64,7 @@ export const addAccessoryService = (
     }
     accessory.removeService(existingService);
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   return accessory.addService(service as any, name);
 };
 
@@ -79,8 +90,19 @@ type TydomAccessorySetup<T extends TydomAccessoryContext> = (
   controller: TydomController,
 ) => void | Promise<void>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getTydomAccessorySetup = <T extends TydomAccessoryContext<any, any> = TydomAccessoryContext>(
+/**
+ * Resolve the setup function for an accessory.
+ *
+ * The `any` generics make this dispatch deliberately unsound: every accessory
+ * module declares its own settings/state shape, and there is no way to say
+ * "returns the function matching this category" from here. Phase 5 replaces the
+ * whole thing with an exhaustive `Record<DeviceType, AccessoryFactory>`, which
+ * lets the compiler check the mapping instead.
+ */
+export const getTydomAccessorySetup = <
+  // oxlint-disable-next-line typescript/no-explicit-any
+  T extends TydomAccessoryContext<any, any> = TydomAccessoryContext,
+>(
   accessory: PlatformAccessory<T>,
   context: T,
 ): TydomAccessorySetup<T> => {
@@ -126,8 +148,11 @@ type TydomAccessoryUpdate<T extends TydomAccessoryContext> = (
   type: TydomAccessoryUpdateType,
 ) => void | Promise<void>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getTydomAccessoryDataUpdate = <T extends TydomAccessoryContext<any, any> = TydomAccessoryContext>(
+/** Resolve the push-update handler for an accessory. See {@link getTydomAccessorySetup}. */
+export const getTydomAccessoryDataUpdate = <
+  // oxlint-disable-next-line typescript/no-explicit-any
+  T extends TydomAccessoryContext<any, any> = TydomAccessoryContext,
+>(
   accessory: PlatformAccessory<T>,
   context: T,
 ): TydomAccessoryUpdate<T> => {

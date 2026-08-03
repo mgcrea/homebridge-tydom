@@ -5,8 +5,7 @@ import { Characteristic, Service } from "src/config/hap";
 import locale from "src/config/locale";
 import type { ControllerDevicePayload, ControllerUpdatePayload } from "src/controller";
 import type TydomController from "src/controller";
-import type {
-  TydomAccessoryUpdateType} from "src/helpers/accessory";
+import type { TydomAccessoryUpdateType } from "src/helpers/accessory";
 import {
   addAccessoryService,
   addAccessoryServiceWithSubtype,
@@ -14,7 +13,7 @@ import {
   getAccessoryServiceWithSubtype,
   SECURITY_SYSTEM_SENSORS,
   setupAccessoryIdentifyHandler,
-  setupAccessoryInformationService
+  setupAccessoryInformationService,
 } from "src/helpers/accessory";
 import { getTydomDataPropValue, getTydomDeviceData } from "src/helpers/tydom";
 import type {
@@ -74,8 +73,14 @@ const getStateForAlarmData = (
   settings: SecuritySystemSettings,
 ): number => {
   const { SecuritySystemCurrentState } = Characteristic;
-  const alarmMode = getTydomDataPropValue<TydomDeviceSecuritySystemAlarmMode>(alarmData, "alarmMode");
-  const alarmState = getTydomDataPropValue<TydomDeviceSecuritySystemAlarmMode>(alarmData, "alarmState");
+  const alarmMode = getTydomDataPropValue<TydomDeviceSecuritySystemAlarmMode>(
+    alarmData,
+    "alarmMode",
+  );
+  const alarmState = getTydomDataPropValue<TydomDeviceSecuritySystemAlarmMode>(
+    alarmData,
+    "alarmState",
+  );
   if (["DELAYED", "ON", "QUIET"].includes(alarmState)) {
     return SecuritySystemCurrentState.ALARM_TRIGGERED;
   }
@@ -103,8 +108,13 @@ export const setupSecuritySystem = async (
 ): Promise<void> => {
   const { context } = accessory;
   const { client, log } = controller;
-  const { SecuritySystemTargetState, SecuritySystemCurrentState, StatusTampered, ContactSensorState, On } =
-    Characteristic;
+  const {
+    SecuritySystemTargetState,
+    SecuritySystemCurrentState,
+    StatusTampered,
+    ContactSensorState,
+    On,
+  } = Characteristic;
 
   const { deviceId, endpointId, settings } = context;
   setupAccessoryInformationService(accessory, controller);
@@ -178,14 +188,22 @@ export const setupSecuritySystem = async (
   }
 
   // Add the actual accessory Service
-  const service = addAccessoryService(accessory, Service.SecuritySystem, accessory.displayName, true);
+  const service = addAccessoryService(
+    accessory,
+    Service.SecuritySystem,
+    accessory.displayName,
+    true,
+  );
 
   service
     .getCharacteristic(SecuritySystemCurrentState)
     .updateValue(SecuritySystemCurrentState.DISARMED) // Default to disarmed to prevent notifications
     .onGet(async () => {
       debugGet(SecuritySystemCurrentState, service);
-      const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, { deviceId, endpointId });
+      const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {
+        deviceId,
+        endpointId,
+      });
       const nextValue = getStateForAlarmData(data, aliases, settings);
       debugGetResult(SecuritySystemCurrentState, service, nextValue);
       return nextValue;
@@ -193,7 +211,10 @@ export const setupSecuritySystem = async (
 
   service.getCharacteristic(StatusTampered).onGet(async () => {
     debugGet(StatusTampered, service);
-    const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, { deviceId, endpointId });
+    const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {
+      deviceId,
+      endpointId,
+    });
     const systAutoProtect = getTydomDataPropValue<boolean>(data, "systAutoProtect");
     debugGetResult(StatusTampered, service, systAutoProtect);
     return systAutoProtect;
@@ -203,7 +224,10 @@ export const setupSecuritySystem = async (
     .getCharacteristic(SecuritySystemTargetState)
     .onGet(async () => {
       debugGet(SecuritySystemTargetState, service);
-      const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, { deviceId, endpointId });
+      const data = await getTydomDeviceData<TydomDeviceSecuritySystemData>(client, {
+        deviceId,
+        endpointId,
+      });
       const nextValue = getStateForAlarmData(data, aliases, settings);
       debugGetResult(SecuritySystemTargetState, service, nextValue);
       return nextValue;
@@ -218,7 +242,11 @@ export const setupSecuritySystem = async (
         preAlarmService.updateCharacteristic(ContactSensorState, false);
       }
       // Global ON/OFF
-      if ([SecuritySystemTargetState.AWAY_ARM, SecuritySystemTargetState.DISARM].includes(value as number)) {
+      if (
+        [SecuritySystemTargetState.AWAY_ARM, SecuritySystemTargetState.DISARM].includes(
+          value as number,
+        )
+      ) {
         const tydomValue = value === SecuritySystemTargetState.DISARM ? "OFF" : "ON";
         if (!isLegacy) {
           await client.put(`/devices/${deviceId}/endpoints/${endpointId}/cdata?name=alarmCmd`, {
@@ -238,9 +266,12 @@ export const setupSecuritySystem = async (
       }
       // Zones ON/OFF
       if (
-        [SecuritySystemTargetState.STAY_ARM, SecuritySystemTargetState.NIGHT_ARM].includes(value as number)
+        [SecuritySystemTargetState.STAY_ARM, SecuritySystemTargetState.NIGHT_ARM].includes(
+          value as number,
+        )
       ) {
-        const targetZones = value === SecuritySystemTargetState.STAY_ARM ? aliases.stay : aliases.night;
+        const targetZones =
+          value === SecuritySystemTargetState.STAY_ARM ? aliases.stay : aliases.night;
         const tydomValue = value === SecuritySystemTargetState.DISARM ? "OFF" : "ON";
         if (Array.isArray(targetZones) && targetZones.length > 0) {
           await setTydomZones(targetZones, tydomValue);
@@ -320,7 +351,10 @@ export const setupSecuritySystem = async (
   const zonesCount = isLegacy ? 4 : 8;
   for (let zoneIndex = 1; zoneIndex <= zonesCount; zoneIndex++) {
     const zoneProp = `${isLegacy ? "part" : "zone"}${zoneIndex}State`;
-    const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(initialData, zoneProp);
+    const zoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(
+      initialData,
+      zoneProp,
+    );
     if (zoneState === "UNUSED") {
       continue;
     }
@@ -346,7 +380,10 @@ export const setupSecuritySystem = async (
           deviceId,
           endpointId,
         });
-        const currentZoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(data, zoneProp);
+        const currentZoneState = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(
+          data,
+          zoneProp,
+        );
         const nextValue = currentZoneState === "ON";
         debugGetResult(On, zoneService, nextValue);
         return nextValue;
@@ -408,14 +445,28 @@ export const updateSecuritySystem = (
           switch (event.name) {
             case "arret": {
               const service = getAccessoryService(accessory, Service.SecuritySystem);
-              debugSetUpdate(SecuritySystemCurrentState, service, SecuritySystemCurrentState.DISARMED);
-              service.updateCharacteristic(SecuritySystemCurrentState, SecuritySystemCurrentState.DISARMED);
+              debugSetUpdate(
+                SecuritySystemCurrentState,
+                service,
+                SecuritySystemCurrentState.DISARMED,
+              );
+              service.updateCharacteristic(
+                SecuritySystemCurrentState,
+                SecuritySystemCurrentState.DISARMED,
+              );
               return;
             }
             case "marcheTotale": {
               const service = getAccessoryService(accessory, Service.SecuritySystem);
-              debugSetUpdate(SecuritySystemCurrentState, service, SecuritySystemCurrentState.AWAY_ARM);
-              service.updateCharacteristic(SecuritySystemCurrentState, SecuritySystemCurrentState.AWAY_ARM);
+              debugSetUpdate(
+                SecuritySystemCurrentState,
+                service,
+                SecuritySystemCurrentState.AWAY_ARM,
+              );
+              service.updateCharacteristic(
+                SecuritySystemCurrentState,
+                SecuritySystemCurrentState.AWAY_ARM,
+              );
               return;
             }
             case "marcheZone": {
@@ -427,7 +478,11 @@ export const updateSecuritySystem = (
               return;
             }
             case "preAlarm": {
-              const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, "preAlarm");
+              const service = getAccessoryServiceWithSubtype(
+                accessory,
+                Service.ContactSensor,
+                "preAlarm",
+              );
               debugSetUpdate(ContactSensorState, service, true);
               service.updateCharacteristic(ContactSensorState, true);
               return;
@@ -471,7 +526,10 @@ export const updateSecuritySystem = (
           }
           case "PART":
           case "ZONE": {
-            const activeZones = getActiveZones(updates as unknown as TydomDeviceSecuritySystemData, settings);
+            const activeZones = getActiveZones(
+              updates as unknown as TydomDeviceSecuritySystemData,
+              settings,
+            );
             const nextValue = getStateForActiveZones(activeZones, aliases);
             debugSetUpdate(SecuritySystemCurrentState, service, nextValue);
             service.updateCharacteristic(SecuritySystemCurrentState, nextValue);
@@ -482,7 +540,11 @@ export const updateSecuritySystem = (
         }
       }
       case "alarmSOS": {
-        const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, "alarmSOS");
+        const service = getAccessoryServiceWithSubtype(
+          accessory,
+          Service.ContactSensor,
+          "alarmSOS",
+        );
         const alarmSOS = !!value;
         debugSetUpdate(ContactSensorState, service, alarmSOS);
         service.updateCharacteristic(ContactSensorState, alarmSOS);
@@ -507,14 +569,22 @@ export const updateSecuritySystem = (
         const match = name.match(isLegacy ? /part(\d+)State/ : /zone(\d+)State/);
         if (!match) return;
         const zoneIndex = parseInt(match[1], 10) - 1; // @NOTE Adjust for productId starting at 0
-        const service = getAccessoryServiceWithSubtype(accessory, Service.Switch, `zone_${zoneIndex}`);
+        const service = getAccessoryServiceWithSubtype(
+          accessory,
+          Service.Switch,
+          `zone_${zoneIndex}`,
+        );
         const nextValue = zoneState === "ON";
         debugSetUpdate(On, service, nextValue);
         service.updateCharacteristic(On, nextValue);
         return;
       }
       case "systOpenIssue": {
-        const service = getAccessoryServiceWithSubtype(accessory, Service.ContactSensor, "systOpenIssue");
+        const service = getAccessoryServiceWithSubtype(
+          accessory,
+          Service.ContactSensor,
+          "systOpenIssue",
+        );
         const systOpenIssue = !!value;
         debugSetUpdate(ContactSensorState, service, systOpenIssue);
         service.updateCharacteristic(ContactSensorState, systOpenIssue);
