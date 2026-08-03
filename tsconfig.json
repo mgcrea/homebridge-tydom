@@ -12,9 +12,13 @@
 
     // --- Relaxations of @tsconfig/strictest, each tagged with the phase that flips it ---
     // TODO(phase-4b): hap-nodejs declares `Categories`, `Formats` and
-    // `AccessoryEventTypes` as ambient `const enum`s, which isolatedModules
-    // forbids referencing (ts2748). Phase 4b replaces them with a local numeric
-    // table and string literals, after which this can go.
+    // `AccessoryEventTypes` as ambient `const enum`s, which both isolatedModules
+    // and verbatimModuleSyntax forbid referencing (ts2748) — measured at 8
+    // errors across config/hap.ts, controller.ts, platform.ts,
+    // helpers/{accessory,tydom}.ts and accessories/smokeDetector.ts. Phase 4b
+    // replaces them with a local numeric table and string literals, which also
+    // drops `homebridge` from the bundle's runtime requires; both flags then
+    // turn on together. `verbatimModuleSyntax` is simply absent until then.
     "isolatedModules": false,
     // TODO(phase-6): needs the accessories converted to classes first.
     "noUncheckedIndexedAccess": false,

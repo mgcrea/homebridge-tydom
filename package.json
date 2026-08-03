@@ -11,8 +11,13 @@
   "homepage": "https://github.com/mgcrea/homebridge-tydom#readme",
   "bugs": "https://github.com/mgcrea/homebridge-tydom/issues",
   "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist",
+    "config.schema.json"
+  ],
   "keywords": [
     "homebridge-plugin",
     "homebridge",
@@ -29,8 +34,8 @@
     "homebridge": "^2.0.0"
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "lint": "oxlint src/ test/ scripts/",
     "lint:fix": "oxlint --fix src/ test/ scripts/",
     "format": "oxfmt --write src/ test/ scripts/",
@@ -65,7 +70,7 @@
     "oxfmt": "^0.61.0",
     "oxlint": "^1.76.0",
     "release-it": "^21.0.1",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.22.14",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"

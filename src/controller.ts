@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 import type { Logging } from "homebridge";
 import { Categories } from "homebridge";
 import { blue, bold, green, yellow } from "kolorist";
-import { get } from "lodash";
+import get from "lodash/get.js";
 import { HOMEBRIDGE_TYDOM_PASSWORD } from "./config/env.js";
 import type { TydomAccessoryUpdateType } from "./helpers/accessory.js";
 import {

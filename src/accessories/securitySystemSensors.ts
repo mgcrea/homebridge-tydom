@@ -1,5 +1,6 @@
 import type { PlatformAccessory } from "homebridge";
-import { get, keyBy } from "lodash";
+import get from "lodash/get.js";
+import keyBy from "lodash/keyBy.js";
 import { Characteristic, Service } from "../config/hap.js";
 import locale from "../config/locale.js";
 import type TydomController from "../controller.js";

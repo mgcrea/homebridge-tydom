@@ -1,5 +1,5 @@
 import type { PlatformAccessory } from "homebridge";
-import { get } from "lodash";
+import get from "lodash/get.js";
 import { HOMEBRIDGE_TYDOM_PIN } from "../config/env.js";
 import { Characteristic, Service } from "../config/hap.js";
 import locale from "../config/locale.js";

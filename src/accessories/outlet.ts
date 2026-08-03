@@ -1,5 +1,5 @@
 import type { PlatformAccessory } from "homebridge";
-import { toNumber } from "lodash";
+import toNumber from "lodash/toNumber.js";
 import { Characteristic, Service } from "../config/hap.js";
 import type TydomController from "../controller.js";
 import {

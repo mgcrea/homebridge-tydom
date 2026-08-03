@@ -1,5 +1,5 @@
 import type { PlatformAccessory } from "homebridge";
-import { get } from "lodash";
+import get from "lodash/get.js";
 import type { CharacteristicProps } from "../config/hap.js";
 import { Characteristic, Service } from "../config/hap.js";
 import locale from "../config/locale.js";

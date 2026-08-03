@@ -1,5 +1,5 @@
 import type { PlatformAccessory } from "homebridge";
-import { find } from "lodash";
+import find from "lodash/find.js";
 import { Categories } from "../config/hap.js";
 import type {
   AnyTydomDataValue,

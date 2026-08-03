@@ -1,6 +1,7 @@
 import debug from "debug";
 import type { PlatformAccessory } from "homebridge";
-import { debounce, find } from "lodash";
+import debounce from "lodash/debounce.js";
+import find from "lodash/find.js";
 import { Characteristic, Service } from "../config/hap.js";
 import type TydomController from "../controller.js";
 import {

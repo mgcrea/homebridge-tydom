@@ -1,5 +1,5 @@
 import type { PlatformAccessory } from "homebridge";
-import { debounce } from "lodash";
+import debounce from "lodash/debounce.js";
 import { Characteristic, Service } from "../config/hap.js";
 import type TydomController from "../controller.js";
 import type { TydomAccessoryUpdateType } from "../helpers/accessory.js";

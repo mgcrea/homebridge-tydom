@@ -1,4 +1,4 @@
-import { xor } from "lodash";
+import xor from "lodash/xor.js";
 
 export const stringIncludes = (array: unknown[], value: string | number): boolean =>
   array.includes(value) || array.includes(`${value}`);
