@@ -157,10 +157,17 @@ export abstract class BaseAccessory implements TydomAccessory {
   /**
    * Get-or-add a sub-service identified by subtype.
    *
-   * A new one gets `ConfiguredName` as well as `Name`. The Home app renders
-   * `ConfiguredName` as the caption under a sub-service and falls back to a
-   * generic service label without it — which made a panel's eight zone switches
-   * indistinguishable from each other.
+   * Carries `ConfiguredName` alongside the `Name` that `addService` sets. Which
+   * of the two the Home app actually renders is not something we could pin
+   * down: hap-nodejs declares `ConfiguredName` for AccessoryInformation,
+   * InputSource, SmartSpeaker, Television and WiFiRouter only, which suggests
+   * it is ignored on a Switch — but sub-service captions do render, and no
+   * experiment separated the two cheaply. It stays because removing it risks
+   * the labels, and it costs one characteristic.
+   *
+   * Note that captions appear only when the Home app is showing the accessory
+   * as separate tiles. Merged into a single tile it captions nothing, and that
+   * is the user's setting, not ours.
    *
    * Filled in only when empty, which covers both a new service and one cached
    * by a release that never set it — but leaves a name the user typed in the

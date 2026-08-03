@@ -176,6 +176,8 @@ Zone names come from the gateway: whatever you named the zone in the Tydom app, 
 
 Alongside the alarm, a second accessory is published holding one contact sensor per opening detector (MDO), so you can see which door is open. Set `"sensors": false` to leave it out.
 
+> **If the zone switches and detectors show up unlabeled**, open the accessory's settings in the Home app and turn on **Show as separate tiles**. Merged into a single tile, the Home app captions none of an accessory's sub-services — it is a display choice on your side, and no plugin can override it. Note that a zone can only have a room or be an automation target if it is a separate *accessory*, which it is not; [open an issue](https://github.com/mgcrea/homebridge-tydom/issues) if you need that.
+
 ### Category overrides
 
 If a device is detected as the wrong thing — a light switch actually driving a fan, say — pin it:

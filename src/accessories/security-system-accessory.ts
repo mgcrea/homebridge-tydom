@@ -209,25 +209,15 @@ export class SecuritySystemAccessory extends BaseAccessory {
       const name = zone?.nameCustom ?? (zone?.nameStd ? this.t(zone.nameStd) : `Zone ${zoneIndex}`);
       const service = this.subService(Services.Switch, name, `zone_${zone?.id ?? zoneIndex}`);
       debugAddSubService(service, this.accessory);
-      // EXPERIMENT (0.30.0-beta.3): the zone switches render as unlabeled tiles
-      // in the Home app even though their `Name` characteristic is set — and
-      // always has been, this is not a regression. `linked` is what tells a
-      // controller a service is subordinate to another (it is how a
-      // Television's InputSource services render inside the parent), so it is
-      // the prime suspect for the missing captions.
+      // Linked, so the Home app groups the zone with its panel.
       //
-      // Unlinked here and *only* here. The three contact sensors below and the
-      // thermostat's mode switches stay linked, on purpose: they are the
-      // control group. If the zones gain captions and those do not, `linked` is
-      // the cause and the fix generalises. If nothing gains a caption, the Home
-      // app simply does not label sub-services, and each zone has to become its
-      // own accessory to be nameable at all.
-      //
-      // `removeLinkedService`, not a deleted `addLinkedService`: the link is
-      // persisted in cachedAccessories and restored by Accessory.deserialize
-      // before any of this runs, so dropping the call would change nothing for
-      // an existing install.
-      this.#service?.removeLinkedService(service);
+      // beta.3 briefly unlinked these to test whether `linked` was why the zone
+      // switches showed no captions. It is not: the contact sensors below stayed
+      // linked throughout and label correctly. Whether a sub-service shows its
+      // name is decided by the Home app's own "separate tiles" setting on the
+      // accessory — merged into one tile, no sub-service is captioned, linked or
+      // not. Nothing here can influence that, so the link stays.
+      this.#service?.addLinkedService(service);
       this.#zones.set(zoneIndex, service);
 
       service

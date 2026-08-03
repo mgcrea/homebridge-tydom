@@ -44,9 +44,9 @@ No accessory is re-registered by this release: rooms, names and automations are 
 - **shutdown:** the plugin now releases its timers, closes the gateway connection and disposes every accessory when Homebridge shuts down.
 - **discovery:** the three gateway endpoints discovery depends on are validated on arrival, so a protocol change is reported clearly instead of surfacing later as an unrelated failure. Device data stays unvalidated by design — unknown hardware is exactly what this plugin exists to onboard.
 
-### Known issues
+### Notes
 
-- **Alarm zone switches are unlabeled in the Home app.** Their `Name` characteristic is set, and always has been — 0.29 behaved identically — but Apple's Home app does not render it for a sub-service. `0.30.0-beta.2` added `ConfiguredName` intending to fix this; that was a mistake, since `ConfiguredName` is not a declared characteristic of `Switch` or `ContactSensor` and Home does not appear to read it there. `beta.3` unlinks the zone switches from the panel service to test whether `linked` is what suppresses the captions, leaving the alarm's contact sensors and the thermostat's mode switches linked as a control. If that comes back negative, the fix is to publish each zone as its own accessory — which is also the only way a zone can have a room or be an automation target.
+- **Unlabeled zone switches are a Home app display setting, not a plugin bug.** Turn on **Show as separate tiles** in the accessory's settings and the captions appear; merged into a single tile the Home app captions none of an accessory's sub-services. `0.30.0-beta.2` and `beta.3` both tried to fix this from the plugin side — first by adding `ConfiguredName`, then by unlinking the zone switches from the panel service — and neither was the cause. The unlink is reverted. A zone still cannot have a room or be an automation target, because those belong to an accessory rather than a service; that would need one accessory per zone.
 
 ### Internals
 
