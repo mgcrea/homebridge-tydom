@@ -14,17 +14,17 @@ export type TydomAccessoryContext<
    * by an earlier release will not have one; the platform falls back to
    * deriving it from `category`.
    */
-  deviceType?: DeviceType;
+  deviceType?: DeviceType | undefined;
   /** Set on a companion accessory, naming the primary it belongs to. */
-  companionOf?: string;
+  companionOf?: string | undefined;
   deviceId: number;
   endpointId: number;
-  group?: TydomConfigGroup;
-  manufacturer?: string;
+  group?: TydomConfigGroup | undefined;
+  manufacturer?: string | undefined;
   metadata: TydomMetaElement[];
-  model?: string;
+  model?: string | undefined;
   name: string;
-  serialNumber?: string;
+  serialNumber?: string | undefined;
   settings: T;
   state: U;
 };

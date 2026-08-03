@@ -1,5 +1,5 @@
 import type { Service } from "homebridge";
-import type { ServiceClass } from "../helpers/accessory.js";
+import type { ServiceClass } from "./service-class.js";
 import { getTydomDataPropValue } from "../helpers/tydom.js";
 import {
   debugGet,

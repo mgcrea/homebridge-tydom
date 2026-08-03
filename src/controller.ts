@@ -2,7 +2,9 @@ import { EventEmitter } from "node:events";
 import type { Logging } from "homebridge";
 import type { Categories } from "homebridge";
 import { blue, bold, green, yellow } from "kolorist";
-import { discoverDevices } from "./api/discovery.js";
+import get from "lodash/get.js";
+import locale from "./config/locale.js";
+import { discoverDevices, expandCompanions } from "./api/discovery.js";
 import {
   classifyMessage,
   getAccessoryId,
@@ -16,7 +18,7 @@ import {
   tydomMetaResponseSchema,
   type TydomUpdateType,
 } from "./api/types.js";
-import type { TydomAccessoryUpdateType } from "./helpers/accessory.js";
+import type { TydomUpdateType as TydomAccessoryUpdateType } from "./api/types.js";
 import { asyncWait } from "./helpers/tydom.js";
 import type { TydomPlatformConfig } from "./platform.js";
 import type {
@@ -55,7 +57,7 @@ export default class TydomController extends EventEmitter {
   public config: TydomPlatformConfig;
   public log: Logging;
   private devices = new Map<string, Categories>();
-  private refreshInterval?: NodeJS.Timeout;
+  private refreshInterval: NodeJS.Timeout | undefined;
   private hasConnectedOnce = false;
   constructor(log: Logging, config: TydomPlatformConfig) {
     super();
@@ -192,7 +194,7 @@ export default class TydomController extends EventEmitter {
       }
     }
 
-    for (const device of devices) {
+    for (const device of devices.flatMap((d) => expandCompanions(d))) {
       const { uniqueId, deviceId, endpointId, firstUsage, category } = device;
       this.log.info(
         `Found new device with firstUsage=${styleString(firstUsage)}, deviceId=${styleNumber(
@@ -209,7 +211,10 @@ export default class TydomController extends EventEmitter {
       );
       this.devices.set(uniqueId, category as Categories);
       const context: TydomAccessoryContext = {
-        name: device.name,
+        name:
+          device.deviceType === "alarm-sensors"
+            ? ((get(locale, "ALARME_ISSUES_OUVERTES", "N/A") as string) ?? device.name)
+            : device.name,
         category: category as Categories,
         deviceType: device.deviceType,
         metadata: device.metadata,
@@ -218,6 +223,7 @@ export default class TydomController extends EventEmitter {
         deviceId,
         endpointId,
         accessoryId: device.accessoryId,
+        ...(device.companionOf ? { companionOf: device.companionOf } : {}),
         manufacturer: "Delta Dore",
         serialNumber: `ID${deviceId}`,
         state: {},

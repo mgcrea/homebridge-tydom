@@ -2,7 +2,6 @@ import type { PlatformAccessory } from "homebridge";
 import type { TydomApiClient } from "../api/client.js";
 import type { DeviceType } from "../api/device-type.js";
 import type { TydomUpdateType } from "../api/types.js";
-import type TydomController from "../controller.js";
 import type TydomPlatform from "../platform.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
 
@@ -18,13 +17,12 @@ export type AccessoryDeps = {
   /** The endpoint-facing API. Class-based accessories use this, not `controller`. */
   api: TydomApiClient;
   /**
-   * The controller.
+   * Raise a user-facing notification (Discord webhooks).
    *
-   * Present only for the function-pair modules still going through
-   * legacy-adapter.ts. Phase 6 replaces it with a per-endpoint device client,
-   * which is what finally severs accessory -> controller.
+   * Injected rather than emitted back through the controller, which is what
+   * created the accessory -> controller -> platform -> accessory cycle.
    */
-  controller: TydomController;
+  notify: (level: "debug" | "info" | "warn", message: string) => void;
 };
 
 /**

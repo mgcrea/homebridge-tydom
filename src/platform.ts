@@ -43,6 +43,15 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   accessories = new Map<string, PlatformAccessory<TydomAccessoryContext>>();
   /** Live handlers, keyed by the same UUID as `accessories`. */
   handlers = new Map<string, TydomAccessory>();
+  /**
+   * Primary accessory UUID -> the UUIDs of companions that share its endpoint.
+   *
+   * The alarm and its sensors accessory sit on one deviceId/endpointId, so the
+   * gateway only ever addresses one of them. The alarm used to relay its own
+   * updates to the companion by emitting back into the controller — a cycle
+   * that made per-accessory teardown impossible. The platform fans out instead.
+   */
+  companions = new Map<string, string[]>();
   controller?: TydomController;
   api: Homebridge;
   config!: TydomPlatformConfig;
@@ -113,6 +122,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       handler.dispose();
     }
     this.handlers.clear();
+    this.companions.clear();
   }
 
   async didFinishLaunching(): Promise<void> {
@@ -186,16 +196,18 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   }
   handleControllerDataUpdate({ type, updates, context }: ControllerUpdatePayload): void {
     const id = this.api.hap.uuid.generate(context.accessoryId);
-    const handler = this.handlers.get(id);
-    if (!handler) {
-      return;
-    }
-    try {
-      handler.update(updates, type);
-    } catch (err) {
-      this.log.error(
-        `Failed to update accessory ${context.accessoryId}: ${stringifyError(err as Error)}`,
-      );
+    for (const target of [id, ...(this.companions.get(id) ?? [])]) {
+      const handler = this.handlers.get(target);
+      if (!handler) {
+        continue;
+      }
+      try {
+        handler.update(updates, type);
+      } catch (err) {
+        this.log.error(
+          `Failed to update accessory ${context.accessoryId}: ${stringifyError(err as Error)}`,
+        );
+      }
     }
   }
 
@@ -266,6 +278,14 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       return;
     }
 
+    if (context.companionOf) {
+      const primaryId = this.api.hap.uuid.generate(context.companionOf);
+      const existing = this.companions.get(primaryId) ?? [];
+      if (!existing.includes(id)) {
+        this.companions.set(primaryId, [...existing, id]);
+      }
+    }
+
     // Re-registering replaces the handler, so the previous one has to let go of
     // its timers first.
     this.handlers.get(id)?.dispose();
@@ -275,7 +295,9 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
         platform: this,
         accessory,
         api: getApiClient(this.controller.client),
-        controller: this.controller,
+        notify: (level, message) => {
+          this.handleControllerNotification({ level, message });
+        },
       }),
     );
 

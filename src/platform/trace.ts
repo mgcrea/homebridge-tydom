@@ -1,7 +1,6 @@
 import createDebug from "debug";
-import type { PlatformAccessory, Service } from "homebridge";
+import type { Characteristic, PlatformAccessory, Service } from "homebridge";
 import { blue } from "kolorist";
-import type { Characteristic } from "../config/hap.js";
 import {
   styleGet,
   styleKeyword,

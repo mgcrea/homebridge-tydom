@@ -9,15 +9,7 @@
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "types": ["node"],
-    "outDir": "./dist",
-
-    // --- Relaxations of @tsconfig/strictest, each tagged with the phase that flips it ---
-    // TODO(phase-6): needs the accessories converted to classes first.
-    "noUncheckedIndexedAccess": false,
-    // TODO(phase-6): blocked on TydomAccessoryContext's optional fields.
-    "exactOptionalPropertyTypes": false,
-    // TODO(phase-9): the i18n tables are indexed by dynamic Delta Dore keys.
-    "noPropertyAccessFromIndexSignature": false
+    "outDir": "./dist"
   },
   "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts", "*.config.ts"]
 }

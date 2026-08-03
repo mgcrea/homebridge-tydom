@@ -1,7 +1,7 @@
 import type { PlatformAccessory, Service } from "homebridge";
 import type { TydomApiClient } from "../api/client.js";
 import type { TydomUpdateType } from "../api/types.js";
-import type { ServiceClass } from "../helpers/accessory.js";
+import type { ServiceClass } from "./service-class.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
 import { debug } from "../platform/trace.js";
 import type { AccessoryDeps, TydomAccessory } from "./base.js";
@@ -19,6 +19,16 @@ export abstract class BaseAccessory implements TydomAccessory {
   protected readonly api: TydomApiClient;
   protected readonly deviceId: number;
   protected readonly endpointId: number;
+  protected readonly notify: AccessoryDeps["notify"];
+
+  /**
+   * Resolves once asynchronous setup has finished.
+   *
+   * Accessories that need a round trip before their services exist assign this,
+   * and queue inbound pushes behind it — the gateway can and does push before
+   * setup completes.
+   */
+  protected ready: Promise<void> = Promise.resolve();
 
   #timers = new Set<NodeJS.Timeout>();
   #disposed = false;
@@ -27,6 +37,7 @@ export abstract class BaseAccessory implements TydomAccessory {
     this.platform = deps.platform;
     this.accessory = deps.accessory;
     this.api = deps.api;
+    this.notify = deps.notify;
     const { deviceId, endpointId } = deps.accessory.context;
     this.deviceId = deviceId;
     this.endpointId = endpointId;

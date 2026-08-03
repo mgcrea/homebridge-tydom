@@ -1,9 +1,10 @@
 import type { AccessoryRegistry } from "./base.js";
 import { createContactSensorAccessory } from "./contact-sensor-accessory.js";
 import { createGarageDoorAccessory } from "./garage-door-accessory.js";
-import { fromFunctionPair } from "./legacy-adapter.js";
 import { createLightbulbAccessory } from "./lightbulb-accessory.js";
 import { createOutletAccessory } from "./outlet-accessory.js";
+import { createSecuritySystemAccessory } from "./security-system-accessory.js";
+import { createSecuritySystemSensorsAccessory } from "./security-system-sensors-accessory.js";
 import { createSmokeDetectorAccessory } from "./smoke-detector-accessory.js";
 import { createTemperatureSensorAccessory } from "./temperature-sensor-accessory.js";
 import { createThermostatAccessory } from "./thermostat-accessory.js";
@@ -14,11 +15,6 @@ import {
   createSwitchableLightbulbAccessory,
   createSwitchAccessory,
 } from "./switchable-accessory.js";
-import { setupSecuritySystem, updateSecuritySystem } from "./securitySystem.js";
-import {
-  setupSecuritySystemSensors,
-  updateSecuritySystemSensors,
-} from "./securitySystemSensors.js";
 
 /**
  * The one place a device type is mapped to an implementation.
@@ -29,13 +25,10 @@ import {
  * Because `AccessoryRegistry` is `Record<DeviceType, AccessoryFactory>`, adding
  * a device type without a handler is now a compile error rather than a runtime
  * one, and the two halves cannot drift apart.
- *
- * Entries move off `fromFunctionPair` one at a time as phase 6 converts each
- * module to a class.
  */
 export const ACCESSORY_REGISTRY: AccessoryRegistry = {
-  alarm: fromFunctionPair(setupSecuritySystem, updateSecuritySystem),
-  "alarm-sensors": fromFunctionPair(setupSecuritySystemSensors, updateSecuritySystemSensors),
+  alarm: createSecuritySystemAccessory,
+  "alarm-sensors": createSecuritySystemSensorsAccessory,
   "contact-sensor": createContactSensorAccessory,
   fan: createFanAccessory,
   "garage-door": createGarageDoorAccessory,
