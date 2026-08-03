@@ -154,12 +154,28 @@ export abstract class BaseAccessory implements TydomAccessory {
     return this.accessory.addService(serviceClass as any, name ?? this.accessory.displayName);
   }
 
-  /** Get-or-add a sub-service identified by subtype. */
+  /**
+   * Get-or-add a sub-service identified by subtype.
+   *
+   * A new one gets `ConfiguredName` as well as `Name`. The Home app renders
+   * `ConfiguredName` as the caption under a sub-service and falls back to a
+   * generic service label without it — which made a panel's eight zone switches
+   * indistinguishable from each other.
+   *
+   * Filled in only when empty, which covers both a new service and one cached
+   * by a release that never set it — but leaves a name the user typed in the
+   * Home app alone, since their rename is stored in this same characteristic.
+   */
   protected subService(serviceClass: ServiceClass, name: string, subtype: string): Service {
-    return (
+    const { ConfiguredName } = this.platform.Characteristic;
+    const service =
       this.accessory.getServiceById(serviceClass, subtype) ??
-      this.accessory.addService(serviceClass, name, subtype)
-    );
+      this.accessory.addService(serviceClass, name, subtype);
+    service.addOptionalCharacteristic(ConfiguredName);
+    if (!service.getCharacteristic(ConfiguredName).value) {
+      service.setCharacteristic(ConfiguredName, name);
+    }
+    return service;
   }
 
   get name(): string {

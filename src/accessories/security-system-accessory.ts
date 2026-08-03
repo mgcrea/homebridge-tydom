@@ -15,7 +15,6 @@ import type {
   SecuritySystemLabelCommandResult,
   SecuritySystemLabelCommandResultZone,
   TydomDeviceSecuritySystemData,
-  TydomDeviceSecuritySystemZoneState,
 } from "../typings/tydom.js";
 import { styleJson, styleKeyword } from "../util/style.js";
 import { BaseAccessory } from "./base-accessory.js";
@@ -25,6 +24,7 @@ import {
   getActiveZones,
   getStateForActiveZones,
   getStateForAlarmData,
+  isZoneArmed,
   type AlarmSettings,
 } from "./security-system-state.js";
 
@@ -216,9 +216,9 @@ export class SecuritySystemAccessory extends BaseAccessory {
         .getCharacteristic(On)
         .onGet(async () => {
           debugGet(On, service);
-          const data = await this.#read();
-          const state = getTydomDataPropValue<TydomDeviceSecuritySystemZoneState>(data, zoneProp);
-          const nextValue = state === "ON";
+          // Reads the panel's mode, not just this zone's property: see
+          // `isZoneArmed`.
+          const nextValue = isZoneArmed(await this.#read(), zoneProp);
           debugGetResult(On, service, nextValue);
           return nextValue;
         })
@@ -311,6 +311,13 @@ export class SecuritySystemAccessory extends BaseAccessory {
           debugSetUpdate(SecuritySystemCurrentState, this.#service, nextValue);
           this.#service.updateCharacteristic(SecuritySystemCurrentState, nextValue);
         }
+        // A whole-system mode change settles every zone switch at once. Any
+        // per-zone property later in this same push refines it.
+        if (value === "OFF") {
+          this.#syncZoneSwitches([]);
+        } else if (value === "ON") {
+          this.#syncZoneSwitches(null);
+        }
         continue;
       }
 
@@ -373,13 +380,18 @@ export class SecuritySystemAccessory extends BaseAccessory {
       switch (event.name) {
         case "arret":
           this.#setState(ALARM_STATE.DISARMED);
+          this.#syncZoneSwitches([]);
           break;
         case "marcheTotale":
           this.#setState(ALARM_STATE.AWAY_ARM);
+          this.#syncZoneSwitches(null);
           break;
         case "marcheZone": {
+          // `id` is the label index; the state properties are `zone1State`
+          // upwards, so it is one greater.
           const activeZones = event.zones.map((zone) => zone.id + 1);
           this.#setState(getStateForActiveZones(activeZones, aliases));
+          this.#syncZoneSwitches(activeZones);
           break;
         }
         case "preAlarm": {
@@ -392,6 +404,23 @@ export class SecuritySystemAccessory extends BaseAccessory {
         default:
           break;
       }
+    }
+  }
+
+  /**
+   * Drive every zone switch from an authoritative arming state.
+   *
+   * `null` means every zone is armed, which is what a full away-arm reports —
+   * it carries no per-zone state at all. The panel does not reliably push a
+   * `zoneNState` for each zone when the whole system changes mode, so relying
+   * on those alone left switches showing armed after a disarm.
+   */
+  #syncZoneSwitches(activeZones: number[] | null): void {
+    const { On } = this.platform.Characteristic;
+    for (const [zoneIndex, service] of this.#zones) {
+      const nextValue = activeZones === null || activeZones.includes(zoneIndex);
+      debugSetUpdate(On, service, nextValue);
+      service.updateCharacteristic(On, nextValue);
     }
   }
 

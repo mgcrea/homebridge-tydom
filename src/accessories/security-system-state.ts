@@ -69,6 +69,27 @@ export const getStateForActiveZones = (
   return ALARM_STATE.DISARMED;
 };
 
+/**
+ * Whether one zone is armed, given the panel's overall mode.
+ *
+ * The mode outranks the per-zone property. A panel does not always volunteer
+ * every `zoneNState` when it disarms — sometimes it sends `alarmMode: "OFF"`
+ * and nothing else — which used to leave a zone switch reading `"ON"` from the
+ * last thing the panel happened to say about it. Since a disarmed system has no
+ * armed zones by definition, and a fully armed one has nothing but, the mode
+ * answers for both.
+ */
+export const isZoneArmed = (alarmData: TydomEndpointData, zoneProp: string): boolean => {
+  const alarmMode = alarmData.find((prop) => prop.name === "alarmMode")?.value;
+  if (alarmMode === "OFF") {
+    return false;
+  }
+  if (alarmMode === "ON") {
+    return true;
+  }
+  return alarmData.find((prop) => prop.name === zoneProp)?.value === "ON";
+};
+
 /** The HomeKit state for a full alarm data snapshot. */
 export const getStateForAlarmData = (
   alarmData: TydomEndpointData,

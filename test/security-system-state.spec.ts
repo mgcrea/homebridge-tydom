@@ -4,6 +4,7 @@ import {
   getActiveZones,
   getStateForActiveZones,
   getStateForAlarmData,
+  isZoneArmed,
 } from "../src/accessories/security-system-state.js";
 import type { TydomEndpointData } from "../src/api/types.js";
 
@@ -71,6 +72,39 @@ describe("getStateForActiveZones", () => {
 
   it("reports disarmed when no aliases are configured", () => {
     expect(getStateForActiveZones([1, 2], {})).toBe(ALARM_STATE.DISARMED);
+  });
+});
+
+describe("isZoneArmed", () => {
+  it("reports no zone armed when the panel is off, whatever the zone says", () => {
+    // The reported bug: disarming from the main selector left the zone
+    // switches showing armed. The panel does not always volunteer a fresh
+    // `zoneNState` when it disarms, so the stale one has to be overruled.
+    const payload = data({ alarmMode: "OFF", zone1State: "ON", zone2State: "ON" });
+    expect(isZoneArmed(payload, "zone1State")).toBe(false);
+    expect(isZoneArmed(payload, "zone2State")).toBe(false);
+  });
+
+  it("reports every zone armed when the panel is fully armed", () => {
+    // A full away-arm carries no per-zone state at all.
+    const payload = data({ alarmMode: "ON" });
+    expect(isZoneArmed(payload, "zone1State")).toBe(true);
+    expect(isZoneArmed(payload, "zone4State")).toBe(true);
+  });
+
+  it("defers to the zone property for a partial arm", () => {
+    const payload = data({ alarmMode: "ZONE", zone1State: "ON", zone2State: "OFF" });
+    expect(isZoneArmed(payload, "zone1State")).toBe(true);
+    expect(isZoneArmed(payload, "zone2State")).toBe(false);
+  });
+
+  it("reports a zone it knows nothing about as disarmed", () => {
+    expect(isZoneArmed(data({ alarmMode: "ZONE" }), "zone7State")).toBe(false);
+  });
+
+  it("works for legacy part properties too", () => {
+    expect(isZoneArmed(data({ alarmMode: "OFF", part2State: "ON" }), "part2State")).toBe(false);
+    expect(isZoneArmed(data({ alarmMode: "PART", part2State: "ON" }), "part2State")).toBe(true);
   });
 });
 
