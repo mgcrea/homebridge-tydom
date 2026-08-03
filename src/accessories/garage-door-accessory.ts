@@ -93,7 +93,7 @@ export class GarageDoorAccessory extends BaseAccessory {
       });
   }
 
-  update(updates: Record<string, unknown>[], type: TydomUpdateType): void {
+  protected override apply(updates: Record<string, unknown>[], type: TydomUpdateType): void {
     const { CurrentDoorState, TargetDoorState } = this.platform.Characteristic;
 
     if (type === "cdata") {
@@ -228,10 +228,7 @@ export class GarageDoorAccessory extends BaseAccessory {
 
   async #readDoorState(): Promise<number> {
     const { CurrentDoorState } = this.platform.Characteristic;
-    const data = await this.api.getDeviceData<TydomDeviceGarageDoorData>(
-      this.deviceId,
-      this.endpointId,
-    );
+    const data = await this.read<TydomDeviceGarageDoorData>();
     const level = getTydomDataPropValue<number>(data, "level") || 0;
     if (level > 0 && level < 100) {
       debug(`Encountered a ${styleString("level")} update with value different from 0 or 100 !`);

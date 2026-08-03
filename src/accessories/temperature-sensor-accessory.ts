@@ -19,14 +19,14 @@ export class TemperatureSensorAccessory extends BaseAccessory {
       .setProps({ minValue: -100 })
       .onGet(async () => {
         debugGet(CurrentTemperature, this.#service);
-        const data = await this.api.getDeviceData(this.deviceId, this.endpointId);
+        const data = await this.read();
         const outTemperature = getTydomDataPropValue<number>(data, "outTemperature");
         debugGetResult(CurrentTemperature, this.#service, outTemperature);
         return outTemperature;
       });
   }
 
-  update(updates: Record<string, unknown>[]): void {
+  protected override apply(updates: Record<string, unknown>[]): void {
     const { CurrentTemperature } = this.platform.Characteristic;
     for (const { name, value } of updates) {
       if (name !== "outTemperature") {

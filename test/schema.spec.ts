@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { PLATFORM_NAME } from "../src/config/env.js";
 import {
   DEFAULT_REFRESH_INTERVAL_MS,
+  DEFAULT_STALE_AFTER_MS,
   MIN_REFRESH_INTERVAL_MS,
   parseConfig,
 } from "../src/config.js";
@@ -47,6 +48,7 @@ describe("config.schema.json", () => {
       "pin",
       "refreshInterval",
       "settings",
+      "staleAfter",
       "username",
       "webhooks",
     ]);
@@ -83,6 +85,7 @@ describe("config.schema.json", () => {
     const props = schema.schema.properties;
     expect(props["refreshInterval"]?.default).toBe(DEFAULT_REFRESH_INTERVAL_MS / 1000);
     expect(props["refreshInterval"]?.minimum).toBe(MIN_REFRESH_INTERVAL_MS / 1000);
+    expect(props["staleAfter"]?.default).toBe(DEFAULT_STALE_AFTER_MS / 1000);
 
     const parsed = parseConfig(
       { platform: PLATFORM_NAME, hostname: "h", username: "u", password: "p" },

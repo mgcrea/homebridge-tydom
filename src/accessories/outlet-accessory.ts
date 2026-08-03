@@ -23,7 +23,7 @@ export class OutletAccessory extends BaseAccessory {
       .getCharacteristic(On)
       .onGet(async () => {
         debugGet(On, this.#service);
-        const data = await this.api.getDeviceData(this.deviceId, this.endpointId);
+        const data = await this.read();
         const plugCmd = getTydomDataPropValue<string>(data, "plugCmd");
         const nextValue = plugCmd === "ON";
         debugGetResult(On, this.#service, nextValue);
@@ -40,7 +40,7 @@ export class OutletAccessory extends BaseAccessory {
 
     this.#service.getCharacteristic(OutletInUse).onGet(async () => {
       debugGet(OutletInUse, this.#service);
-      const data = await this.api.getDeviceData(this.deviceId, this.endpointId);
+      const data = await this.read();
       const power = getTydomDataPropValue<number>(data, "energyInstantTotElecP");
       const nextValue = power > 0;
       debugGetResult(OutletInUse, this.#service, nextValue);
@@ -48,7 +48,7 @@ export class OutletAccessory extends BaseAccessory {
     });
   }
 
-  update(updates: Record<string, unknown>[]): void {
+  protected override apply(updates: Record<string, unknown>[]): void {
     const { On, OutletInUse } = this.platform.Characteristic;
     for (const { name, value } of updates) {
       switch (name) {

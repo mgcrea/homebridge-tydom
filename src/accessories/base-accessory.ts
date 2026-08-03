@@ -1,6 +1,7 @@
 import type { PlatformAccessory, Service } from "homebridge";
 import type { TydomApiClient } from "../api/client.js";
-import type { TydomUpdateType } from "../api/types.js";
+import type { TydomDataElement, TydomEndpointData, TydomUpdateType } from "../api/types.js";
+import { StateCache } from "../util/state-cache.js";
 import type { ServiceClass } from "./service-class.js";
 import type { TydomAccessoryContext } from "../typings/tydom.js";
 import { debug } from "../platform/trace.js";
@@ -34,6 +35,7 @@ export abstract class BaseAccessory implements TydomAccessory {
 
   #timers = new Set<NodeJS.Timeout>();
   #disposed = false;
+  readonly #state: StateCache<TydomDataElement>;
 
   constructor(deps: AccessoryDeps) {
     this.platform = deps.platform;
@@ -45,11 +47,57 @@ export abstract class BaseAccessory implements TydomAccessory {
     this.deviceId = deviceId;
     this.endpointId = endpointId;
 
+    this.#state = new StateCache<TydomDataElement>({
+      fetch: async () => this.api.getDeviceData(this.deviceId, this.endpointId),
+      staleAfterMs: this.platform.config.staleAfterMs,
+      // A repair is fed back through the accessory's own push handler: a
+      // refresh is exactly a push of every property at once, and `apply` is
+      // already the code that knows how to put those onto characteristics.
+      onRepair: (data) => {
+        void this.apply(data, "data");
+      },
+      onError: (err) => {
+        debug(`Failed to refresh ${this.name}: ${String(err)}`);
+      },
+    });
+
     this.#setupInformation();
     this.#setupIdentify();
   }
 
-  abstract update(updates: Record<string, unknown>[], type: TydomUpdateType): void | Promise<void>;
+  /**
+   * Apply a push from the gateway. Implemented by every accessory.
+   *
+   * Must be idempotent for `type: "data"` — the lazy repair replays a full
+   * snapshot through it. `type: "cdata"` carries events, which are not
+   * replayed and may have side effects such as raising a notification.
+   */
+  protected abstract apply(
+    updates: Record<string, unknown>[],
+    type: TydomUpdateType,
+  ): void | Promise<void>;
+
+  /**
+   * Entry point for the platform. Not overridden: it keeps the local state in
+   * step with what the gateway has told us before handing off to `apply`.
+   */
+  update(updates: Record<string, unknown>[], type: TydomUpdateType): void | Promise<void> {
+    if (type === "data") {
+      this.#state.merge(updates as TydomDataElement[]);
+    }
+    return this.apply(updates, type);
+  }
+
+  /**
+   * The endpoint's data, for a characteristic read.
+   *
+   * Served from memory once warm. The first read blocks, as every read used to;
+   * a read that finds the data stale returns it anyway and repairs in the
+   * background. See `StateCache` for why that is the right trade here.
+   */
+  protected async read<T extends TydomEndpointData = TydomEndpointData>(): Promise<T> {
+    return (await this.#state.read()) as T;
+  }
 
   /**
    * Release timers. Idempotent, and safe on an accessory whose constructor
@@ -58,6 +106,7 @@ export abstract class BaseAccessory implements TydomAccessory {
    */
   dispose(): void {
     this.#disposed = true;
+    this.#state.dispose();
     for (const timer of this.#timers) {
       clearTimeout(timer);
     }

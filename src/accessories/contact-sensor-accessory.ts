@@ -15,14 +15,14 @@ export class ContactSensorAccessory extends BaseAccessory {
 
     this.#service.getCharacteristic(ContactSensorState).onGet(async () => {
       debugGet(ContactSensorState, this.#service);
-      const data = await this.api.getDeviceData(this.deviceId, this.endpointId);
+      const data = await this.read();
       const intrusionDetect = getTydomDataPropValue<boolean>(data, "intrusionDetect");
       debugGetResult(ContactSensorState, this.#service, intrusionDetect);
       return intrusionDetect;
     });
   }
 
-  update(updates: Record<string, unknown>[]): void {
+  protected override apply(updates: Record<string, unknown>[]): void {
     const { ContactSensorState } = this.platform.Characteristic;
     for (const { name, value } of updates) {
       if (name !== "intrusionDetect") {

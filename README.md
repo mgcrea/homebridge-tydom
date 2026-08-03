@@ -102,6 +102,7 @@ They take precedence over the corresponding config fields.
 | `pin` | `string` | — | TYXAL+ alarm PIN. Without it the alarm reports its state but cannot be armed or disarmed. |
 | `locale` | `"fr" \| "en"` | `"fr"` | Language of the labels Delta Dore supplies for zones, detectors and thermostat modes. |
 | `refreshInterval` | `number` | `14400` | Seconds between full state refreshes. The gateway pushes changes as they happen, so this is only a safety net; clamped to a minimum of 60. |
+| `staleAfter` | `number` | `300` | Seconds a device reading is served from memory before HomeKit's next query triggers a background re-read. `0` reads through on every query, as releases before 0.30 did. See [Reading state](#reading-state). |
 | `includedDevices` | `string[]` | `[]` | If non-empty, ignore every device not listed. |
 | `excludedDevices` | `string[]` | `[]` | Devices to leave out, applied after the include list. |
 | `includedCategories` | `string[]` | `[]` | Same, by HAP category number. |
@@ -123,6 +124,14 @@ Environment variables:
 | `HOMEBRIDGE_TYDOM_PASSWORD` | Tydom password, base64-encoded. Overrides `password`. |
 | `HOMEBRIDGE_TYDOM_PIN` | TYXAL+ PIN, base64-encoded. Overrides `pin`. |
 | `HOMEBRIDGE_TYDOM_LOCALE` | `fr` or `en`. Overrides `locale`. |
+
+### Reading state
+
+The gateway is push-first: it tells the plugin when something changes rather than waiting to be asked. So device readings are held in memory and served straight to HomeKit, which queries far more often than anything actually changes — a Tydom box is a small embedded device, and hammering it with a request per query is what makes it drop local clients.
+
+Because there is no polling loop to fall back on, a missed push would otherwise leave HomeKit wrong until the next full refresh, hours later. So a query that finds its reading older than `staleAfter` returns the held value immediately *and* re-reads in the background, pushing the corrected value out when it arrives. Staleness is bounded by `staleAfter`; nothing waits on the gateway except the very first read of each device.
+
+If you would rather trade the traffic for a guaranteed-fresh read every time, set `staleAfter` to `0`.
 
 ### Connecting locally
 

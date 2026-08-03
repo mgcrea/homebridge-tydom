@@ -20,10 +20,7 @@ export class SmokeDetectorAccessory extends BaseAccessory {
       .setProps({ format: "bool" })
       .onGet(async () => {
         debugGet(SmokeDetected, this.#service);
-        const data = await this.api.getDeviceData<TydomDeviceSmokeDetectorData>(
-          this.deviceId,
-          this.endpointId,
-        );
+        const data = await this.read<TydomDeviceSmokeDetectorData>();
         const smokeDefect = getTydomDataPropValue<boolean>(data, "techSmokeDefect");
         debugGetResult(SmokeDetected, this.#service, smokeDefect);
         return smokeDefect;
@@ -31,17 +28,14 @@ export class SmokeDetectorAccessory extends BaseAccessory {
 
     this.#service.getCharacteristic(StatusLowBattery).onGet(async () => {
       debugGet(StatusLowBattery, this.#service);
-      const data = await this.api.getDeviceData<TydomDeviceSmokeDetectorData>(
-        this.deviceId,
-        this.endpointId,
-      );
+      const data = await this.read<TydomDeviceSmokeDetectorData>();
       const battDefect = getTydomDataPropValue<boolean>(data, "battDefect");
       debugGetResult(StatusLowBattery, this.#service, battDefect);
       return this.#batteryLevel(battDefect);
     });
   }
 
-  update(updates: Record<string, unknown>[]): void {
+  protected override apply(updates: Record<string, unknown>[]): void {
     const { SmokeDetected, StatusLowBattery } = this.platform.Characteristic;
     for (const { name, value } of updates) {
       switch (name) {

@@ -46,7 +46,7 @@ export class TriggerSwitchAccessory extends BaseAccessory {
   }
 
   /** Nothing to apply: the device has no state this switch reflects. */
-  update(): void {
+  protected override apply(): void {
     // no-op
   }
 

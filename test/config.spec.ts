@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ConfigError,
   DEFAULT_REFRESH_INTERVAL_MS,
+  DEFAULT_STALE_AFTER_MS,
   MIN_REFRESH_INTERVAL_MS,
   parseConfig,
 } from "../src/config.js";
@@ -106,6 +107,31 @@ describe("parseConfig", () => {
     it("falls back to the default when the value is not a number", () => {
       expect(parseConfig({ ...base, refreshInterval: "soon" } as never, {}).refreshIntervalMs).toBe(
         DEFAULT_REFRESH_INTERVAL_MS,
+      );
+    });
+  });
+
+  describe("staleAfter", () => {
+    it("converts the user-facing seconds to milliseconds", () => {
+      expect(parseConfig({ ...base, staleAfter: 30 } as never, {}).staleAfterMs).toBe(30_000);
+    });
+
+    it("defaults to five minutes", () => {
+      expect(parseConfig(base as never, {}).staleAfterMs).toBe(DEFAULT_STALE_AFTER_MS);
+    });
+
+    it("accepts zero, which reads through on every query", () => {
+      // The escape hatch back to pre-0.30 behaviour, so it must not be clamped
+      // or treated as "unset".
+      expect(parseConfig({ ...base, staleAfter: 0 } as never, {}).staleAfterMs).toBe(0);
+    });
+
+    it("falls back to the default for a negative or non-numeric value", () => {
+      expect(parseConfig({ ...base, staleAfter: -1 } as never, {}).staleAfterMs).toBe(
+        DEFAULT_STALE_AFTER_MS,
+      );
+      expect(parseConfig({ ...base, staleAfter: "never" } as never, {}).staleAfterMs).toBe(
+        DEFAULT_STALE_AFTER_MS,
       );
     });
   });

@@ -123,7 +123,7 @@ export class ThermostatAccessory extends BaseAccessory {
     this.#setupThermicLevels();
   }
 
-  update(updates: Record<string, unknown>[]): void {
+  protected override apply(updates: Record<string, unknown>[]): void {
     const {
       TargetHeatingCoolingState,
       CurrentHeatingCoolingState,
@@ -193,7 +193,7 @@ export class ThermostatAccessory extends BaseAccessory {
   }
 
   async #read(): Promise<TydomDeviceThermostatData> {
-    return this.api.getDeviceData<TydomDeviceThermostatData>(this.deviceId, this.endpointId);
+    return this.read<TydomDeviceThermostatData>();
   }
 
   async #writeHvacMode(value: string): Promise<void> {

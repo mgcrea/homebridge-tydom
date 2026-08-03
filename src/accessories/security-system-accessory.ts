@@ -72,10 +72,7 @@ export class SecuritySystemAccessory extends BaseAccessory {
     const { SecuritySystemTargetState, SecuritySystemCurrentState, StatusTampered } =
       Characteristic;
 
-    const initialData = await this.api.getDeviceData<TydomDeviceSecuritySystemData>(
-      this.deviceId,
-      this.endpointId,
-    );
+    const initialData = await this.read<TydomDeviceSecuritySystemData>();
     const zones = await this.#readZoneLabels();
 
     const service = this.service(Services.SecuritySystem);
@@ -129,7 +126,7 @@ export class SecuritySystemAccessory extends BaseAccessory {
     this.#setupZones(initialData, zones);
   }
 
-  update(updates: Record<string, unknown>[], type: TydomUpdateType): void {
+  protected override apply(updates: Record<string, unknown>[], type: TydomUpdateType): void {
     // Services may not exist yet: setup needs two round trips, and the gateway
     // pushes before it finishes.
     void this.ready.then(() => {
@@ -145,7 +142,7 @@ export class SecuritySystemAccessory extends BaseAccessory {
   // ---------------------------------------------------------------- internals
 
   async #read(): Promise<TydomDeviceSecuritySystemData> {
-    return this.api.getDeviceData<TydomDeviceSecuritySystemData>(this.deviceId, this.endpointId);
+    return this.read<TydomDeviceSecuritySystemData>();
   }
 
   async #currentState(): Promise<number> {

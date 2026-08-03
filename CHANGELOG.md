@@ -30,6 +30,7 @@ No accessory is re-registered by this release: rooms, names and automations are 
 
 ### Features
 
+- **reads:** device readings are held in memory and served straight to HomeKit instead of re-reading the gateway on every query. A reading older than `staleAfter` (default 5 minutes) is still returned immediately, with a background re-read pushing the corrected value out when it lands — so nothing waits on the gateway except the first read of each device, and staleness stays bounded despite there being no polling loop. Set `staleAfter` to `0` for the previous read-through behaviour.
 - **config UI:** the schema now offers every supported option. `webhooks`, `refreshInterval`, `pin`, `locale` and the four include/exclude filters were previously reachable only by hand-editing `config.json`. Passwords and PINs are masked.
 - **shutdown:** the plugin now releases its timers, closes the gateway connection and disposes every accessory when Homebridge shuts down.
 - **discovery:** the three gateway endpoints discovery depends on are validated on arrival, so a protocol change is reported clearly instead of surfacing later as an unrelated failure. Device data stays unvalidated by design — unknown hardware is exactly what this plugin exists to onboard.

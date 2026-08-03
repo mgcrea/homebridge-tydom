@@ -58,7 +58,7 @@ export class LightbulbAccessory extends BaseAccessory {
       .getCharacteristic(On)
       .onGet(async () => {
         debugGet(On, this.#service);
-        const data = await this.api.getDeviceData(this.deviceId, this.endpointId);
+        const data = await this.read();
         const level = getTydomDataPropValue<number>(data, "level");
         const nextValue = level > 0;
         debugGetResult(On, this.#service, nextValue);
@@ -76,7 +76,7 @@ export class LightbulbAccessory extends BaseAccessory {
       .getCharacteristic(Brightness)
       .onGet(async () => {
         debugGet(Brightness, this.#service);
-        const data = await this.api.getDeviceData(this.deviceId, this.endpointId);
+        const data = await this.read();
         const level = getTydomDataPropValue<number>(data, "level");
         debugGetResult(Brightness, this.#service, level);
         return level;
@@ -89,7 +89,7 @@ export class LightbulbAccessory extends BaseAccessory {
       });
   }
 
-  update(updates: Record<string, unknown>[]): void {
+  protected override apply(updates: Record<string, unknown>[]): void {
     const { On, Brightness } = this.platform.Characteristic;
     for (const { name, value } of updates) {
       if (name !== "level") {

@@ -46,7 +46,7 @@ export abstract class SwitchableAccessory extends BaseAccessory {
       .getCharacteristic(On)
       .onGet(async () => {
         debugGet(On, service);
-        const data = await this.api.getDeviceData(this.deviceId, this.endpointId);
+        const data = await this.read();
         const level = getTydomDataPropValue<number>(data, "level");
         const nextValue = level === 100;
         debugGetResult(On, service, nextValue);
@@ -62,7 +62,7 @@ export abstract class SwitchableAccessory extends BaseAccessory {
       });
   }
 
-  update(updates: Record<string, unknown>[]): void {
+  protected override apply(updates: Record<string, unknown>[]): void {
     const { On } = this.platform.Characteristic;
     for (const { name, value } of updates) {
       if (name !== "level") {

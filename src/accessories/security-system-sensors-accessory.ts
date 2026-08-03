@@ -75,7 +75,7 @@ export class SecuritySystemSensorsAccessory extends BaseAccessory {
     }
   }
 
-  update(updates: Record<string, unknown>[], type: TydomUpdateType): void {
+  protected override apply(updates: Record<string, unknown>[], type: TydomUpdateType): void {
     if (type === "cdata") {
       return;
     }

@@ -50,6 +50,13 @@
         "minimum": 60,
         "description": "How often to ask the gateway to re-push the state of everything. The gateway pushes changes as they happen, so this is only a safety net against a missed message; the default is four hours. Values below 60 seconds are clamped."
       },
+      "staleAfter": {
+        "title": "Reading lifetime (seconds)",
+        "type": "integer",
+        "default": 300,
+        "minimum": 0,
+        "description": "How long a device reading is served from memory before HomeKit's next query triggers a background re-read. The gateway pushes changes as they happen, so re-reading on every query is mostly wasted traffic on a box that copes badly with chatty clients. Set to 0 to read through on every query, as releases before 0.30 did."
+      },
       "includedDevices": {
         "title": "Only these devices",
         "type": "array",
@@ -164,7 +171,7 @@
       "type": "fieldset",
       "title": "Advanced",
       "expandable": true,
-      "items": ["locale", "refreshInterval", "debug", "settings"]
+      "items": ["locale", "refreshInterval", "staleAfter", "debug", "settings"]
     }
   ]
 }

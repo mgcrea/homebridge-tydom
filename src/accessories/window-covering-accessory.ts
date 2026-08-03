@@ -96,7 +96,7 @@ export class WindowCoveringAccessory extends BaseAccessory {
       });
   }
 
-  update(updates: Record<string, unknown>[], type: TydomUpdateType): void {
+  protected override apply(updates: Record<string, unknown>[], type: TydomUpdateType): void {
     const { CurrentPosition, TargetPosition, ObstructionDetected } = this.platform.Characteristic;
 
     if (type === "cdata") {
@@ -147,10 +147,7 @@ export class WindowCoveringAccessory extends BaseAccessory {
   }
 
   async #readPosition(): Promise<number> {
-    const data = await this.api.getDeviceData<TydomDeviceShutterData>(
-      this.deviceId,
-      this.endpointId,
-    );
+    const data = await this.read<TydomDeviceShutterData>();
     return asNumber(getTydomDataPropValue<number>(data, "position") || 0);
   }
 }
