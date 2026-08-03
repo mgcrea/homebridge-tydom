@@ -45,6 +45,7 @@
     "coverage": "vitest --run --coverage",
     "watch": "vitest",
     "hash": "tsx scripts/hash.ts",
+    "validate:dumps": "tsx scripts/validate-dumps.ts",
     "dev:homebridge": "homebridge -D -U ./.homebridge -P . --strict-plugin-resolution",
     "dev:homebridge:insecure": "NODE_TLS_REJECT_UNAUTHORIZED=0 homebridge -D -U ./.homebridge -P . --strict-plugin-resolution",
     "clean": "rm -rf .homebridge/persist/* .homebridge/accessories/*",
@@ -57,7 +58,8 @@
     "kolorist": "^1.8.0",
     "lodash": "^4.17.23",
     "source-map-support": "^0.5.21",
-    "tydom-client": "^0.16.0"
+    "tydom-client": "^0.16.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "^24.0.0",

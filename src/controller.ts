@@ -9,7 +9,13 @@ import {
   getUniqueId,
   parseDeviceDataUpdate,
 } from "./api/messages.js";
-import type { TydomUpdateType } from "./api/types.js";
+import {
+  parseDiscoveryResponse,
+  tydomConfigResponseSchema,
+  tydomGroupsResponseSchema,
+  tydomMetaResponseSchema,
+  type TydomUpdateType,
+} from "./api/types.js";
 import type { TydomAccessoryUpdateType } from "./helpers/accessory.js";
 import { asyncWait } from "./helpers/tydom.js";
 import type { TydomPlatformConfig } from "./platform.js";
@@ -124,9 +130,24 @@ export default class TydomController extends EventEmitter {
   }> {
     const { hostname, refreshIntervalMs } = this.config;
     debug(`Syncing state from hostname=${styleString(hostname)}...`);
-    const config = await this.client.get<TydomConfigResponse>("/configs/file");
-    const groups = await this.client.get<TydomGroupsResponse>("/groups/file");
-    const meta = await this.client.get<TydomMetaResponse>("/devices/meta");
+    // Checked rather than cast: everything downstream assumes these shapes, and
+    // an unnoticed change here would surface as a TypeError deep inside
+    // discovery instead of naming the endpoint that actually moved.
+    const config = parseDiscoveryResponse(
+      "/configs/file",
+      tydomConfigResponseSchema,
+      await this.client.get("/configs/file"),
+    );
+    const groups = parseDiscoveryResponse(
+      "/groups/file",
+      tydomGroupsResponseSchema,
+      await this.client.get("/groups/file"),
+    );
+    const meta = parseDiscoveryResponse(
+      "/devices/meta",
+      tydomMetaResponseSchema,
+      await this.client.get("/devices/meta"),
+    );
     // Final outro handshake
     await this.refresh();
     if (this.refreshInterval) {

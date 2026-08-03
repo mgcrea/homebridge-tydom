@@ -23,6 +23,9 @@ importers:
       tydom-client:
         specifier: ^0.16.0
         version: 0.16.0
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@tsconfig/node-lts':
         specifier: ^24.0.0
@@ -2160,6 +2163,9 @@ packages:
   yuku-parser@0.8.3:
     resolution: {integrity: sha512-KPQcpF9aj77ywlJBIkQWCQ9DObdxnCA8AJdUOmA5CZZx042Xt4+dvbQmPJfWxF3E+KG5dVAZ2fBKuDJ8VsKWgA==}
 
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+
 snapshots:
 
   '@babel/helper-string-parser@7.29.7': {}
@@ -3907,3 +3913,5 @@ snapshots:
       '@yuku-parser/binding-linux-x64-musl': 0.8.3
       '@yuku-parser/binding-win32-arm64': 0.8.3
       '@yuku-parser/binding-win32-x64': 0.8.3
+
+  zod@4.4.3: {}
