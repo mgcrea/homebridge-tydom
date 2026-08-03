@@ -2,7 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.30.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.29.0...v0.30.0)
+## [0.30.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.29.0...master)
+
+> Currently in prerelease as `0.30.0-beta.0`, published under the `beta` dist-tag. Install it with `npm install homebridge-tydom@beta`; nobody is upgraded to it automatically.
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. See [Migrating to v0.30](https://github.com/mgcrea/homebridge-tydom#migrating-to-v030).
 
