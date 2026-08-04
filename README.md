@@ -236,6 +236,33 @@ Nothing in your config needs to change, and no accessory is re-registered: rooms
 
 ## Troubleshooting
 
+### Duplicate accessories, or `Cannot serialize accessory`
+
+Versions up to v0.30.0 handed each newly discovered accessory to Homebridge for
+caching before registering it, which made the cache write fail:
+
+```text
+Failed to save cached accessories to disk: Cannot serialize accessory 'Salon' - missing associated plugin
+Accessory 'Salon' has the same UUID as existing accessory 'Salon'. Skipping duplicate.
+```
+
+v0.30.1 fixes the cause, and Homebridge rewrites one entry per accessory on the
+first scan after upgrading — so most installations recover on their own after a
+restart. An accessory that was duplicated and then removed from the gateway can
+be left orphaned in the cache, which only a reset clears. If the warnings
+persist, stop Homebridge and delete the cache file once:
+
+```sh
+rm ~/.homebridge/accessories/cachedAccessories
+```
+
+On a child bridge the file is named `cachedAccessories.<bridge-username>`. This
+re-registers every accessory, so rooms, names and automations for Tydom devices
+have to be set up again — which is why it is a last resort rather than a routine
+upgrade step.
+
+### Debugging
+
 Set `debug` to `true` in the config, or start Homebridge with:
 
 ```bash

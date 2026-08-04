@@ -51,6 +51,16 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
    * that made per-accessory teardown impossible. The platform fans out instead.
    */
   companions = new Map<string, string[]>();
+  /**
+   * The `device` handlers still in flight.
+   *
+   * The controller announces every device synchronously from `scan`, but the
+   * handler is async and only reaches `accessories.set` after two awaits, so
+   * nothing it registers has landed when `scan` resolves. The startup sweep and
+   * the count used to run right there — which is why a fully populated gateway
+   * reported `Properly loaded 0-accessories`.
+   */
+  pendingDevices = new Set<Promise<void>>();
   controller?: TydomController;
   /**
    * The endpoint-facing API, handed to every accessory.
@@ -115,11 +125,16 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       this.stop();
     });
     this.controller.on("device", (context: ControllerDevicePayload) => {
-      this.handleControllerDevice(context).catch((err: unknown) => {
-        this.log.error(
-          `Failed to handle device ${context.deviceId}: ${stringifyError(err as Error)}`,
-        );
-      });
+      const pending = this.handleControllerDevice(context)
+        .catch((err: unknown) => {
+          this.log.error(
+            `Failed to handle device ${context.deviceId}: ${stringifyError(err as Error)}`,
+          );
+        })
+        .finally(() => {
+          this.pendingDevices.delete(pending);
+        });
+      this.pendingDevices.add(pending);
     });
     this.controller.on("update", this.handleControllerDataUpdate.bind(this));
     this.controller.on("notification", this.handleControllerNotification.bind(this));
@@ -172,13 +187,61 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     }
 
     await this.controller.scan();
+    await this.settlePendingDevices();
     this.cleanupAccessoriesIds.forEach((accessoryId) => {
       const accessory = this.accessories.get(accessoryId);
       if (!accessory) return;
       this.log.warn(`Deleting missing accessory with id=${styleNumber(accessoryId)}`);
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.forgetAccessory(accessoryId);
     });
     this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
+  }
+
+  /**
+   * Drain the announced-device handlers.
+   *
+   * Looping rather than awaiting once covers a handler that itself announces
+   * more work; the `finally` that empties the set is attached before
+   * `allSettled` subscribes, so the loop always terminates.
+   */
+  async settlePendingDevices(): Promise<void> {
+    while (this.pendingDevices.size > 0) {
+      await Promise.allSettled(this.pendingDevices);
+    }
+  }
+
+  /**
+   * Drop every trace of an accessory the platform no longer owns.
+   *
+   * `unregisterPlatformAccessories` only tells Homebridge; the platform's own
+   * tables used to keep the entry. That inflated the `Properly loaded` count by
+   * every accessory the sweep had just removed, and left the handler holding
+   * its timers and the companion links pointing at an accessory that is gone.
+   *
+   * `pruneCompanions` is false when the accessory is about to be rebuilt under
+   * the same UUID: the links are keyed by the primary but written by the
+   * companion's own pass, and the controller announces each accessory once.
+   */
+  forgetAccessory(id: string, { pruneCompanions = true } = {}): void {
+    this.accessories.delete(id);
+    this.handlers.get(id)?.dispose();
+    this.handlers.delete(id);
+    if (!pruneCompanions) {
+      return;
+    }
+    this.companions.delete(id);
+    for (const [primaryId, companionIds] of this.companions) {
+      if (!companionIds.includes(id)) {
+        continue;
+      }
+      const remaining = companionIds.filter((companionId) => companionId !== id);
+      if (remaining.length > 0) {
+        this.companions.set(primaryId, remaining);
+      } else {
+        this.companions.delete(primaryId);
+      }
+    }
   }
   async handleControllerDevice(context: ControllerDevicePayload): Promise<void> {
     const { name, deviceId, category, accessoryId } = context;
@@ -203,9 +266,18 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       } else {
         this.log.warn(`Deleting accessory with new category with id=${styleNumber(accessoryId)}`);
         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
+        // Rebuilt under the same UUID two lines down, so its companion links
+        // have to survive — the companion's own pass already wrote them.
+        this.forgetAccessory(id, { pruneCompanions: false });
       }
     }
     const accessory = await this.createAccessory(name, id, category, context);
+    // Wire the services up first, then hand the finished accessory over.
+    // `registerPlatformAccessories` is what stamps the plugin association, and
+    // it is the only Homebridge call that may be the first one an accessory
+    // ever sees: `updatePlatformAccessories` on an unassociated accessory makes
+    // `PlatformAccessory.serialize` throw, which aborts the whole cache write.
+    await this.configureHandler(accessory, context);
     this.accessories.set(id, accessory);
     this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
   }
@@ -267,9 +339,16 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     );
     const accessory = new PlatformAccessory<TydomAccessoryContext>(accessoryName, id, category);
     Object.assign(accessory.context, context);
-    await this.updateAccessory(accessory, context);
     return accessory;
   }
+  /**
+   * Re-configure an accessory Homebridge already knows about, and persist it.
+   *
+   * Only ever call this on an accessory that came back from `configureAccessory`
+   * or that has already been through `registerPlatformAccessories` — those are
+   * the only two ways an accessory gets its plugin association, and without one
+   * the cache write below throws and takes every other accessory down with it.
+   */
   async updateAccessory(
     accessory: PlatformAccessory<TydomAccessoryContext>,
     context: TydomAccessoryContext,
@@ -280,6 +359,23 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
         context.deviceId,
       )} (id=${styleKeyword(id)})"`,
     );
+    if (!(await this.configureHandler(accessory, context))) {
+      return;
+    }
+    this.api.updatePlatformAccessories([accessory]);
+  }
+  /**
+   * Attach (or re-attach) the handler and its companion links.
+   *
+   * Deliberately touches no Homebridge persistence, so it is safe to run on an
+   * accessory that has not been registered yet. Returns whether a handler was
+   * actually wired, so callers can skip persisting a category they cannot serve.
+   */
+  async configureHandler(
+    accessory: PlatformAccessory<TydomAccessoryContext>,
+    context: TydomAccessoryContext,
+  ): Promise<boolean> {
+    const { displayName: accessoryName, UUID: id } = accessory;
     Object.assign(accessory.context, context);
     assert(this.apiClient);
 
@@ -290,7 +386,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
           accessory.category,
         )}`,
       );
-      return;
+      return false;
     }
 
     if (context.companionOf) {
@@ -317,7 +413,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       }),
     );
 
-    this.api.updatePlatformAccessories([accessory]);
+    return true;
   }
   // Called by homebridge with existing cached accessories
   configureAccessory(accessory: PlatformAccessory): void {

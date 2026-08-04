@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.1](https://github.com/mgcrea/homebridge-tydom/compare/v0.30.0...v0.30.1) (2026-08-04)
+
+### Bug Fixes
+
+- **accessories:** the accessory cache is written again. Every newly discovered accessory was handed to Homebridge for caching *before* it was registered, and registration is the only thing that stamps an accessory's plugin association — so the write threw `Cannot serialize accessory 'X' - missing associated plugin` and, because one failure aborts the whole file, nothing at all persisted. The failed write had already inserted the accessory into Homebridge's cached list, which registration then appended to a second time, so each accessory was eventually written twice and came back on the next boot as `Accessory 'X' has the same UUID as existing accessory 'X'. Skipping duplicate.`
+
+  Most installations recover on their own once restarted: Homebridge rewrites one entry per accessory on the first successful scan. An accessory that was duplicated and then removed from the gateway can be left orphaned in the cache — see [Troubleshooting](https://github.com/mgcrea/homebridge-tydom#duplicate-accessories-or-cannot-serialize-accessory) for the one-time reset.
+
+- **startup:** `Properly loaded N-accessories` reports the real count. Devices are announced synchronously while their handlers are still starting up, and the count was logged before any of them had finished, so a fully populated gateway reported `0-accessories`.
+- **startup:** accessories removed during the startup sweep are no longer counted as loaded, and their handlers and companion links are released rather than left behind. Unregistering an accessory told Homebridge but left the platform's own tables untouched.
+
 ## [0.30.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.29.0...v0.30.0) (2026-08-03)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. See [Migrating to v0.30](https://github.com/mgcrea/homebridge-tydom#migrating-to-v030).
