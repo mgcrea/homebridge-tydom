@@ -45,6 +45,7 @@
     "coverage": "vitest --run --coverage",
     "watch": "vitest",
     "hash": "tsx scripts/hash.ts",
+    "resolve-credentials": "tsx scripts/resolve-credentials.ts",
     "validate:dumps": "tsx scripts/validate-dumps.ts",
     "dev:homebridge": "homebridge -D -U ./.homebridge -P . --strict-plugin-resolution",
     "dev:homebridge:insecure": "NODE_TLS_REJECT_UNAUTHORIZED=0 homebridge -D -U ./.homebridge -P . --strict-plugin-resolution",
