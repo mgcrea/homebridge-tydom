@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.31.1](https://github.com/mgcrea/homebridge-tydom/compare/v0.31.0...v0.31.1) (2026-08-06)
+
+### Bug Fixes
+
+- **config:** signing in with an account that can see a house but holds no credentials for it now says so. Delta Dore returns such a site — one shared with the account rather than registered by it — with its gateway password missing, which was indistinguishable from the MAC not matching at all: the error told you no gateway with that MAC was attached to the account, sending you hunting for a typo in a MAC that was demonstrably correct. It now names the real problem and both ways out — sign in with the account that registered the gateway, or set `password` to the gateway password directly and leave `email` out.
+
 ## [0.31.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.30.1...v0.31.0) (2026-08-06)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. Existing configurations keep working unchanged — the new option below is opt-in.
