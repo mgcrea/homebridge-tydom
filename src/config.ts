@@ -1,4 +1,5 @@
 import type { PlatformConfig } from "homebridge";
+import { z } from "zod";
 import type { DeviceSettings } from "./api/discovery.js";
 import type { Webhook } from "./helpers/webhook.js";
 import type { Locale } from "./i18n/index.js";
@@ -69,6 +70,50 @@ export const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 const asArray = (value: unknown): (string | number)[] =>
   Array.isArray(value) ? (value as (string | number)[]) : [];
 
+/**
+ * The two config values that are structures rather than scalars.
+ *
+ * These were the only casts in `parseConfig` that crossed a trust boundary:
+ * `config["webhooks"] as Webhook[]` checked `Array.isArray` and nothing more,
+ * so a malformed entry reached `new URL()` inside the notification handler and
+ * threw there — at whatever hour the alarm happened to fire, from a `forEach`
+ * with nothing to catch it. Checking at startup means the user hears about it
+ * while they are still looking at the config file.
+ *
+ * Both are parsed rather than merely validated, so what comes out is what the
+ * rest of the plugin is typed against.
+ */
+const webhookSchema = z.object({
+  url: z.url("must be a full URL, e.g. https://discord.com/api/webhooks/…"),
+  // Only Discord is implemented; anything else silently did nothing.
+  type: z.literal("discord", 'is not a webhook type this plugin knows (only "discord")'),
+});
+
+const webhooksSchema = z.array(webhookSchema).default([]);
+
+/**
+ * Per-device overrides, keyed by numeric device id.
+ *
+ * Deliberately permissive about the contents: which options a device accepts
+ * depends on what it is, and the device-type layer already ignores what does
+ * not apply. What is checked is the shape — that each value is an object — and
+ * the key, because a device id that is not numeric silently matches no device
+ * and the user is left wondering why their setting did nothing.
+ */
+const settingsSchema = z
+  .record(z.string(), z.looseObject({}))
+  // Keys are checked here rather than with a key schema: zod reports a failing
+  // record key as "Invalid key in record" and discards the schema's own
+  // message, which tells the user nothing about what is wrong with theirs.
+  .superRefine((value, ctx) => {
+    for (const key of Object.keys(value)) {
+      if (!/^\d+$/.test(key)) {
+        ctx.addIssue({ code: "custom", path: [key], message: "is not a numeric device id" });
+      }
+    }
+  })
+  .default({});
+
 const asBoolean = (value: unknown, fallback: boolean): boolean =>
   typeof value === "boolean" ? value : fallback;
 
@@ -87,6 +132,26 @@ export type ConfigEnv = {
   HOMEBRIDGE_TYDOM_EMAIL?: string | undefined;
   // Present so `process.env` — which carries an index signature — is assignable.
   [key: string]: string | undefined;
+};
+
+/**
+ * Run a schema, reporting a failure the way the rest of this file does.
+ *
+ * zod's own message is not what the user should read: it names a path relative
+ * to the value rather than to their config file, and the platform reports this
+ * as a single line before going dormant. So the option name leads, the path
+ * within it follows, and the message says what to do.
+ */
+const parseOrThrow = <T>(schema: z.ZodType<T>, value: unknown, option: string): T => {
+  const result = schema.safeParse(value ?? undefined);
+  if (result.success) {
+    return result.data;
+  }
+  const [issue] = result.error.issues;
+  const path = issue?.path.join(".");
+  throw new ConfigError(
+    `Invalid "${option}"${path ? ` at ${path}` : ""} — ${issue?.message ?? "unexpected shape"}.`,
+  );
 };
 
 export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env): TydomConfig => {
@@ -137,8 +202,6 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
       ? staleSeconds * 1000
       : DEFAULT_STALE_AFTER_MS;
 
-  const settings = (config["settings"] ?? {}) as Record<string, DeviceSettings>;
-
   return {
     hostname,
     username,
@@ -147,8 +210,11 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
     pin,
     locale,
     debug: asBoolean(config["debug"], false),
-    settings: typeof settings === "object" ? settings : {},
-    webhooks: Array.isArray(config["webhooks"]) ? (config["webhooks"] as Webhook[]) : [],
+    settings: parseOrThrow(settingsSchema, config["settings"], "settings") as Record<
+      string,
+      DeviceSettings
+    >,
+    webhooks: parseOrThrow(webhooksSchema, config["webhooks"], "webhooks") as Webhook[],
     includedDevices: asArray(config["includedDevices"]),
     excludedDevices: asArray(config["excludedDevices"]),
     includedCategories: asArray(config["includedCategories"]),

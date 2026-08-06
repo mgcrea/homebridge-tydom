@@ -14,6 +14,13 @@
   "type": "module",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist",
     "config.schema.json"
@@ -57,7 +64,6 @@
   "dependencies": {
     "debug": "^4.4.3",
     "kolorist": "^1.8.0",
-    "lodash": "^4.17.23",
     "source-map-support": "^0.5.21",
     "tydom-client": "^0.16.0",
     "zod": "^4.4.3"
@@ -66,7 +72,6 @@
     "@tsconfig/node-lts": "^24.0.0",
     "@tsconfig/strictest": "^2.0.8",
     "@types/debug": "^4.1.12",
-    "@types/lodash": "^4.17.23",
     "@types/node": "^25.2.3",
     "@vitest/coverage-v8": "^4.1.10",
     "homebridge": "^2.0.0-beta.0",

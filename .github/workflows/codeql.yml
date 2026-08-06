@@ -1,0 +1,40 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    # Weekly, so a newly-published advisory is found against unchanged code.
+    # Most of what CodeQL has to say about this plugin will come from a rule
+    # that did not exist when the code was last touched.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+# Least privilege: the analysis needs to read the tree and write its results,
+# and nothing else.
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          # `security-extended` over the default: this plugin handles account
+          # credentials, builds gateway URIs from user config and posts to a
+          # user-supplied webhook URL, which is exactly the surface the extra
+          # queries cover.
+          queries: security-extended
+
+      # No build step. CodeQL analyses the TypeScript sources directly, and
+      # `pnpm build` emits one bundled `dist/index.mjs` that would tell it less
+      # than the tree already does.
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:javascript-typescript

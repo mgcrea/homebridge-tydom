@@ -1,0 +1,36 @@
+version: 2
+updates:
+  # Grouped and monthly on purpose. This is a single-maintainer plugin whose
+  # dependency surface is five runtime packages; a per-dependency weekly cadence
+  # would produce more pull requests than the repo produces commits, and the
+  # ones that matter would be lost among them.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      # Everything the plugin ships with. Small enough to review as one diff.
+      runtime:
+        dependency-type: production
+      # Toolchain moves fast (tsdown, oxlint, oxfmt, vitest all release often)
+      # and a failure here is a CI failure, not a user-facing one.
+      tooling:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Pinned deliberately: `homebridge` is a devDependency rather than a peer
+      # so betas can install, and the version tracked here is the one the plugin
+      # is developed against. Bumping it is a decision, not a chore.
+      - dependency-name: homebridge
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns:
+          - "*"

@@ -203,4 +203,72 @@ describe("parseConfig", () => {
       expect(config.excludedDevices).toEqual([1, "2"]);
     });
   });
+
+  describe("webhooks", () => {
+    const withWebhooks = (webhooks: unknown) => parseConfig({ ...base, webhooks } as never, {});
+
+    it("keeps a well-formed webhook", () => {
+      const url = "https://discord.com/api/webhooks/1/abc";
+      expect(withWebhooks([{ url, type: "discord" }]).webhooks).toEqual([{ url, type: "discord" }]);
+    });
+
+    it("rejects a URL that is not one, at startup rather than at 3am", () => {
+      // This used to reach `new URL()` inside the notification handler, from a
+      // `forEach` with nothing to catch it — so the first anyone heard of it was
+      // the alarm firing and the bridge throwing.
+      expect(() => withWebhooks([{ url: "discord.com/webhook", type: "discord" }])).toThrow(
+        ConfigError,
+      );
+      expect(() => withWebhooks([{ url: "discord.com/webhook", type: "discord" }])).toThrow(
+        /"webhooks" at 0\.url/,
+      );
+    });
+
+    it("names the offending entry when several are configured", () => {
+      const good = { url: "https://discord.com/api/webhooks/1/abc", type: "discord" };
+      expect(() => withWebhooks([good, { url: "nope", type: "discord" }])).toThrow(/at 1\.url/);
+    });
+
+    it("rejects a webhook type it would have silently ignored", () => {
+      expect(() => withWebhooks([{ url: "https://example.com/hook", type: "slack" }])).toThrow(
+        /only "discord"/,
+      );
+    });
+
+    it("rejects a webhook missing its URL", () => {
+      expect(() => withWebhooks([{ type: "discord" }])).toThrow(ConfigError);
+    });
+
+    it("ignores a non-array, as it always did", () => {
+      expect(withWebhooks(undefined).webhooks).toEqual([]);
+    });
+  });
+
+  describe("device settings", () => {
+    const withSettings = (settings: unknown) => parseConfig({ ...base, settings } as never, {});
+
+    it("keeps free-form per-device options", () => {
+      // What a device accepts depends on what it is, so the contents are not
+      // constrained — only the shape.
+      const settings = { "1234567": { name: "Kitchen blind", delay: 20_000, aliases: {} } };
+      expect(withSettings(settings).settings).toEqual(settings);
+    });
+
+    it("rejects a key that is not a device id", () => {
+      // A non-numeric key matches no device, so the setting silently does
+      // nothing and the user is left wondering why.
+      expect(() => withSettings({ "kitchen-blind": { name: "x" } })).toThrow(
+        /not a numeric device id/,
+      );
+    });
+
+    it("rejects a device whose settings are not an object", () => {
+      expect(() => withSettings({ "1234567": "Kitchen blind" })).toThrow(ConfigError);
+    });
+
+    it("rejects an array, which used to pass the typeof check", () => {
+      // `typeof [] === "object"`, so the guard this replaces let one through.
+      expect(() => withSettings([])).toThrow(ConfigError);
+    });
+  });
 });
