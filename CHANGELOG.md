@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.31.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.30.1...v0.31.0) (2026-08-06)
+
+No accessory is re-registered by this release: rooms, names and automations are preserved. Existing configurations keep working unchanged — the new option below is opt-in.
+
+### Features
+
+- **config:** the gateway password can be looked up from your Delta Dore account. Newer setups have the app generate that password and never show it to you, so the only way to get at it was to inspect the app's traffic with an SSL proxy. Set the new `email` field to the address you sign in to the Tydom app with, and `password` is read as your **account** password instead: the plugin signs in at startup, looks up the gateway named in `username`, and uses the gateway password it gets back. Leave `email` out — the default, and what every existing install has — and `password` keeps its old meaning of the gateway's own password. Also accepted as `HOMEBRIDGE_TYDOM_EMAIL`.
+
+  The account has to already own that gateway: there is no public API that lists the gateways on an account, so `username` stays required either way. This looks a password up, it cannot discover which houses you have.
+
+- **cli:** `pnpm resolve-credentials <email> <password> <username>` checks an account and gateway pair without waiting on Homebridge to start.
+
+### Bug Fixes
+
+- **config:** the Homebridge UI now describes both meanings of `password`, so the field does not silently change what it wants depending on whether `email` is filled in.
+
 ## [0.30.1](https://github.com/mgcrea/homebridge-tydom/compare/v0.30.0...v0.30.1) (2026-08-04)
 
 ### Bug Fixes
