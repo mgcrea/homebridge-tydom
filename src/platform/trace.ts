@@ -1,5 +1,5 @@
 import createDebug from "debug";
-import type { Characteristic, PlatformAccessory, Service } from "homebridge";
+import type { PlatformAccessory, Service } from "homebridge";
 import { blue } from "kolorist";
 import {
   styleGet,
@@ -11,6 +11,18 @@ import {
 } from "../util/style.js";
 
 type IdentifiableAccessoryObject = PlatformAccessory | Service;
+
+/**
+ * Enough of a HAP characteristic to name it in a trace line.
+ *
+ * Not `typeof Characteristic`, which is the entire statics namespace: a
+ * concrete class such as `ContactSensorState` satisfies that only by inheriting
+ * all 260-odd siblings through the prototype chain, so any characteristic
+ * described generically — one held in a mapping table rather than named
+ * literally — fails to type against it. These helpers read the name and nothing
+ * else.
+ */
+type NamedCharacteristic = { name: string };
 
 export const debug = createDebug("homebridge-tydom");
 export const enableDebug = () => {
@@ -36,14 +48,14 @@ const describe = (target: IdentifiableAccessoryObject): string => {
 };
 
 export const debugGet = (
-  characteristic: typeof Characteristic,
+  characteristic: NamedCharacteristic,
   target: IdentifiableAccessoryObject,
 ): void => {
   debug(`${styleGet("→GET")}:${blue(characteristic.name)} for ${describe(target)} ...`);
 };
 
 export const debugGetResult = (
-  characteristic: typeof Characteristic,
+  characteristic: NamedCharacteristic,
   target: IdentifiableAccessoryObject,
   value: unknown,
 ): void => {
@@ -53,7 +65,7 @@ export const debugGetResult = (
 };
 
 export const debugSetUpdate = (
-  characteristic: typeof Characteristic,
+  characteristic: NamedCharacteristic,
   target: IdentifiableAccessoryObject,
   value: unknown,
 ): void => {
@@ -63,7 +75,7 @@ export const debugSetUpdate = (
 };
 
 export const debugSet = (
-  characteristic: typeof Characteristic,
+  characteristic: NamedCharacteristic,
   target: IdentifiableAccessoryObject,
   value: unknown,
 ): void => {
@@ -73,7 +85,7 @@ export const debugSet = (
 };
 
 export const debugSetResult = (
-  characteristic: typeof Characteristic,
+  characteristic: NamedCharacteristic,
   target: IdentifiableAccessoryObject,
   value: unknown,
   tydomValue?: unknown,
