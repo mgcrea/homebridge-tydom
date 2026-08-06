@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.31.2](https://github.com/mgcrea/homebridge-tydom/compare/v0.31.1...v0.31.2) (2026-08-06)
+
+No accessory is re-registered by this release: rooms, names and automations are preserved. Seven device types were rewritten internally, but they publish the same services and characteristics as before.
+
+### Bug Fixes
+
+- **config:** a password containing an accent works. The base64 environment escape hatches decoded as ASCII, which masks the high bit of every byte, silently turning a password such as `Été2024` into mojibake. It went unnoticed while the only secrets passed that way were a gateway password and a PIN; a Delta Dore account password is one you chose yourself, and a sign-in with a mangled one fails with nothing but an opaque `invalid_grant` to go on.
+- **config:** a rejected Delta Dore account password is reported at once. It was indistinguishable from the gateway being unreachable, so the startup retry ladder re-submitted the same wrong password eleven times over about twenty-five minutes — which earns a lockout from Azure AD B2C and never a connection. Credentials are now resolved before the socket is attempted, and a rejection stops the ladder rather than feeding it.
+- **shutdown:** Homebridge shutting down no longer leaves the plugin running. `tydom-client` reconnects whenever its socket closes, and closing it is exactly what shutdown does — so every shutdown started a reconnection, which re-armed the refresh interval the platform had just cleared and replayed device state into accessories that were already disposed. The re-armed interval was also the one place the timer was not `unref`-ed, so a bridge that had reconnected even once could no longer exit on its own and had to be killed.
+- **reconnection:** a flapping connection starts one re-sync, not one per attempt. Each `connect` used to begin its own, so several `/ping` and `/refresh/all` round trips ran concurrently and each re-installed the refresh interval the last had just set up.
+- **startup:** a connection that comes up while the retry ladder is waiting is used, instead of a second one being opened alongside it. Both the plugin and `tydom-client` retry, and after a failed first attempt the two ran independently.
+- **webhooks:** an alarm notification naming a device with an accent in it is delivered. `Content-Length` was computed from string length rather than byte length, so anything non-ASCII under-reported its own size and the request truncated or hung. A webhook URL carrying a query string — a Discord `?thread_id=` — had it dropped, and a webhook that answered with an error page took the whole bridge down: the response was parsed outside the promise's frame, where a failure surfaces as an uncaught exception rather than a rejection.
+- **alarm:** a failed zone-label query now says what went wrong. The error was discarded entirely and the warning mentioned only that it had happened.
+- **accessories:** rebuilding an accessory no longer leaves its predecessor behind. The `identify` listener was never detached, so each rebuild against the same accessory — which is what a category change does — added another copy, each holding a dead handler alive.
+
+### ⚠ Behaviour changes
+
+- **config:** `webhooks` and `settings` are validated at startup. Previously only their outermost shape was checked, so a mistyped webhook URL was accepted and then threw when the alarm eventually fired, and a device-settings key that was not a numeric device id silently matched nothing. Both are now reported at startup with the offending entry named — but note that, as with any configuration problem, the platform reports it and then stays dormant. A typo that used to load will now stop the plugin until it is corrected.
+
+### Internals
+
+- The seven device types that were nothing but a characteristic-to-property mapping are declared as data rather than written out. Each characteristic's mapping is now stated once and used for both reads and pushes, so the two directions cannot disagree. Nothing was wrong with them going in — but two of the bugs fixed in `0.30.0`, the outlet comparing a numeric `level` against `"ON"` and the smoke detector's raw low-battery boolean, were both a push path having drifted from the read path beside it, and that is the shape this removes.
+- The accessory layer has tests for the first time, against a small in-memory HAP double. It refuses to answer for a characteristic constant it has not been given a real value for, because a double that returns `undefined` lets a wrong mapping pass green. The controller has tests for the first time too, covering the reconnection paths above. 285 tests, still no HAP dependency and no sockets.
+- Requests to the gateway are spaced by a few milliseconds. Nothing bounded the burst a Home app refresh or a scene produced, and the gateway is a small embedded box. Starts are spaced rather than completions serialised, so one slow relayed response cannot stall unrelated reads behind it.
+- `lodash` is gone. The dependency existed for a single function call.
+
 ## [0.31.1](https://github.com/mgcrea/homebridge-tydom/compare/v0.31.0...v0.31.1) (2026-08-06)
 
 ### Bug Fixes
