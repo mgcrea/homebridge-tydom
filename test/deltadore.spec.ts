@@ -162,6 +162,19 @@ describe("fetchGatewayPassword", () => {
     await expect(promise).rejects.toThrow(MAC);
   });
 
+  it("distinguishes a house the account can see but holds no password for", async () => {
+    // Observed against the live API on a second house: the site comes back, so
+    // the MAC is right, but its gateway carries no `password` at all. Reporting
+    // that as "no such gateway" sends the user hunting a typo that is not there.
+    const fetch = fakeFetch([
+      sitesRoute({ count: 1, sites: [{ id: "site-2", gateway: { mac: MAC } }] }),
+    ]);
+    const promise = fetchGatewayPassword({ accessToken: "tok", mac: MAC, fetch });
+    await expect(promise).rejects.toBeInstanceOf(DeltaDoreAuthError);
+    await expect(promise).rejects.toThrow("no password for gateway");
+    await expect(promise).rejects.not.toThrow("No gateway with MAC");
+  });
+
   it.each([401, 403])("reports HTTP %i as an authorisation problem", async (status) => {
     const fetch = fakeFetch([sitesRoute({ code: "FORBIDDEN" }, status)]);
     await expect(

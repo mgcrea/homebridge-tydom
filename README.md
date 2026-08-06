@@ -97,13 +97,41 @@ Rather than extract it, add your account **e-mail** and let the plugin fetch it 
 
 With `email` set, `password` is read as your **Delta Dore account** password: at startup the plugin signs in to Delta Dore, looks up the gateway named in `username`, and uses the gateway password it gets back. Nothing else changes, and your account password is never sent to the gateway. Leave `email` out — the default — and `password` keeps its old meaning of the gateway's own password.
 
-The account has to already own that gateway. There is no public API that lists the gateways on an account, so `username` stays required either way; this looks a password up, it cannot discover which houses you have. To check a pair without waiting on Homebridge:
+The account has to already own that gateway. To check a pair without waiting on Homebridge:
 
 ```bash
 pnpm resolve-credentials you@example.com 'YourDeltaDoreAccountPassw0rd' 001A25123456
 ```
 
 If you would rather extract the gateway password by hand, you still can, by inspecting the app's traffic with an SSL proxy following [this guide](https://github.com/mgcrea/homebridge-tydom/issues/72#issuecomment-1315036089) from @aure-olivier.
+
+### If your account has several houses
+
+`username` is what picks the house. One Delta Dore account can hold several — a home, a holiday flat, a relative's place — and each is one gateway with its own MAC. Point `username` at the MAC of the house you want this Homebridge instance to expose, and that is the one you get. Adding `email` does not change that: the account lookup is scoped to the MAC you named, and hands back that gateway's password specifically.
+
+To find the MAC of each house, open the Tydom app's home list and read the 6-character home ID next to each one; the MAC is `001A25` followed by that. An account holding three homes gives you three MACs, and each resolves to its own distinct gateway password:
+
+```text
+Maison            ->  001A25 AAAAAA
+Appartement       ->  001A25 BBBBBB
+Chalet            ->  001A25 CCCCCC
+```
+
+Pick the one you want and put it in `username`. Note that the account only ever *confirms* a gateway you name — there is no public Delta Dore API that lists the houses on an account, and the lookup carries no house name either, so the home ID from the app is how you tell them apart.
+
+Being able to *see* a house is not the same as holding its credentials. A house attached to your account but registered by someone else's comes back from the lookup without a password, and the plugin will tell you so rather than pretend the MAC is wrong:
+
+```text
+Delta Dore returned no password for gateway 001A25XXXXXX. The account can see that house
+but does not hold its credentials — sign in with the account that registered the gateway,
+or set "password" to the gateway password directly and leave "email" out.
+```
+
+As that says, the fallback is to drop `email` and give that house's gateway password directly.
+
+Each house gets its own accessory namespace, derived from that home ID, so switching `username` from one house to another retires the first house's accessories and publishes the second's rather than mixing them up. Expect a batch of `Deleting missing accessory` lines in the log the first time you do it — that is the sweep clearing out the house you moved away from.
+
+A platform block is one house at a time; the plugin is declared `singular`, so the Homebridge UI allows a single Tydom block. To expose two houses at once you would need a second Homebridge instance, or a hand-written second platform block run as a child bridge.
 
 Both secrets can be supplied out of band instead, base64-encoded, which is usually what you want in a container:
 
@@ -119,7 +147,7 @@ They take precedence over the corresponding config fields.
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
 | `hostname` | `string` | — | `mediation.tydom.com` for the relay, or your gateway's LAN address (see [Connecting locally](#connecting-locally)). Required. |
-| `username` | `string` | — | Gateway MAC address, e.g. `001A25123456`. Required. |
+| `username` | `string` | — | Gateway MAC address, e.g. `001A25123456`. This is what selects the house — see [If your account has several houses](#if-your-account-has-several-houses). Required. |
 | `email` | `string` | — | Delta Dore account e-mail. Set it to have the gateway password fetched for you, which also changes what `password` below means. See [Finding your credentials](#finding-your-credentials). |
 | `password` | `string` | — | Your Delta Dore account password if `email` is set, otherwise the gateway's own password. Required, unless supplied via the environment. |
 | `pin` | `string` | — | TYXAL+ alarm PIN. Without it the alarm reports its state but cannot be armed or disarmed. |

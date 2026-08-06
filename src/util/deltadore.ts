@@ -213,17 +213,30 @@ export const fetchGatewayPassword = async ({
 
   // The MAC is a query filter, not a guarantee — re-check it rather than trust
   // whichever site happens to come back first.
-  const gatewayPassword = parsed.data.sites.find(
-    (site) => normalizeMacAddress(site.gateway?.mac ?? "") === normalizedMac,
-  )?.gateway?.password;
+  const site = parsed.data.sites.find(
+    (candidate) => normalizeMacAddress(candidate.gateway?.mac ?? "") === normalizedMac,
+  );
 
-  if (!gatewayPassword) {
+  if (!site) {
     throw new DeltaDoreAuthError(
       `No gateway with MAC ${normalizedMac} is attached to this Delta Dore account. ` +
         `Check "username" against the MAC printed underneath your Tydom box.`,
     );
   }
-  return gatewayPassword;
+
+  // A house the account can see but holds no credentials for. Observed on a
+  // site shared with the account rather than owned by it, which comes back
+  // without so much as a creation date. Saying "no such gateway" here would
+  // send the user hunting for a typo in a MAC that is demonstrably correct —
+  // the gateway password has to come from the account that registered it.
+  if (!site.gateway?.password) {
+    throw new DeltaDoreAuthError(
+      `Delta Dore returned no password for gateway ${normalizedMac}. The account can see that ` +
+        `house but does not hold its credentials — sign in with the account that registered the ` +
+        `gateway, or set "password" to the gateway password directly and leave "email" out.`,
+    );
+  }
+  return site.gateway.password;
 };
 
 /** Sign in, then read the gateway password. The whole flow, in one call. */
