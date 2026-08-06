@@ -64,6 +64,43 @@ describe("parseConfig", () => {
     });
   });
 
+  describe("Delta Dore account e-mail", () => {
+    it("leaves the e-mail undefined by default, which is what every existing install has", () => {
+      const config = parseConfig(base, {});
+      expect(config.email).toBeUndefined();
+      expect(config.password).toBe("s3cret");
+    });
+
+    it("carries the e-mail through, so the controller knows which kind of password it holds", () => {
+      const config = parseConfig({ ...base, email: "someone@example.test" } as never, {});
+      expect(config.email).toBe("someone@example.test");
+      expect(config.password).toBe("s3cret");
+    });
+
+    it("reads the e-mail from the environment", () => {
+      const config = parseConfig(base, { HOMEBRIDGE_TYDOM_EMAIL: "env@example.test" });
+      expect(config.email).toBe("env@example.test");
+    });
+
+    it("prefers the environment over the config file", () => {
+      const config = parseConfig({ ...base, email: "file@example.test" } as never, {
+        HOMEBRIDGE_TYDOM_EMAIL: "env@example.test",
+      });
+      expect(config.email).toBe("env@example.test");
+    });
+
+    it("still requires a password, and says which one it wants", () => {
+      // The two cases want different secrets, so one message cannot serve both.
+      const withEmail = { ...base, password: "", email: "a@b.test" } as unknown as PlatformConfig;
+      expect(() => parseConfig(withEmail, {})).toThrow(ConfigError);
+      expect(() => parseConfig(withEmail, {})).toThrow("Delta Dore account a@b.test");
+
+      const withoutEmail = { ...base, password: "" } as unknown as PlatformConfig;
+      expect(() => parseConfig(withoutEmail, {})).toThrow("gateway's password");
+      expect(() => parseConfig(withoutEmail, {})).toThrow('set "email"');
+    });
+  });
+
   describe("environment escape hatches", () => {
     it("prefers a base64 password from the environment", () => {
       const config = parseConfig(base, { HOMEBRIDGE_TYDOM_PASSWORD: b64("from-env") });

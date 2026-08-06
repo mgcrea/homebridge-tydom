@@ -23,7 +23,24 @@ export type TydomLocale = Locale;
 export type TydomConfig = {
   hostname: string;
   username: string;
+  /**
+   * The password — of the account when `email` is set, of the gateway when it
+   * is not. `email` is the discriminator; see it for why there is only one.
+   */
   password: string;
+  /**
+   * Delta Dore account e-mail, if the gateway password is to be derived.
+   *
+   * Set, and `password` above is the account password: the controller signs in
+   * with the pair and fetches the gateway password from Delta Dore. Unset — the
+   * default, and what every existing install has — and `password` is the
+   * gateway password, used directly.
+   *
+   * One password field rather than two because the e-mail already says which
+   * kind it is, and nobody needs to supply both: knowing the gateway password
+   * is the whole point of signing in.
+   */
+  email: string | undefined;
   /** Alarm PIN, if configured here rather than per-device. */
   pin: string | undefined;
   locale: TydomLocale;
@@ -67,6 +84,7 @@ export type ConfigEnv = {
   HOMEBRIDGE_TYDOM_PASSWORD?: string | undefined;
   HOMEBRIDGE_TYDOM_PIN?: string | undefined;
   HOMEBRIDGE_TYDOM_LOCALE?: string | undefined;
+  HOMEBRIDGE_TYDOM_EMAIL?: string | undefined;
   // Present so `process.env` — which carries an index signature — is assignable.
   [key: string]: string | undefined;
 };
@@ -84,6 +102,9 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
     ? decode(env.HOMEBRIDGE_TYDOM_PIN)
     : asString(config["pin"]) || undefined;
 
+  // Turns `password` above into an account password rather than a gateway one.
+  const email = asString(env.HOMEBRIDGE_TYDOM_EMAIL) || asString(config["email"]) || undefined;
+
   if (!hostname) {
     throw new ConfigError(
       'Missing "hostname" — use "mediation.tydom.com" for remote access, or your gateway\'s local address.',
@@ -94,7 +115,11 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
   }
   if (!password) {
     throw new ConfigError(
-      'Missing "password" — set it in the platform config, or as a base64-encoded HOMEBRIDGE_TYDOM_PASSWORD.',
+      `Missing "password" — ${
+        email
+          ? `the password of the Delta Dore account ${email}.`
+          : 'your gateway\'s password, or set "email" to sign in with your Delta Dore account instead.'
+      } Can also be supplied as a base64-encoded HOMEBRIDGE_TYDOM_PASSWORD.`,
     );
   }
 
@@ -118,6 +143,7 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
     hostname,
     username,
     password,
+    email,
     pin,
     locale,
     debug: asBoolean(config["debug"], false),

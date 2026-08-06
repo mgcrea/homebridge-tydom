@@ -38,6 +38,7 @@ describe("config.schema.json", () => {
   it("offers every option parseConfig reads", () => {
     expect(PROPERTIES.toSorted()).toEqual([
       "debug",
+      "email",
       "excludedCategories",
       "excludedDevices",
       "hostname",
@@ -73,7 +74,7 @@ describe("config.schema.json", () => {
     expect(PROPERTIES.filter((name) => !laidOut.has(name))).toEqual([]);
   });
 
-  it("masks the two secrets", () => {
+  it("masks every secret", () => {
     for (const name of ["password", "pin"] as const) {
       expect(schema.schema.properties[name]).toMatchObject({
         "x-schema-form": { type: "password" },
@@ -110,5 +111,12 @@ describe("config.schema.json", () => {
       // sees, since the platform reports it and then stays dormant.
       expect(() => parseConfig(config, {})).toThrow(new RegExp(`Missing "${omitted}"`));
     }
+  });
+
+  it("leaves the account e-mail optional, since omitting it is the default setup", () => {
+    expect(schema.schema.properties["email"]?.required).toBeUndefined();
+    expect(() =>
+      parseConfig({ platform: PLATFORM_NAME, hostname: "h", username: "u", password: "p" }, {}),
+    ).not.toThrow();
   });
 });

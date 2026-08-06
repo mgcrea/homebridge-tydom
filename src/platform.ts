@@ -110,10 +110,21 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     this.pluginLog = createPluginLogger(log, this.config.debug);
 
     this.controller = new TydomController(log, this.config);
+    const controller = this.controller;
     this.apiClient = new TydomApiClient({
+      // Resolved per call rather than captured: with account credentials the
+      // controller replaces its client once `connect` has fetched the gateway
+      // password, and a transport bound to the placeholder would keep talking
+      // to the client that never connected.
+      //
       // tydom-client's methods are generic over the response type; the
       // transport seam deliberately is not, so it can be faked in tests.
-      transport: this.controller.client as unknown as TydomTransport,
+      transport: {
+        get: (uri) => controller.client.get(uri),
+        put: (uri, body) => controller.client.put(uri, body as never),
+        post: (uri, body) => controller.client.post(uri, body as never),
+        command: (uri) => controller.client.command(uri),
+      } satisfies TydomTransport,
       logger: this.pluginLog,
     });
     this.api.on("didFinishLaunching", () => {

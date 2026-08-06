@@ -20,12 +20,17 @@
         "required": true,
         "description": "Your gateway's MAC address, uppercase and without separators — e.g. `001A25123456`. It is printed underneath the Tydom box."
       },
+      "email": {
+        "title": "Delta Dore account e-mail",
+        "type": "string",
+        "description": "Optional. The e-mail you sign in to the Tydom app with.\n\nFill it in and the password below is read as your **Delta Dore account** password: the plugin signs in at startup and fetches the gateway's own password for you. Leave it empty — the default — and the password below is the **gateway's** password, used as-is.\n\nThe account has to already own the gateway named above; this looks a password up, it cannot discover which gateways you have. Also accepted as a `HOMEBRIDGE_TYDOM_EMAIL` environment variable."
+      },
       "password": {
         "title": "Password",
         "type": "string",
         "required": true,
         "x-schema-form": { "type": "password" },
-        "description": "The password of your Tydom account. Can be supplied out of band instead, as a base64-encoded `HOMEBRIDGE_TYDOM_PASSWORD` environment variable, which takes precedence over this field."
+        "description": "Your Delta Dore account password if an e-mail is set above, otherwise the gateway's own password. Can be supplied out of band instead, as a base64-encoded `HOMEBRIDGE_TYDOM_PASSWORD` environment variable, which takes precedence over this field."
       },
       "pin": {
         "title": "Alarm PIN",
@@ -121,7 +126,11 @@
     }
   },
   "layout": [
-    { "type": "fieldset", "title": "Connection", "items": ["hostname", "username", "password"] },
+    {
+      "type": "fieldset",
+      "title": "Connection",
+      "items": ["hostname", "username", "email", "password"]
+    },
     {
       "type": "fieldset",
       "title": "Alarm",

@@ -30,6 +30,7 @@ import type {
 import { styleJson, styleNumber, styleString } from "./util/style.js";
 import { debug } from "./platform/trace.js";
 import { stringifyError } from "./util/error.js";
+import { resolveGatewayPassword } from "./util/deltadore.js";
 import type TydomClient from "tydom-client";
 import {
   createClient as createTydomClient,
@@ -74,6 +75,14 @@ export default class TydomController extends EventEmitter {
   private emitted = new Set<string>();
   private refreshInterval: NodeJS.Timeout | undefined;
   private hasConnectedOnce = false;
+  /**
+   * The gateway password actually in use.
+   *
+   * Empty until `connect` derives it, when the platform was configured with an
+   * account e-mail — in which case `config.password` is the account's, not the
+   * gateway's, and must never reach the gateway.
+   */
+  private gatewayPassword: string;
   /** Delta Dore label lookups, bound to the configured locale. */
   private readonly t: Translator;
   constructor(log: Logging, config: TydomPlatformConfig) {
@@ -83,12 +92,27 @@ export default class TydomController extends EventEmitter {
     this.t = createTranslator(config.locale);
     // hostname/username/password are validated and resolved by parseConfig,
     // so there is nothing left to assert here.
-    const { hostname, username, password } = config;
+    const { hostname, username, password, email } = config;
     this.log.info(
       `Creating tydom client with username=${styleString(username)} and hostname=${styleString(hostname)}`,
     );
-    this.client = createTydomClient({ username, password, hostname, followUpDebounce: 500 });
-    this.client.on("message", (message: TydomHttpMessage) => {
+    // With an e-mail configured, `password` belongs to the account rather than
+    // the gateway, so the client starts out with no usable credential and
+    // `connect` fills one in.
+    this.gatewayPassword = email ? "" : password;
+    this.client = this.createClient(this.gatewayPassword);
+  }
+  /**
+   * Build a client for `password` and wire its events up.
+   *
+   * Split out of the constructor because account-derived credentials only
+   * arrive once `connect` has been able to await the account API, and the
+   * client takes its password at construction time.
+   */
+  private createClient(password: string): TydomClient {
+    const { hostname, username } = this.config;
+    const client = createTydomClient({ username, password, hostname, followUpDebounce: 500 });
+    client.on("message", (message: TydomHttpMessage) => {
       try {
         this.handleMessage(message);
       } catch (err) {
@@ -97,7 +121,7 @@ export default class TydomController extends EventEmitter {
         );
       }
     });
-    this.client.on("connect", () => {
+    client.on("connect", () => {
       this.log.info(
         `Successfully connected to Tydom hostname=${styleString(hostname)} with username=${styleString(username)}`,
       );
@@ -111,7 +135,7 @@ export default class TydomController extends EventEmitter {
       }
       this.emit("connect");
     });
-    this.client.on("disconnect", () => {
+    client.on("disconnect", () => {
       this.log.warn(`Disconnected from Tydom hostname=${styleString(hostname)}"`);
       if (this.refreshInterval) {
         clearInterval(this.refreshInterval);
@@ -119,6 +143,36 @@ export default class TydomController extends EventEmitter {
       }
       this.emit("disconnect");
     });
+    return client;
+  }
+  /**
+   * Fetch the gateway password from the Delta Dore account, once.
+   *
+   * No-op unless an account e-mail was configured. The result is kept for the
+   * process lifetime: the gateway password is stable, and `connect` is retried
+   * with backoff on startup — re-running the whole OAuth flow on every attempt
+   * would turn a flaky socket into repeated sign-ins.
+   */
+  private async resolveGatewayPassword(): Promise<void> {
+    const { email, password: accountPassword, username } = this.config;
+    if (this.gatewayPassword || !email) {
+      return;
+    }
+    this.log.info(
+      `Resolving the gateway password from the Delta Dore account of ${styleString(email)}...`,
+    );
+    const password = await resolveGatewayPassword({
+      email,
+      password: accountPassword,
+      mac: username,
+    });
+    this.gatewayPassword = password;
+    // The client takes its password at construction, so the placeholder built
+    // in the constructor has to be replaced rather than reconfigured. Nothing
+    // has connected yet, so there is no socket to migrate — only listeners.
+    this.client.removeAllListeners();
+    this.client = this.createClient(password);
+    this.log.info(`Resolved the gateway password for username=${styleString(username)}`);
   }
   getUniqueId(deviceId: number, endpointId: number): string {
     return deviceId === endpointId ? `${deviceId}` : `${deviceId}:${endpointId}`;
@@ -131,6 +185,9 @@ export default class TydomController extends EventEmitter {
     const { hostname, username } = this.config;
     debug(`Connecting to hostname=${styleString(hostname)}...`);
     try {
+      // Before the socket, not inside the constructor: this is the first point
+      // at which the controller is allowed to await anything.
+      await this.resolveGatewayPassword();
       await this.client.connect();
       await asyncWait(250);
       // Initial intro handshake
