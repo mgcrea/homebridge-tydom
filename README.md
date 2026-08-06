@@ -119,12 +119,12 @@ Chalet            ->  001A25 CCCCCC
 
 Pick the one you want and put it in `username`. Note that the account only ever *confirms* a gateway you name — there is no public Delta Dore API that lists the houses on an account, and the lookup carries no house name either, so the home ID from the app is how you tell them apart.
 
-Being able to *see* a house is not the same as holding its credentials. A house attached to your account but registered by someone else's comes back from the lookup without a password, and the plugin will tell you so rather than pretend the MAC is wrong:
+A correct MAC is not the same as access to that house. The lookup resolves any real gateway by MAC, and only the *credentials* are gated on what your account may reach — so a house you have no access to still comes back, just stripped of its password. The plugin says so rather than pretending the MAC is wrong:
 
 ```text
-Delta Dore returned no password for gateway 001A25XXXXXX. The account can see that house
-but does not hold its credentials — sign in with the account that registered the gateway,
-or set "password" to the gateway password directly and leave "email" out.
+Delta Dore returned no password for gateway 001A25XXXXXX. The gateway exists, but this
+account has no access to that house — sign in with an account that does, or set "password"
+to the gateway password directly and leave "email" out.
 ```
 
 As that says, the fallback is to drop `email` and give that house's gateway password directly.

@@ -224,16 +224,20 @@ export const fetchGatewayPassword = async ({
     );
   }
 
-  // A house the account can see but holds no credentials for. Observed on a
-  // site shared with the account rather than owned by it, which comes back
-  // without so much as a creation date. Saying "no such gateway" here would
-  // send the user hunting for a typo in a MAC that is demonstrably correct —
-  // the gateway password has to come from the account that registered it.
+  // The lookup resolves any real gateway by MAC; only the credentials are gated
+  // on what the account is entitled to. So a house this account has no access to
+  // still comes back — as a stripped record, without a password and without so
+  // much as a creation date. Verified against a live account that holds two of
+  // three houses: the third returns exactly this shape, and returns in full to
+  // the account that does have access.
+  //
+  // Reporting it as "no such gateway" would send the user hunting for a typo in
+  // a MAC that is demonstrably correct.
   if (!site.gateway?.password) {
     throw new DeltaDoreAuthError(
-      `Delta Dore returned no password for gateway ${normalizedMac}. The account can see that ` +
-        `house but does not hold its credentials — sign in with the account that registered the ` +
-        `gateway, or set "password" to the gateway password directly and leave "email" out.`,
+      `Delta Dore returned no password for gateway ${normalizedMac}. The gateway exists, but ` +
+        `this account has no access to that house — sign in with an account that does, or set ` +
+        `"password" to the gateway password directly and leave "email" out.`,
     );
   }
   return site.gateway.password;

@@ -162,10 +162,11 @@ describe("fetchGatewayPassword", () => {
     await expect(promise).rejects.toThrow(MAC);
   });
 
-  it("distinguishes a house the account can see but holds no password for", async () => {
-    // Observed against the live API on a second house: the site comes back, so
-    // the MAC is right, but its gateway carries no `password` at all. Reporting
-    // that as "no such gateway" sends the user hunting a typo that is not there.
+  it("distinguishes a real gateway the account has no access to", async () => {
+    // Observed against the live API, on a house the account confirmed it has no
+    // access to: the site still comes back — the MAC lookup is not gated — but
+    // its gateway carries no `password`. Reporting that as "no such gateway"
+    // sends the user hunting a typo that is not there.
     const fetch = fakeFetch([
       sitesRoute({ count: 1, sites: [{ id: "site-2", gateway: { mac: MAC } }] }),
     ]);
