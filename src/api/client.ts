@@ -1,4 +1,5 @@
 import { RequestCache } from "./cache.js";
+import { RequestPacer } from "./pacer.js";
 import { TydomApiError, UnreachableDeviceError } from "./errors.js";
 import type { TydomEndpointData, TydomEndpointDataResponse } from "./types.js";
 
@@ -35,22 +36,37 @@ const UNREACHABLE_THRESHOLD = 10;
 
 export const DEFAULT_CACHE_WINDOW_MS = 1_000;
 
+/**
+ * Smallest gap between two request starts.
+ *
+ * Small on purpose. This is a burst ceiling, not a throttle: at 25 ms a
+ * fifty-device refresh is spread over about a second, which the gateway copes
+ * with and HomeKit does not notice, while a scene firing a dozen commands in one
+ * tick no longer arrives as a dozen simultaneous frames. No specific gateway
+ * failure prompted this — it is a bound on a burst nothing else bounds.
+ */
+export const DEFAULT_REQUEST_INTERVAL_MS = 25;
+
 export type TydomApiClientOptions = {
   transport: TydomTransport;
   logger: PluginLogger;
   /** How long a read stays fresh. Tests pass 0. */
   cacheWindowMs?: number;
+  /** Smallest gap between request starts. Tests pass 0. */
+  requestIntervalMs?: number;
 };
 
 export class TydomApiClient {
   readonly #transport: TydomTransport;
   readonly #logger: PluginLogger;
   readonly #cache: RequestCache;
+  readonly #pacer: RequestPacer;
 
   constructor(options: TydomApiClientOptions) {
     this.#transport = options.transport;
     this.#logger = options.logger;
     this.#cache = new RequestCache(options.cacheWindowMs ?? DEFAULT_CACHE_WINDOW_MS);
+    this.#pacer = new RequestPacer(options.requestIntervalMs ?? DEFAULT_REQUEST_INTERVAL_MS);
   }
 
   static dataUri(deviceId: number, endpointId: number): string {
@@ -74,7 +90,9 @@ export class TydomApiClient {
   ): Promise<T> {
     const uri = TydomApiClient.dataUri(deviceId, endpointId);
     return this.#cache.run(uri, async () => {
-      const res = (await this.#transport.get(uri)) as TydomEndpointDataResponse;
+      const res = (await this.#pacer.run(() =>
+        this.#transport.get(uri),
+      )) as TydomEndpointDataResponse;
       this.#assertOk(uri, res.error);
       // Some firmware answers with the bare data array rather than an envelope.
       return (res.data ? res.data : res) as unknown as T;
@@ -87,7 +105,9 @@ export class TydomApiClient {
     endpointId: number,
     values: { name: string; value: unknown }[],
   ): Promise<void> {
-    await this.#transport.put(TydomApiClient.dataUri(deviceId, endpointId), values);
+    await this.#pacer.run(() =>
+      this.#transport.put(TydomApiClient.dataUri(deviceId, endpointId), values),
+    );
   }
 
   /** Run a device command (`cdata`), collapsing duplicate concurrent runs. */
@@ -98,7 +118,10 @@ export class TydomApiClient {
     searchParams?: Record<string, string>,
   ): Promise<T[]> {
     const uri = TydomApiClient.commandUri(deviceId, endpointId, name, searchParams);
-    return this.#cache.run(uri, async () => (await this.#transport.command(uri)) as T[]);
+    return this.#cache.run(
+      uri,
+      async () => (await this.#pacer.run(() => this.#transport.command(uri))) as T[],
+    );
   }
 
   /** Issue a device command that carries a body (arming, zone changes). */
@@ -108,15 +131,17 @@ export class TydomApiClient {
     name: string,
     body: Record<string, unknown>,
   ): Promise<void> {
-    await this.#transport.put(TydomApiClient.commandUri(deviceId, endpointId, name), body);
+    await this.#pacer.run(() =>
+      this.#transport.put(TydomApiClient.commandUri(deviceId, endpointId, name), body),
+    );
   }
 
   async get<T>(uri: string): Promise<T> {
-    return (await this.#transport.get(uri)) as T;
+    return (await this.#pacer.run(() => this.#transport.get(uri))) as T;
   }
 
   async post<T>(uri: string, body?: unknown): Promise<T> {
-    return (await this.#transport.post(uri, body)) as T;
+    return (await this.#pacer.run(() => this.#transport.post(uri, body))) as T;
   }
 
   #assertOk(uri: string, code: number | undefined): void {

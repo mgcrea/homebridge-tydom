@@ -175,6 +175,13 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       if (this.shuttingDown) {
         return;
       }
+      // `tydom-client` reconnects on its own, so a socket may already have come
+      // up while this ladder was waiting out its backoff. Asking for another
+      // one opens a second socket and drives a second scan.
+      if (attempt > 0 && this.controller.isConnected) {
+        this.log.info("A connection came up while retrying; continuing with it.");
+        break;
+      }
       try {
         await this.controller.connect();
         break;

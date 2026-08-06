@@ -23,7 +23,7 @@ const createClient = (overrides: Partial<TydomTransport> = {}) => {
   return {
     transport,
     logger,
-    client: new TydomApiClient({ transport, logger, cacheWindowMs: 0 }),
+    client: new TydomApiClient({ transport, logger, cacheWindowMs: 0, requestIntervalMs: 0 }),
   };
 };
 
@@ -83,6 +83,7 @@ describe("getDeviceData", () => {
       transport: createTransport({ get }),
       logger: createTestLogger(),
       cacheWindowMs: 1000,
+      requestIntervalMs: 0,
     });
     await Promise.all([client.getDeviceData(1, 2), client.getDeviceData(1, 2)]);
     expect(get).toHaveBeenCalledTimes(1);
@@ -95,8 +96,8 @@ describe("getDeviceData", () => {
     const get = vi.fn<Get>(async () => ({ error: 0, data: [] }));
     const transport = createTransport({ get });
     const logger = createTestLogger();
-    const a = new TydomApiClient({ transport, logger, cacheWindowMs: 1000 });
-    const b = new TydomApiClient({ transport, logger, cacheWindowMs: 1000 });
+    const a = new TydomApiClient({ transport, logger, cacheWindowMs: 1000, requestIntervalMs: 0 });
+    const b = new TydomApiClient({ transport, logger, cacheWindowMs: 1000, requestIntervalMs: 0 });
     await a.getDeviceData(1, 2);
     await b.getDeviceData(1, 2);
     expect(get).toHaveBeenCalledTimes(2);

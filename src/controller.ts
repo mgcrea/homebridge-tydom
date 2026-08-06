@@ -72,6 +72,30 @@ export default class TydomController extends EventEmitter {
   private refreshInterval: NodeJS.Timeout | undefined;
   private hasConnectedOnce = false;
   /**
+   * Whether a socket is currently up.
+   *
+   * `tydom-client` reconnects on its own (`retryOnClose` defaults to true), so
+   * a connection can appear without anyone here having asked for one. The
+   * platform's startup ladder consults this so the two do not each open a
+   * socket and each drive a scan.
+   */
+  private connected = false;
+  /**
+   * Set by `dispose`, and never cleared.
+   *
+   * `client.close()` cannot actually stop `tydom-client`: its socket `close`
+   * handler calls `scheduleReconnect` unconditionally, and the `isExiting` flag
+   * that would suppress that is only set by its own SIGINT/SIGTERM handler. So
+   * a Homebridge `shutdown` leaves the client reconnecting, and every
+   * reconnection used to re-arm the refresh interval the platform had just
+   * cleared and replay device state into disposed handlers. We cannot stop it
+   * reconnecting from out here; we can stop reacting to it.
+   */
+  private disposed = false;
+  /** The resync in flight, if any; see `resync`. */
+  private resyncing: Promise<void> | undefined;
+  private pendingResync = false;
+  /**
    * The gateway password actually in use.
    *
    * Empty until `connect` derives it, when the platform was configured with an
@@ -118,6 +142,10 @@ export default class TydomController extends EventEmitter {
       }
     });
     client.on("connect", () => {
+      if (this.disposed) {
+        return;
+      }
+      this.connected = true;
       this.log.info(
         `Successfully connected to Tydom hostname=${styleString(hostname)} with username=${styleString(username)}`,
       );
@@ -132,7 +160,11 @@ export default class TydomController extends EventEmitter {
       this.emit("connect");
     });
     client.on("disconnect", () => {
-      this.log.warn(`Disconnected from Tydom hostname=${styleString(hostname)}"`);
+      this.connected = false;
+      if (this.disposed) {
+        return;
+      }
+      this.log.warn(`Disconnected from Tydom hostname=${styleString(hostname)}`);
       if (this.refreshInterval) {
         clearInterval(this.refreshInterval);
         this.refreshInterval = undefined;
@@ -170,6 +202,11 @@ export default class TydomController extends EventEmitter {
     this.client = this.createClient(password);
     this.log.info(`Resolved the gateway password for username=${styleString(username)}`);
   }
+  /** Whether a socket is up, however it got there. */
+  get isConnected(): boolean {
+    return this.connected;
+  }
+
   async connect(): Promise<void> {
     const { hostname, username } = this.config;
     debug(`Connecting to hostname=${styleString(hostname)}...`);
@@ -318,22 +355,66 @@ export default class TydomController extends EventEmitter {
     }, refreshIntervalMs);
     this.refreshInterval.unref?.();
   }
+  /**
+   * Re-sync after a reconnection, one at a time.
+   *
+   * A flapping socket emits `connect` repeatedly, and each one used to start
+   * its own resync: several `/ping`s and `/refresh/all`s in flight together,
+   * every one of them re-arming the interval the last had just installed. The
+   * run in progress is not joined but followed, because a resync that began
+   * before the newest reconnection queried the socket that has since gone.
+   */
   private async resync(): Promise<void> {
+    if (this.resyncing) {
+      this.pendingResync = true;
+      return this.resyncing;
+    }
+    const run = (async () => {
+      do {
+        this.pendingResync = false;
+        await this.runResync();
+      } while (this.pendingResync && !this.disposed);
+    })();
+    this.resyncing = run;
+    try {
+      await run;
+    } finally {
+      this.resyncing = undefined;
+    }
+  }
+
+  private async runResync(): Promise<void> {
     const { hostname } = this.config;
     debug(`Re-syncing state after reconnection to hostname=${styleString(hostname)}...`);
     await asyncWait(250);
+    if (this.disposed) {
+      return;
+    }
     await this.client.get("/ping");
     await this.refresh();
+    if (this.disposed) {
+      return;
+    }
     // Re-establish the refresh interval, which the disconnect handler cleared.
     this.scheduleRefresh();
   }
-  /** Stop the refresh timer and close the socket. Idempotent. */
+
+  /**
+   * Stop the refresh timer and close the socket. Idempotent.
+   *
+   * Listeners come off before the close: `client.close()` triggers the socket's
+   * own `close` handler, which reconnects. See `disposed` for why that cannot
+   * be prevented from here — detaching first is what stops the reconnection
+   * from re-arming timers and pushing state into handlers that are gone.
+   */
   dispose(): void {
+    this.disposed = true;
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
       this.refreshInterval = undefined;
     }
     try {
+      this.client.removeAllListeners();
       this.client.close();
     } catch (err) {
       debug(`Ignoring error while closing the Tydom client: ${String(err)}`);
