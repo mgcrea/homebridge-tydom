@@ -13,17 +13,14 @@ import { ConfigError, parseConfig, type TydomConfig } from "./config.js";
 import { PLATFORM_NAME, PLUGIN_NAME } from "./config/env.js";
 import { createTranslator, type Translator } from "./i18n/index.js";
 import { createPluginLogger } from "./platform/logger.js";
-import type {
-  ControllerDevicePayload,
-  ControllerNotificationPayload,
-  ControllerUpdatePayload,
-} from "./controller.js";
+import type { ControllerDevicePayload, ControllerUpdatePayload } from "./controller.js";
 import TydomController from "./controller.js";
-import { triggerWebhook } from "./helpers/webhook.js";
+import { triggerWebhook, type NotificationPayload } from "./helpers/webhook.js";
 import type { TydomAccessory } from "./accessories/base.js";
 import { ACCESSORY_REGISTRY } from "./accessories/registry.js";
 import type { TydomAccessoryContext } from "./typings/tydom.js";
 import { assert } from "./util/assert.js";
+import { DeltaDoreAuthError } from "./util/deltadore.js";
 import { styleKeyword, styleNumber, styleString } from "./util/style.js";
 import { debug, enableDebug } from "./platform/trace.js";
 import { stringifyError } from "./util/error.js";
@@ -148,7 +145,9 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       this.pendingDevices.add(pending);
     });
     this.controller.on("update", this.handleControllerDataUpdate.bind(this));
-    this.controller.on("notification", this.handleControllerNotification.bind(this));
+    // No "notification" listener: the controller never emits one. Accessories
+    // raise notifications through the `notify` callback injected below, which is
+    // what broke the accessory -> controller -> platform -> accessory cycle.
   }
 
   /**
@@ -180,6 +179,13 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
         await this.controller.connect();
         break;
       } catch (err) {
+        if (err instanceof DeltaDoreAuthError) {
+          // Delta Dore rejected the account credentials. Retrying re-submits the
+          // same wrong password to Azure AD B2C every few minutes, which earns a
+          // lockout and never a connection, so stop here and say what to fix.
+          this.log.error(err.message);
+          return;
+        }
         if (attempt === maxRetries) {
           this.log.error(
             `Failed to connect after ${maxRetries} retries, giving up: ${stringifyError(err as Error)}`,
@@ -309,7 +315,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  handleControllerNotification({ level, message }: ControllerNotificationPayload): void {
+  handleControllerNotification({ level, message }: NotificationPayload): void {
     const { webhooks = [] } = this.config;
     webhooks.forEach((webhook) => {
       void triggerWebhook(webhook, { level, message }).catch((err: unknown) => {

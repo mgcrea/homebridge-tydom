@@ -1,6 +1,7 @@
 import type { API as Homebridge, Logging, PlatformConfig } from "homebridge";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CATEGORY } from "../src/api/device-type.js";
+import { DeltaDoreAuthError } from "../src/util/deltadore.js";
 import type { TydomAccessoryContext } from "../src/typings/tydom.js";
 import { metadataFrom } from "./helpers.js";
 
@@ -243,6 +244,42 @@ describe("TydomPlatform", () => {
     announce([]);
     await platform.didFinishLaunching();
     expect(platform.companions.size).toBe(0);
+  });
+
+  it("stops retrying when Delta Dore rejects the account credentials", async () => {
+    const { platform, log } = createPlatform();
+    let attempts = 0;
+    platform.controller!.connect = async () => {
+      attempts += 1;
+      throw new DeltaDoreAuthError("Delta Dore rejected the account password.");
+    };
+    await platform.didFinishLaunching();
+    // One attempt, not eleven. The retry ladder would otherwise re-submit the
+    // same wrong password to Azure AD B2C over ~25 minutes, which earns a
+    // lockout and never a connection.
+    expect(attempts).toBe(1);
+    expect(log.messages).toContain("Delta Dore rejected the account password.");
+    // And the misleading gateway-unreachable line must not appear.
+    expect(log.messages.join("\n")).not.toContain("Failed to connect after");
+  });
+
+  it("still retries a transient connection failure", async () => {
+    const { platform } = createPlatform();
+    let attempts = 0;
+    platform.controller!.connect = async () => {
+      attempts += 1;
+      if (attempts < 2) {
+        throw new Error("ECONNREFUSED");
+      }
+    };
+    // The first retry waits 5s; run the ladder on fake timers so the test does
+    // not actually sleep through it.
+    vi.useFakeTimers();
+    const launching = platform.didFinishLaunching();
+    await vi.advanceTimersByTimeAsync(5000);
+    await launching;
+    vi.useRealTimers();
+    expect(attempts).toBe(2);
   });
 
   it("replaces an accessory whose category changed", async () => {

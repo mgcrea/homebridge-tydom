@@ -114,6 +114,15 @@ describe("parseConfig", () => {
       expect(config.password).toBe("from-env");
     });
 
+    it("decodes a password containing non-ASCII characters", () => {
+      // Decoding as "ascii" masks the high bit of every byte, so an account
+      // password with an accent in it silently became mojibake and the sign-in
+      // failed with nothing but an opaque `invalid_grant` to go on.
+      const password = "Mot2Passe-éàü£";
+      const config = parseConfig(base, { HOMEBRIDGE_TYDOM_PASSWORD: b64(password) });
+      expect(config.password).toBe(password);
+    });
+
     it("reads the alarm pin from the environment", () => {
       expect(parseConfig(base, { HOMEBRIDGE_TYDOM_PIN: b64("123456") }).pin).toBe("123456");
     });

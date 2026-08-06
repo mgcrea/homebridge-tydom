@@ -16,6 +16,7 @@ import type {
   SecuritySystemLabelCommandResultZone,
   TydomDeviceSecuritySystemData,
 } from "../typings/tydom.js";
+import { stringifyError } from "../util/error.js";
 import { styleJson, styleKeyword } from "../util/style.js";
 import { BaseAccessory } from "./base-accessory.js";
 import type { AccessoryDeps } from "./base.js";
@@ -162,8 +163,10 @@ export class SecuritySystemAccessory extends BaseAccessory {
         "label",
       );
       return results[0]?.zones ?? [];
-    } catch {
-      this.platform.log.warn(`Failed to query labels for security system`);
+    } catch (err) {
+      this.platform.log.warn(
+        `Failed to query labels for security system: ${stringifyError(err as Error)}`,
+      );
       return [];
     }
   }

@@ -31,6 +31,7 @@ import { styleJson, styleNumber, styleString } from "./util/style.js";
 import { debug } from "./platform/trace.js";
 import { stringifyError } from "./util/error.js";
 import { resolveGatewayPassword } from "./util/deltadore.js";
+import { maskEmail } from "./util/redact.js";
 import type TydomClient from "tydom-client";
 import {
   createClient as createTydomClient,
@@ -45,11 +46,6 @@ export type ControllerUpdatePayload = {
   category: Categories;
   updates: Record<string, unknown>[];
   context: TydomAccessoryContext;
-};
-
-export type ControllerNotificationPayload = {
-  level: string;
-  message: string;
 };
 
 export default class TydomController extends EventEmitter {
@@ -159,7 +155,7 @@ export default class TydomController extends EventEmitter {
       return;
     }
     this.log.info(
-      `Resolving the gateway password from the Delta Dore account of ${styleString(email)}...`,
+      `Resolving the gateway password from the Delta Dore account of ${styleString(maskEmail(email))}...`,
     );
     const password = await resolveGatewayPassword({
       email,
@@ -174,20 +170,15 @@ export default class TydomController extends EventEmitter {
     this.client = this.createClient(password);
     this.log.info(`Resolved the gateway password for username=${styleString(username)}`);
   }
-  getUniqueId(deviceId: number, endpointId: number): string {
-    return deviceId === endpointId ? `${deviceId}` : `${deviceId}:${endpointId}`;
-  }
-  getAccessoryId(deviceId: number, endpointId: number): string {
-    const { username } = this.config;
-    return `tydom:${username.slice(6)}:accessories:${this.getUniqueId(deviceId, endpointId)}`;
-  }
   async connect(): Promise<void> {
     const { hostname, username } = this.config;
     debug(`Connecting to hostname=${styleString(hostname)}...`);
+    // Outside the try below, and before the socket: a rejected account
+    // credential is not a failure to reach the gateway, and reporting it as one
+    // hides the only thing the user can act on. `didFinishLaunching` recognises
+    // `DeltaDoreAuthError` and stops rather than retrying it.
+    await this.resolveGatewayPassword();
     try {
-      // Before the socket, not inside the constructor: this is the first point
-      // at which the controller is allowed to await anything.
-      await this.resolveGatewayPassword();
       await this.client.connect();
       await asyncWait(250);
       // Initial intro handshake
@@ -205,7 +196,7 @@ export default class TydomController extends EventEmitter {
     groups: TydomGroupsResponse;
     meta: TydomMetaResponse;
   }> {
-    const { hostname, refreshIntervalMs } = this.config;
+    const { hostname } = this.config;
     debug(`Syncing state from hostname=${styleString(hostname)}...`);
     // Checked rather than cast: everything downstream assumes these shapes, and
     // an unnoticed change here would surface as a TypeError deep inside
@@ -227,19 +218,7 @@ export default class TydomController extends EventEmitter {
     );
     // Final outro handshake
     await this.refresh();
-    if (this.refreshInterval) {
-      debug(`Removing existing refresh interval`);
-      clearInterval(this.refreshInterval);
-    }
-    debug(`Configuring refresh interval of ${styleNumber(Math.round(refreshIntervalMs / 1000))}s`);
-    this.refreshInterval = setInterval(async () => {
-      try {
-        await this.refresh();
-      } catch (err) {
-        debug(`Failed interval refresh with err ${err}`);
-      }
-    }, refreshIntervalMs);
-    this.refreshInterval.unref?.();
+    this.scheduleRefresh();
     return { config, groups, meta };
   }
   async scan(): Promise<void> {
@@ -315,26 +294,38 @@ export default class TydomController extends EventEmitter {
     debug(`Refreshing Tydom controller ...`);
     await this.client.post("/refresh/all");
   }
+  /**
+   * (Re-)install the periodic full refresh.
+   *
+   * One method rather than a copy in each of `sync` and `resync`: the two had
+   * drifted, and the reconnect copy had lost the `unref` — so a bridge that had
+   * reconnected once could no longer exit on its own.
+   */
+  private scheduleRefresh(): void {
+    const { refreshIntervalMs } = this.config;
+    if (this.refreshInterval) {
+      debug(`Removing existing refresh interval`);
+      clearInterval(this.refreshInterval);
+    }
+    debug(`Configuring refresh interval of ${styleNumber(Math.round(refreshIntervalMs / 1000))}s`);
+    this.refreshInterval = setInterval(() => {
+      this.refresh().catch((err: unknown) => {
+        // Warn rather than debug: a gateway that has quietly stopped accepting
+        // refreshes leaves every reading to go stale, and that is invisible in
+        // a normal log if it only ever reaches the debug sink.
+        this.log.warn(`Failed interval refresh: ${stringifyError(err as Error)}`);
+      });
+    }, refreshIntervalMs);
+    this.refreshInterval.unref?.();
+  }
   private async resync(): Promise<void> {
-    const { hostname, refreshIntervalMs } = this.config;
+    const { hostname } = this.config;
     debug(`Re-syncing state after reconnection to hostname=${styleString(hostname)}...`);
     await asyncWait(250);
     await this.client.get("/ping");
     await this.refresh();
-    // Re-establish refresh interval (cleared on disconnect)
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-    }
-    debug(
-      `Re-configuring refresh interval of ${styleNumber(Math.round(refreshIntervalMs / 1000))}s`,
-    );
-    this.refreshInterval = setInterval(async () => {
-      try {
-        await this.refresh();
-      } catch (err) {
-        debug(`Failed interval refresh with err ${err}`);
-      }
-    }, refreshIntervalMs);
+    // Re-establish the refresh interval, which the disconnect handler cleared.
+    this.scheduleRefresh();
   }
   /** Stop the refresh timer and close the socket. Idempotent. */
   dispose(): void {

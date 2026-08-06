@@ -36,6 +36,8 @@ export abstract class BaseAccessory implements TydomAccessory {
   #timers = new Set<NodeJS.Timeout>();
   #disposed = false;
   readonly #state: StateCache<TydomDataElement>;
+  /** Held so `dispose` can detach it; see `#setupIdentify`. */
+  #identifyListener: (() => void) | undefined;
 
   constructor(deps: AccessoryDeps) {
     this.platform = deps.platform;
@@ -111,6 +113,10 @@ export abstract class BaseAccessory implements TydomAccessory {
       clearTimeout(timer);
     }
     this.#timers.clear();
+    if (this.#identifyListener) {
+      this.accessory.removeListener("identify", this.#identifyListener);
+      this.#identifyListener = undefined;
+    }
   }
 
   protected get disposed(): boolean {
@@ -207,11 +213,21 @@ export abstract class BaseAccessory implements TydomAccessory {
       .setCharacteristic(Characteristic.Model, model);
   }
 
+  /**
+   * Log HomeKit's "identify this accessory" request.
+   *
+   * The listener is kept so `dispose` can remove it. A `PlatformAccessory`
+   * outlives the handler wrapping it — `configureHandler` disposes the old
+   * handler and builds a new one against the same accessory whenever a device's
+   * category changes — so a listener left attached accumulates one copy per
+   * rebuild, each holding its dead handler alive.
+   */
   #setupIdentify(): void {
-    this.accessory.on("identify", () => {
+    this.#identifyListener = () => {
       debug(
         `New identify request for device named="${this.name}" with id="${this.accessory.UUID}"`,
       );
-    });
+    };
+    this.accessory.on("identify", this.#identifyListener);
   }
 }
