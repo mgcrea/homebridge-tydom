@@ -60,6 +60,13 @@ export type TydomConfig = {
    * releases before 0.30 did.
    */
   staleAfterMs: number;
+  /**
+   * Recoverable problems found while parsing, for the platform to log.
+   *
+   * Carried on the config rather than thrown because these do not stop the
+   * plugin working; see `parseWebhooks` for where the line sits.
+   */
+  warnings: string[];
 };
 
 export const DEFAULT_REFRESH_INTERVAL_MS = 4 * 60 * 60 * 1000;
@@ -89,30 +96,14 @@ const webhookSchema = z.object({
   type: z.literal("discord", 'is not a webhook type this plugin knows (only "discord")'),
 });
 
-const webhooksSchema = z.array(webhookSchema).default([]);
-
 /**
- * Per-device overrides, keyed by numeric device id.
+ * One device's overrides, keyed in the config by numeric device id.
  *
  * Deliberately permissive about the contents: which options a device accepts
  * depends on what it is, and the device-type layer already ignores what does
- * not apply. What is checked is the shape — that each value is an object — and
- * the key, because a device id that is not numeric silently matches no device
- * and the user is left wondering why their setting did nothing.
+ * not apply. Only the shape is checked here — that it is an object at all.
  */
-const settingsSchema = z
-  .record(z.string(), z.looseObject({}))
-  // Keys are checked here rather than with a key schema: zod reports a failing
-  // record key as "Invalid key in record" and discards the schema's own
-  // message, which tells the user nothing about what is wrong with theirs.
-  .superRefine((value, ctx) => {
-    for (const key of Object.keys(value)) {
-      if (!/^\d+$/.test(key)) {
-        ctx.addIssue({ code: "custom", path: [key], message: "is not a numeric device id" });
-      }
-    }
-  })
-  .default({});
+const deviceSettingsSchema = z.looseObject({});
 
 const asBoolean = (value: unknown, fallback: boolean): boolean =>
   typeof value === "boolean" ? value : fallback;
@@ -135,26 +126,80 @@ export type ConfigEnv = {
 };
 
 /**
- * Run a schema, reporting a failure the way the rest of this file does.
+ * Parse the optional collections, keeping whatever is usable.
  *
- * zod's own message is not what the user should read: it names a path relative
- * to the value rather than to their config file, and the platform reports this
- * as a single line before going dormant. So the option name leads, the path
- * within it follows, and the message says what to do.
+ * A malformed entry in one of these is not a reason to take the platform down.
+ * The connection fields are — without a hostname there is nothing to talk to,
+ * so `parseConfig` still throws for those. But a typo in a webhook URL should
+ * cost the user their notifications, not their lights, and an earlier version
+ * of this validation disabled the whole platform over one. The bad entry is
+ * dropped, the reason is reported, and everything else keeps working.
+ *
+ * The entry schemas stay zod — the URL check is the part with real value. Only
+ * the surrounding container is walked by hand, so one bad element cannot
+ * invalidate its siblings the way a single `z.array` parse would.
  */
-const parseOrThrow = <T>(schema: z.ZodType<T>, value: unknown, option: string): T => {
-  const result = schema.safeParse(value ?? undefined);
-  if (result.success) {
-    return result.data;
-  }
-  const [issue] = result.error.issues;
+const describeIssue = (error: z.ZodError): string => {
+  const [issue] = error.issues;
   const path = issue?.path.join(".");
-  throw new ConfigError(
-    `Invalid "${option}"${path ? ` at ${path}` : ""} — ${issue?.message ?? "unexpected shape"}.`,
-  );
+  const message = issue?.message ?? "is not usable";
+  return path ? `"${path}" ${message}` : message;
+};
+
+const parseWebhooks = (value: unknown, warn: (message: string) => void): Webhook[] => {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    warn(`Ignoring "webhooks": expected a list.`);
+    return [];
+  }
+  const kept: Webhook[] = [];
+  value.forEach((entry, index) => {
+    const result = webhookSchema.safeParse(entry);
+    if (result.success) {
+      kept.push(result.data);
+      return;
+    }
+    warn(`Ignoring webhook ${index}: ${describeIssue(result.error)}.`);
+  });
+  return kept;
+};
+
+const parseSettings = (
+  value: unknown,
+  warn: (message: string) => void,
+): Record<string, DeviceSettings> => {
+  if (value === undefined || value === null) {
+    return {};
+  }
+  if (typeof value !== "object" || Array.isArray(value)) {
+    warn(`Ignoring "settings": expected an object keyed by device id.`);
+    return {};
+  }
+  const kept: Record<string, DeviceSettings> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (!/^\d+$/.test(key)) {
+      // A non-numeric key matches no device, so the setting would have done
+      // nothing at all and left the user wondering why.
+      warn(`Ignoring device settings for "${key}": not a numeric device id.`);
+      continue;
+    }
+    const result = deviceSettingsSchema.safeParse(entry);
+    if (!result.success) {
+      warn(`Ignoring device settings for ${key}: ${describeIssue(result.error)}.`);
+      continue;
+    }
+    kept[key] = result.data as DeviceSettings;
+  }
+  return kept;
 };
 
 export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env): TydomConfig => {
+  const warnings: string[] = [];
+  const warn = (message: string): void => {
+    warnings.push(message);
+  };
   const hostname = asString(config["hostname"]);
   const username = asString(config["username"]);
 
@@ -210,16 +255,14 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
     pin,
     locale,
     debug: asBoolean(config["debug"], false),
-    settings: parseOrThrow(settingsSchema, config["settings"], "settings") as Record<
-      string,
-      DeviceSettings
-    >,
-    webhooks: parseOrThrow(webhooksSchema, config["webhooks"], "webhooks") as Webhook[],
+    settings: parseSettings(config["settings"], warn),
+    webhooks: parseWebhooks(config["webhooks"], warn),
     includedDevices: asArray(config["includedDevices"]),
     excludedDevices: asArray(config["excludedDevices"]),
     includedCategories: asArray(config["includedCategories"]),
     excludedCategories: asArray(config["excludedCategories"]),
     refreshIntervalMs,
     staleAfterMs,
+    warnings,
   };
 };

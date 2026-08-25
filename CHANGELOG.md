@@ -17,9 +17,11 @@ No accessory is re-registered by this release: rooms, names and automations are 
 - **alarm:** a failed zone-label query now says what went wrong. The error was discarded entirely and the warning mentioned only that it had happened.
 - **accessories:** rebuilding an accessory no longer leaves its predecessor behind. The `identify` listener was never detached, so each rebuild against the same accessory — which is what a category change does — added another copy, each holding a dead handler alive.
 
-### ⚠ Behaviour changes
+### Behaviour changes
 
-- **config:** `webhooks` and `settings` are validated at startup. Previously only their outermost shape was checked, so a mistyped webhook URL was accepted and then threw when the alarm eventually fired, and a device-settings key that was not a numeric device id silently matched nothing. Both are now reported at startup with the offending entry named — but note that, as with any configuration problem, the platform reports it and then stays dormant. A typo that used to load will now stop the plugin until it is corrected.
+- **config:** `webhooks` and `settings` are checked at startup, and a bad entry is dropped with a line saying why rather than silently doing nothing. Previously only the outermost shape was checked, so a mistyped webhook URL was accepted and then threw when the alarm eventually fired, and a device-settings key that was not a numeric device id matched nothing at all with no indication. Entries are validated one at a time, so one bad webhook does not discard the others.
+
+  A malformed entry here does **not** stop the plugin. The connection fields still do — without a hostname there is nothing to talk to — but a typo in a notification URL costs you that notification, not your lights.
 
 ### Internals
 

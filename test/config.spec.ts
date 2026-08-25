@@ -209,38 +209,49 @@ describe("parseConfig", () => {
 
     it("keeps a well-formed webhook", () => {
       const url = "https://discord.com/api/webhooks/1/abc";
-      expect(withWebhooks([{ url, type: "discord" }]).webhooks).toEqual([{ url, type: "discord" }]);
+      const config = withWebhooks([{ url, type: "discord" }]);
+      expect(config.webhooks).toEqual([{ url, type: "discord" }]);
+      expect(config.warnings).toEqual([]);
     });
 
-    it("rejects a URL that is not one, at startup rather than at 3am", () => {
-      // This used to reach `new URL()` inside the notification handler, from a
-      // `forEach` with nothing to catch it — so the first anyone heard of it was
-      // the alarm firing and the bridge throwing.
-      expect(() => withWebhooks([{ url: "discord.com/webhook", type: "discord" }])).toThrow(
-        ConfigError,
-      );
-      expect(() => withWebhooks([{ url: "discord.com/webhook", type: "discord" }])).toThrow(
-        /"webhooks" at 0\.url/,
-      );
+    it("drops a URL that is not one, and keeps the platform running", () => {
+      // A typo here used to disable the whole platform, which costs the user
+      // their lights over a notification they would merely have missed. Before
+      // that it reached `new URL()` inside the notification handler and threw
+      // when the alarm fired.
+      const config = withWebhooks([{ url: "discord.com/webhook", type: "discord" }]);
+      expect(config.webhooks).toEqual([]);
+      expect(config.warnings).toHaveLength(1);
+      expect(config.warnings[0]).toMatch(/Ignoring webhook 0.*"url"/);
     });
 
-    it("names the offending entry when several are configured", () => {
+    it("keeps the good entries alongside a bad one", () => {
+      // Walking the list by hand rather than parsing it as a whole is what
+      // makes this possible: one `z.array` parse would reject all of them.
       const good = { url: "https://discord.com/api/webhooks/1/abc", type: "discord" };
-      expect(() => withWebhooks([good, { url: "nope", type: "discord" }])).toThrow(/at 1\.url/);
+      const config = withWebhooks([good, { url: "nope", type: "discord" }]);
+      expect(config.webhooks).toEqual([good]);
+      expect(config.warnings[0]).toMatch(/Ignoring webhook 1/);
     });
 
-    it("rejects a webhook type it would have silently ignored", () => {
-      expect(() => withWebhooks([{ url: "https://example.com/hook", type: "slack" }])).toThrow(
-        /only "discord"/,
-      );
+    it("drops a webhook type it would have silently ignored", () => {
+      const config = withWebhooks([{ url: "https://example.com/hook", type: "slack" }]);
+      expect(config.webhooks).toEqual([]);
+      expect(config.warnings[0]).toMatch(/only "discord"/);
     });
 
-    it("rejects a webhook missing its URL", () => {
-      expect(() => withWebhooks([{ type: "discord" }])).toThrow(ConfigError);
+    it("drops a webhook missing its URL", () => {
+      expect(withWebhooks([{ type: "discord" }]).webhooks).toEqual([]);
     });
 
-    it("ignores a non-array, as it always did", () => {
-      expect(withWebhooks(undefined).webhooks).toEqual([]);
+    it("reports a webhooks value that is not a list", () => {
+      const config = withWebhooks("https://discord.com/api/webhooks/1/abc");
+      expect(config.webhooks).toEqual([]);
+      expect(config.warnings[0]).toMatch(/expected a list/);
+    });
+
+    it("says nothing when none are configured", () => {
+      expect(withWebhooks(undefined).warnings).toEqual([]);
     });
   });
 
@@ -251,24 +262,45 @@ describe("parseConfig", () => {
       // What a device accepts depends on what it is, so the contents are not
       // constrained — only the shape.
       const settings = { "1234567": { name: "Kitchen blind", delay: 20_000, aliases: {} } };
-      expect(withSettings(settings).settings).toEqual(settings);
+      const config = withSettings(settings);
+      expect(config.settings).toEqual(settings);
+      expect(config.warnings).toEqual([]);
     });
 
-    it("rejects a key that is not a device id", () => {
-      // A non-numeric key matches no device, so the setting silently does
-      // nothing and the user is left wondering why.
-      expect(() => withSettings({ "kitchen-blind": { name: "x" } })).toThrow(
-        /not a numeric device id/,
-      );
+    it("drops a key that is not a device id, keeping the rest", () => {
+      const config = withSettings({
+        "1234567": { name: "Kitchen blind" },
+        "kitchen-blind": { name: "x" },
+      });
+      expect(Object.keys(config.settings)).toEqual(["1234567"]);
+      expect(config.warnings[0]).toMatch(/not a numeric device id/);
     });
 
-    it("rejects a device whose settings are not an object", () => {
-      expect(() => withSettings({ "1234567": "Kitchen blind" })).toThrow(ConfigError);
+    it("drops a device whose settings are not an object", () => {
+      const config = withSettings({ "1234567": "Kitchen blind" });
+      expect(config.settings).toEqual({});
+      expect(config.warnings).toHaveLength(1);
     });
 
-    it("rejects an array, which used to pass the typeof check", () => {
-      // `typeof [] === "object"`, so the guard this replaces let one through.
-      expect(() => withSettings([])).toThrow(ConfigError);
+    it("reports an array, which used to pass the typeof check", () => {
+      // `typeof [] === "object"`, so an earlier guard let one through.
+      const config = withSettings([]);
+      expect(config.settings).toEqual({});
+      expect(config.warnings[0]).toMatch(/keyed by device id/);
+    });
+  });
+
+  describe("what is fatal and what is not", () => {
+    it("still refuses to run without the connection fields", () => {
+      // The line: no hostname means there is nothing to talk to, so the
+      // platform reports it and stays dormant. A bad webhook does not.
+      expect(() => parseConfig({ ...base, hostname: "" } as never, {})).toThrow(ConfigError);
+    });
+
+    it("never throws for a malformed optional collection", () => {
+      expect(() =>
+        parseConfig({ ...base, webhooks: [{ url: "nope" }], settings: 42 } as never, {}),
+      ).not.toThrow();
     });
   });
 });

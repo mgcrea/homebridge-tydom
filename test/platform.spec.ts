@@ -246,6 +246,30 @@ describe("TydomPlatform", () => {
     expect(platform.companions.size).toBe(0);
   });
 
+  it("stays up and reports a bad webhook rather than going dormant", async () => {
+    // The point of the change: a typo in a notification URL must not cost the
+    // user every accessory. The platform loads, and says what it dropped.
+    const { api, calls } = createFakeApi();
+    const log = createFakeLog();
+    const platform = new TydomPlatform(
+      log,
+      { ...config, webhooks: [{ url: "nope", type: "discord" }] } as unknown as PlatformConfig,
+      api as unknown as Homebridge,
+    );
+    expect(platform.disabled).toBe(false);
+    const controller = platform.controller!;
+    controller.connect = async () => {};
+    controller.dispose = () => {};
+    controller.scan = async () => {
+      controller.emit("device", deviceContext({ accessoryId: "a" }));
+    };
+    await platform.didFinishLaunching();
+
+    expect(platform.accessories.size).toBe(1);
+    expect(log.messages.join("\n")).toMatch(/Ignoring webhook 0/);
+    expectNoPrematureUpdate(calls);
+  });
+
   it("stops retrying when Delta Dore rejects the account credentials", async () => {
     const { platform, log } = createPlatform();
     let attempts = 0;

@@ -100,6 +100,13 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       return;
     }
 
+    // Recoverable config problems: a dropped webhook or device-settings entry.
+    // Reported at warn so they are visible without `-D`, since the user would
+    // otherwise just find the feature quietly not working.
+    for (const warning of this.config.warnings) {
+      this.log.warn(warning);
+    }
+
     if (this.config.debug) {
       enableDebug();
     }
