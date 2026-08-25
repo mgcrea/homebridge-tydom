@@ -8,7 +8,7 @@
   "git": {
     "commitMessage": "chore(release): cut the v${version} release",
     "tagAnnotation": "v${version} release",
-    "requireBranch": "master",
+    "requireBranch": "main",
     "requireCleanWorkingDir": true
   },
   "github": {
