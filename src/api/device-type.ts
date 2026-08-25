@@ -39,7 +39,8 @@ export type DeviceType =
  * makes Homebridge re-register the accessory, and the user loses its room
  * assignment and any automation referencing it.
  *
- * Values verified against @homebridge/hap-nodejs 2.x.
+ * Values verified against @homebridge/hap-nodejs 2.2.2, the version homebridge
+ * 2.4.0 ships.
  */
 export const CATEGORY = {
   FAN: 3,
