@@ -1,3 +1,9 @@
-onlyBuiltDependencies:
-  - esbuild
-  - unrs-resolver
+# pnpm 11 replaced `onlyBuiltDependencies` (a list of approvals) with
+# `allowBuilds` (an explicit yes or no per package), and it refuses to proceed
+# while any package with a build script is unanswered — including under
+# `--frozen-lockfile`, which is what CI runs. An unanswered entry is a failed
+# install, not a warning.
+allowBuilds:
+  # Reaches us as vitest -> vite -> esbuild. The postinstall puts the platform
+  # binary in place; without it the test runner will not start.
+  esbuild: true
