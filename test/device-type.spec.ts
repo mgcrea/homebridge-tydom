@@ -194,6 +194,7 @@ describe("deviceTypeForCategory", () => {
   it("applies the settings-driven narrowings the old switch had", () => {
     expect(deviceTypeForCategory(CATEGORY.SWITCH, { trigger: true })).toBe("trigger-switch");
     expect(deviceTypeForCategory(CATEGORY.SENSOR, { smokeDetector: true })).toBe("smoke-detector");
+    expect(deviceTypeForCategory(CATEGORY.SENSOR, { lightSensor: true })).toBe("light-sensor");
   });
 
   it("returns undefined for a category the plugin has no handler for", () => {

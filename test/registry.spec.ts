@@ -14,6 +14,7 @@ const ALL_DEVICE_TYPES: DeviceType[] = [
   "contact-sensor",
   "fan",
   "garage-door",
+  "light-sensor",
   "lightbulb",
   "lightbulb-switchable",
   "outlet",

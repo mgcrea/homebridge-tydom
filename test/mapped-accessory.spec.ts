@@ -4,6 +4,7 @@ import type { AccessoryDeps } from "../src/accessories/base.js";
 import {
   contactSensorSpec,
   fanSpec,
+  lightSensorSpec,
   outletSpec,
   smokeDetectorSpec,
   switchableLightbulbSpec,
@@ -123,6 +124,25 @@ describe("MappedAccessory", () => {
       const { service, hap } = mount(temperatureSensorSpec, []);
       expect(service.getCharacteristic(hap.Characteristic.CurrentTemperature).props).toMatchObject({
         minValue: -100,
+      });
+    });
+  });
+
+  describe("light sensor", () => {
+    it("reads the ambient light level", async () => {
+      const { service, hap } = mount(lightSensorSpec, [{ name: "lightPower", value: 42 }]);
+      expect(
+        await service.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel).handleGet(),
+      ).toBe(42);
+    });
+
+    it("widens the floor below HAP's default", () => {
+      // HAP defaults to a 0.0001 lux floor, which full darkness (0 lux) goes below.
+      const { service, hap } = mount(lightSensorSpec, []);
+      expect(
+        service.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel).props,
+      ).toMatchObject({
+        minValue: 0,
       });
     });
   });

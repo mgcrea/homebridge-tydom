@@ -18,6 +18,7 @@ export type DeviceType =
   | "contact-sensor"
   | "fan"
   | "garage-door"
+  | "light-sensor"
   | "lightbulb"
   | "lightbulb-switchable"
   | "outlet"
@@ -67,6 +68,7 @@ export type CategoryValue = (typeof CATEGORY)[keyof typeof CATEGORY];
 /** Settings a hardware signature can imply, independently of the user's config. */
 export type ImpliedSettings = {
   legacy?: boolean;
+  lightSensor?: boolean;
   smokeDetector?: boolean;
 };
 
@@ -303,6 +305,9 @@ const narrowDeviceType = (
   }
   if (deviceType === "temperature-sensor" && settings.smokeDetector) {
     return "smoke-detector";
+  }
+  if (deviceType === "temperature-sensor" && settings.lightSensor) {
+    return "light-sensor";
   }
   if (deviceType === "lightbulb") {
     // `step: 100` means the driver only does on/off, so it gets a plain

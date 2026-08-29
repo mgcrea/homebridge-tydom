@@ -202,6 +202,7 @@ Pointing `hostname` at your gateway's IP (e.g. `192.168.0.42`) skips Delta Dore'
 | `category` | any | Pin the device to a HAP category, bypassing hardware detection. See [Category overrides](#category-overrides). |
 | `trigger` | switches | Publish a stateless switch that returns to off, rather than a toggle. |
 | `smokeDetector` | temperature sensors | Publish as a smoke detector instead. |
+| `lightSensor` | temperature sensors | Publish as an ambient light sensor instead, reading `lightPower`. |
 | `delay` | garage doors | Travel time in **milliseconds**. Defaults to `20000`. |
 | `autoCloseDelay` | garage doors | Close again this many **milliseconds** after opening. Off by default. |
 | `pin` | alarm | PIN for this alarm, overriding the platform-level one. |
@@ -273,6 +274,8 @@ Reported working by the community:
 - Window coverings ([TYXIA 5630](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5630-ref-6351401), [TYXIA 5730](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5730-ref-6351402), [TYXIA 5731](https://www.deltadore.co.uk/home-automation/control-shutters-blinds-gate-garage/receiver-micromodule/tyxia-5731-ref-6351412))
 
 Also published: outlets, garage door openers, smoke detectors and temperature sensors. Devices are matched on the shape of the metadata the gateway reports, so similar hardware generally works untouched — and adding a new match is a small change, so please open an issue if yours is not recognised.
+
+A `lightPower`-reporting light sensor is also supported, but not yet auto-detected — no hardware signature has been reported for one. Enable it with `{"category": 10, "lightSensor": true}` in that device's settings (see [Category overrides](#category-overrides)), and please open an issue with a metadata dump (`pnpm hash`) so it can be auto-detected like the others.
 
 ## Migrating to v0.30
 

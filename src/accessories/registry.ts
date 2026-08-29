@@ -10,6 +10,7 @@ import { mappedAccessory } from "./mapped-accessory.js";
 import {
   contactSensorSpec,
   fanSpec,
+  lightSensorSpec,
   outletSpec,
   smokeDetectorSpec,
   switchableLightbulbSpec,
@@ -33,6 +34,7 @@ export const ACCESSORY_REGISTRY: AccessoryRegistry = {
   "contact-sensor": mappedAccessory(contactSensorSpec),
   fan: mappedAccessory(fanSpec),
   "garage-door": createGarageDoorAccessory,
+  "light-sensor": mappedAccessory(lightSensorSpec),
   lightbulb: createLightbulbAccessory,
   "lightbulb-switchable": mappedAccessory(switchableLightbulbSpec),
   outlet: mappedAccessory(outletSpec),

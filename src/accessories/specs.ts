@@ -32,6 +32,19 @@ export const temperatureSensorSpec: AccessorySpec = {
   ],
 };
 
+/** A standalone ambient light sensor reporting `lightPower`. */
+export const lightSensorSpec: AccessorySpec = {
+  service: (Services) => Services.LightSensor,
+  bindings: (Characteristics) => [
+    {
+      characteristic: Characteristics.CurrentAmbientLightLevel,
+      prop: "lightPower",
+      // HAP defaults to a 0.0001 lux floor, which full darkness (0 lux) goes below.
+      props: { minValue: 0 },
+    },
+  ],
+};
+
 /** A DFR TYXAL+ smoke detector. */
 export const smokeDetectorSpec: AccessorySpec = {
   service: (Services) => Services.SmokeSensor,
