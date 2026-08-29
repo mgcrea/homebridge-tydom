@@ -18,6 +18,7 @@ const ALL_DEVICE_TYPES: DeviceType[] = [
   "lightbulb-switchable",
   "outlet",
   "smoke-detector",
+  "sunlight-sensor",
   "switch",
   "temperature-sensor",
   "thermostat",

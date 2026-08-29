@@ -22,6 +22,7 @@ export type DeviceType =
   | "lightbulb-switchable"
   | "outlet"
   | "smoke-detector"
+  | "sunlight-sensor"
   | "switch"
   | "temperature-sensor"
   | "thermostat"
@@ -68,6 +69,7 @@ export type CategoryValue = (typeof CATEGORY)[keyof typeof CATEGORY];
 export type ImpliedSettings = {
   legacy?: boolean;
   smokeDetector?: boolean;
+  sunlightSensor?: boolean;
 };
 
 /** Settings that steer resolution but come from the user's config. */
@@ -303,6 +305,9 @@ const narrowDeviceType = (
   }
   if (deviceType === "temperature-sensor" && settings.smokeDetector) {
     return "smoke-detector";
+  }
+  if (deviceType === "temperature-sensor" && settings.sunlightSensor) {
+    return "sunlight-sensor";
   }
   if (deviceType === "lightbulb") {
     // `step: 100` means the driver only does on/off, so it gets a plain

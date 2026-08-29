@@ -32,6 +32,28 @@ export const temperatureSensorSpec: AccessorySpec = {
   ],
 };
 
+/**
+ * A sunlight probe (Delta Dore's "sonde d'ensoleillement", e.g. SE 2100)
+ * reporting solar irradiance in W/m² as `lightPower` — the sensor used to
+ * trigger shutter automations on sun intensity, not a calibrated lux meter.
+ *
+ * HomeKit has no solar-irradiance characteristic, so this repurposes
+ * `CurrentAmbientLightLevel` — the only numeric light characteristic HAP
+ * defines — to carry the raw W/m² reading. The Home app will caption it as a
+ * light sensor in lux; the number is accurate, the unit label is not.
+ */
+export const sunlightSensorSpec: AccessorySpec = {
+  service: (Services) => Services.LightSensor,
+  bindings: (Characteristics) => [
+    {
+      characteristic: Characteristics.CurrentAmbientLightLevel,
+      prop: "lightPower",
+      // HAP defaults to a 0.0001 floor, which a real 0 W/m² reading (night) goes below.
+      props: { minValue: 0 },
+    },
+  ],
+};
+
 /** A DFR TYXAL+ smoke detector. */
 export const smokeDetectorSpec: AccessorySpec = {
   service: (Services) => Services.SmokeSensor,

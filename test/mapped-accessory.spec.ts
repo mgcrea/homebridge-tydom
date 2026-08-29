@@ -6,6 +6,7 @@ import {
   fanSpec,
   outletSpec,
   smokeDetectorSpec,
+  sunlightSensorSpec,
   switchableLightbulbSpec,
   switchSpec,
   temperatureSensorSpec,
@@ -123,6 +124,25 @@ describe("MappedAccessory", () => {
       const { service, hap } = mount(temperatureSensorSpec, []);
       expect(service.getCharacteristic(hap.Characteristic.CurrentTemperature).props).toMatchObject({
         minValue: -100,
+      });
+    });
+  });
+
+  describe("sunlight sensor", () => {
+    it("reads the solar irradiance in W/m² through the lux characteristic", async () => {
+      const { service, hap } = mount(sunlightSensorSpec, [{ name: "lightPower", value: 42 }]);
+      expect(
+        await service.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel).handleGet(),
+      ).toBe(42);
+    });
+
+    it("widens the floor below HAP's default", () => {
+      // HAP defaults to a 0.0001 floor, which a real 0 W/m² reading (night) goes below.
+      const { service, hap } = mount(sunlightSensorSpec, []);
+      expect(
+        service.getCharacteristic(hap.Characteristic.CurrentAmbientLightLevel).props,
+      ).toMatchObject({
+        minValue: 0,
       });
     });
   });
