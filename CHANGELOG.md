@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.32.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.31.2...v0.32.0) (2026-08-30)
+
+No accessory is re-registered by this release: rooms, names and automations are preserved. Nothing changes for a thermostat that already worked — both changes below activate only on hardware that reports itself differently.
+
+### Features
+
+- **thermostat:** reversible units can cool. A heat pump that runs in reverse advertises `COOLING` among the values its `authorization` property accepts, and HomeKit is offered a cool mode only on hardware that does. A radiator is untouched: it keeps the same two modes and the same single-property write it has always had, since whether the gateway accepts a write to `authorization` on a device with no use for one is not something that can be established without the hardware. Built from the work in [#182](https://github.com/mgcrea/homebridge-tydom/pull/182) by @jrozelle.
+
+### Bug Fixes
+
+- **thermostat:** Tybox 5100 thermostats work again. Delta Dore dropped `hvacMode` on this hardware and moved the operating mode to `localMode`, carrying the same values plus an `ABSENCE` that reads as off. Reading a property that is not there throws, so the accessory was discovered and registered and then failed on every HomeKit query with `Missing property with name="hvacMode" in endpoint data`. The mode property is now resolved from the device's own metadata, `hvacMode` when it exists and `localMode` otherwise. Reported in [#185](https://github.com/mgcrea/homebridge-tydom/issues/185) with the metadata dump that made it fixable without the hardware.
+
+### Internals
+
+- The thermostat has tests, 40 of them, against the in-memory HAP double added in 0.31.2. Twenty were written before either change above and pin the previous heat-only behaviour; they still pass untouched, which is what establishes that existing installs are unaffected. `src/accessories` coverage goes from 18.8% to 33.4%.
+
 ## [0.31.2](https://github.com/mgcrea/homebridge-tydom/compare/v0.31.1...v0.31.2) (2026-08-30)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. Seven device types were rewritten internally, but they publish the same services and characteristics as before.
