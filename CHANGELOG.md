@@ -29,6 +29,8 @@ No accessory is re-registered by this release: rooms, names and automations are 
 - The accessory layer has tests for the first time, against a small in-memory HAP double. It refuses to answer for a characteristic constant it has not been given a real value for, because a double that returns `undefined` lets a wrong mapping pass green. The controller has tests for the first time too, covering the reconnection paths above. 285 tests, still no HAP dependency and no sockets.
 - Requests to the gateway are spaced by a few milliseconds. Nothing bounded the burst a Home app refresh or a scene produced, and the gateway is a small embedded box. Starts are spaced rather than completions serialised, so one slow relayed response cannot stall unrelated reads behind it.
 - `lodash` is gone. The dependency existed for a single function call.
+- `source-map-support` is gone too, in favour of Node's built-in `process.setSourceMapsEnabled`. It only maps frames for modules compiled after it runs, so the platform is now pulled in through a dynamic import to put it in a later-compiled chunk; stack traces still resolve to the TypeScript sources, with one fewer runtime dependency.
+- The published package carries a `LICENSE` file. The MIT terms were only ever stated in the README and the `package.json` field, so the tarball on npm shipped without the license text it grants under.
 
 ## [0.31.1](https://github.com/mgcrea/homebridge-tydom/compare/v0.31.0...v0.31.1) (2026-08-06)
 
