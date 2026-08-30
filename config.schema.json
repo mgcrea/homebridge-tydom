@@ -14,6 +14,11 @@
         "default": "mediation.tydom.com",
         "description": "Leave as `mediation.tydom.com` to reach the gateway through Delta Dore's relay. To talk to it directly on your LAN, use its IP address or `.local` name — faster and it keeps working when the relay is down, but the gateway serves a self-signed certificate, so Node must be started with `NODE_TLS_REJECT_UNAUTHORIZED=0`."
       },
+      "localHostname": {
+        "title": "Local fallback hostname",
+        "type": "string",
+        "description": "Optional LAN IP address or `.local` name for the same Tydom gateway. The plugin uses it when the primary hostname is unavailable, keeps checking the primary in the background, and switches back after it recovers. Local gateways use a self-signed certificate, so Node normally needs `NODE_TLS_REJECT_UNAUTHORIZED=0`."
+      },
       "username": {
         "title": "Username",
         "type": "string",
@@ -54,6 +59,13 @@
         "default": 14400,
         "minimum": 60,
         "description": "How often to ask the gateway to re-push the state of everything. The gateway pushes changes as they happen, so this is only a safety net against a missed message; the default is four hours. Values below 60 seconds are clamped."
+      },
+      "primaryRetryInterval": {
+        "title": "Primary retry interval (seconds)",
+        "type": "integer",
+        "default": 300,
+        "minimum": 30,
+        "description": "How often to check whether the primary hostname has recovered while the local fallback is active. The default is five minutes; values below 30 seconds are clamped."
       },
       "staleAfter": {
         "title": "Reading lifetime (seconds)",
@@ -129,7 +141,7 @@
     {
       "type": "fieldset",
       "title": "Connection",
-      "items": ["hostname", "username", "email", "password"]
+      "items": ["hostname", "localHostname", "username", "email", "password"]
     },
     {
       "type": "fieldset",
@@ -180,7 +192,14 @@
       "type": "fieldset",
       "title": "Advanced",
       "expandable": true,
-      "items": ["locale", "refreshInterval", "staleAfter", "debug", "settings"]
+      "items": [
+        "locale",
+        "refreshInterval",
+        "primaryRetryInterval",
+        "staleAfter",
+        "debug",
+        "settings"
+      ]
     }
   ]
 }

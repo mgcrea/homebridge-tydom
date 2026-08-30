@@ -147,12 +147,14 @@ They take precedence over the corresponding config fields.
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
 | `hostname` | `string` | — | `mediation.tydom.com` for the relay, or your gateway's LAN address (see [Connecting locally](#connecting-locally)). Required. |
+| `localHostname` | `string` | — | Optional LAN address for the same gateway. Used automatically when `hostname` is unavailable. |
 | `username` | `string` | — | Gateway MAC address, e.g. `001A25123456`. This is what selects the house — see [If your account has several houses](#if-your-account-has-several-houses). Required. |
 | `email` | `string` | — | Delta Dore account e-mail. Set it to have the gateway password fetched for you, which also changes what `password` below means. See [Finding your credentials](#finding-your-credentials). |
 | `password` | `string` | — | Your Delta Dore account password if `email` is set, otherwise the gateway's own password. Required, unless supplied via the environment. |
 | `pin` | `string` | — | TYXAL+ alarm PIN. Without it the alarm reports its state but cannot be armed or disarmed. |
 | `locale` | `"fr" \| "en"` | `"fr"` | Language of the labels Delta Dore supplies for zones, detectors and thermostat modes. |
 | `refreshInterval` | `number` | `14400` | Seconds between full state refreshes. The gateway pushes changes as they happen, so this is only a safety net; clamped to a minimum of 60. |
+| `primaryRetryInterval` | `number` | `300` | Seconds between relay recovery probes while the local fallback is active; clamped to a minimum of 30. |
 | `staleAfter` | `number` | `300` | Seconds a device reading is served from memory before HomeKit's next query triggers a background re-read. `0` reads through on every query, as releases before 0.30 did. See [Reading state](#reading-state). |
 | `includedDevices` | `string[]` | `[]` | If non-empty, ignore every device not listed. |
 | `excludedDevices` | `string[]` | `[]` | Devices to leave out, applied after the include list. |
@@ -191,6 +193,25 @@ Pointing `hostname` at your gateway's IP (e.g. `192.168.0.42`) skips Delta Dore'
 
 - The gateway serves a self-signed certificate, so Node must be started with `NODE_TLS_REJECT_UNAUTHORIZED=0`.
 - Tydom 2.0 firmware sometimes copes badly with several local clients at once, and can lock you out of the mobile app.
+
+To keep the relay as the primary route and use the LAN only during an outage, configure both endpoints:
+
+```json
+{
+  "platform": "Tydom",
+  "hostname": "mediation.tydom.com",
+  "localHostname": "192.168.0.42",
+  "primaryRetryInterval": 300,
+  "username": "001A25123456",
+  "password": "YourPassw0rd"
+}
+```
+
+The plugin tries `hostname` first at startup. If it cannot connect, or if that connection later drops, it opens one managed connection to `localHostname`. While local is active it probes the primary endpoint every `primaryRetryInterval` seconds without interrupting the working local socket, then switches back and re-syncs after a successful probe.
+
+Reads which fail because the socket disappeared are retried after the switch. A write is retried only when it was rejected before anything reached the socket; a timeout is deliberately not replayed because the gateway may already have applied the command.
+
+The local certificate caveat applies to fallback too. With a trusted LAN gateway, start Homebridge with `NODE_TLS_REJECT_UNAUTHORIZED=0`; the development script `pnpm dev:homebridge:insecure` does that for the isolated `.homebridge` setup. Some older firmware also needs OpenSSL legacy renegotiation — see the [local fallback test protocol](docs/local-fallback-testing.md#legacy-tls-renegotiation).
 
 ## Device settings
 

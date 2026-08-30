@@ -123,12 +123,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       //
       // tydom-client's methods are generic over the response type; the
       // transport seam deliberately is not, so it can be faked in tests.
-      transport: {
-        get: (uri) => controller.client.get(uri),
-        put: (uri, body) => controller.client.put(uri, body as never),
-        post: (uri, body) => controller.client.post(uri, body as never),
-        command: (uri) => controller.client.command(uri),
-      } satisfies TydomTransport,
+      transport: controller.transport satisfies TydomTransport,
       logger: this.pluginLog,
     });
     this.api.on("didFinishLaunching", () => {
