@@ -14,9 +14,6 @@ importers:
       kolorist:
         specifier: ^1.8.0
         version: 1.8.0
-      source-map-support:
-        specifier: ^0.5.21
-        version: 0.5.21
       tydom-client:
         specifier: ^0.16.0
         version: 0.16.0(supports-color@7.2.0)
