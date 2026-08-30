@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.31.2](https://github.com/mgcrea/homebridge-tydom/compare/v0.31.1...v0.31.2) (2026-08-06)
+## [0.31.2](https://github.com/mgcrea/homebridge-tydom/compare/v0.31.1...v0.31.2) (2026-08-30)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. Seven device types were rewritten internally, but they publish the same services and characteristics as before.
 
