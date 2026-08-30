@@ -23,6 +23,8 @@ const CHARACTERISTIC_CONSTANTS: Record<string, Record<string, number>> = {
   StatusLowBattery: { BATTERY_LEVEL_NORMAL: 0, BATTERY_LEVEL_LOW: 1 },
   ContactSensorState: { CONTACT_DETECTED: 0, CONTACT_NOT_DETECTED: 1 },
   SmokeDetected: { SMOKE_NOT_DETECTED: 0, SMOKE_DETECTED: 1 },
+  CurrentHeatingCoolingState: { OFF: 0, HEAT: 1, COOL: 2 },
+  TargetHeatingCoolingState: { OFF: 0, HEAT: 1, COOL: 2, AUTO: 3 },
 };
 
 /** Looks like a HAP enum constant, as opposed to `name` or `prototype`. */
@@ -118,6 +120,7 @@ export class FakeCharacteristic {
 
 export class FakeService {
   readonly characteristics = new Map<string, FakeCharacteristic>();
+  readonly linked: FakeService[] = [];
 
   constructor(
     public displayName: string,
@@ -145,6 +148,12 @@ export class FakeService {
   }
 
   addOptionalCharacteristic(): void {}
+
+  /** Recorded rather than acted on; HomeKit uses it only for grouping. */
+  addLinkedService(service: FakeService): this {
+    this.linked.push(service);
+    return this;
+  }
 
   /** The value HomeKit currently holds, without invoking the read handler. */
   currentValue(hapClass: HapClass): unknown {

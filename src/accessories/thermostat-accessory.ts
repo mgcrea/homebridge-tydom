@@ -32,9 +32,24 @@ export class ThermostatAccessory extends BaseAccessory {
   readonly #service: Service;
   /** Thermic-level switches, by the Tydom value each one selects. */
   readonly #levelSwitches = new Map<string, Service>();
+  /**
+   * Whether this device can cool as well as heat.
+   *
+   * Read from the endpoint's own metadata rather than configured: reversible
+   * hardware — a heat pump that runs in reverse — advertises `COOLING` among
+   * the values its `authorization` property accepts, and a radiator does not.
+   * Offering HomeKit a cool mode on a radiator would put a button in the Home
+   * app that silently does nothing.
+   */
+  readonly #canCool: boolean;
 
   constructor(deps: AccessoryDeps) {
     super(deps);
+    this.#canCool = Boolean(
+      deps.accessory.context.metadata
+        .find(({ name }) => name === "authorization")
+        ?.enum_values?.includes("COOLING"),
+    );
     const {
       TargetHeatingCoolingState,
       CurrentHeatingCoolingState,
@@ -45,8 +60,11 @@ export class ThermostatAccessory extends BaseAccessory {
 
     this.#service
       .getCharacteristic(CurrentHeatingCoolingState)
-      // These devices only heat, so COOL and AUTO are not offered.
-      .setProps({ validValues: [0, 1] } as Partial<CharacteristicProps>)
+      // AUTO is never offered: nothing in the protocol expresses "decide for
+      // yourself". COOL only on hardware that advertises it.
+      .setProps({
+        validValues: this.#canCool ? [0, 1, 2] : [0, 1],
+      } as Partial<CharacteristicProps>)
       .onGet(async () => {
         debugGet(CurrentHeatingCoolingState, this.#service);
         const data = await this.#read();
@@ -56,17 +74,24 @@ export class ThermostatAccessory extends BaseAccessory {
         );
         const setpoint = getTydomDataPropValue<number>(data, "setpoint");
         const temperature = getTydomDataPropValue<number>(data, "temperature");
-        const nextValue =
-          authorization === "HEATING" && setpoint > temperature
-            ? CurrentHeatingCoolingState.HEAT
-            : CurrentHeatingCoolingState.OFF;
+        // Symmetrical with the heating case: this characteristic reports what
+        // the device is doing now, not what it is allowed to do, so an
+        // authorised unit sitting at its setpoint reads OFF either way.
+        let nextValue: number = CurrentHeatingCoolingState.OFF;
+        if (authorization === "HEATING" && setpoint > temperature) {
+          nextValue = CurrentHeatingCoolingState.HEAT;
+        } else if (authorization === "COOLING" && temperature > setpoint) {
+          nextValue = CurrentHeatingCoolingState.COOL;
+        }
         debugGetResult(CurrentHeatingCoolingState, this.#service, nextValue);
         return nextValue;
       });
 
     this.#service
       .getCharacteristic(TargetHeatingCoolingState)
-      .setProps({ validValues: [0, 1] } as Partial<CharacteristicProps>)
+      .setProps({
+        validValues: this.#canCool ? [0, 1, 2] : [0, 1],
+      } as Partial<CharacteristicProps>)
       .onGet(async () => {
         debugGet(TargetHeatingCoolingState, this.#service);
         const data = await this.#read();
@@ -75,28 +100,46 @@ export class ThermostatAccessory extends BaseAccessory {
           data,
           "authorization",
         );
-        const nextValue =
-          authorization === "HEATING" && hvacMode === "NORMAL"
-            ? TargetHeatingCoolingState.HEAT
-            : TargetHeatingCoolingState.OFF;
+        let nextValue: number = TargetHeatingCoolingState.OFF;
+        if (hvacMode === "NORMAL" && authorization === "HEATING") {
+          nextValue = TargetHeatingCoolingState.HEAT;
+        } else if (hvacMode === "NORMAL" && authorization === "COOLING") {
+          nextValue = TargetHeatingCoolingState.COOL;
+        }
         debugGetResult(TargetHeatingCoolingState, this.#service, nextValue);
         return nextValue;
       })
       .onSet(async (value) => {
         debugSet(TargetHeatingCoolingState, this.#service, value);
-        const shouldHeat = [
-          TargetHeatingCoolingState.HEAT,
-          TargetHeatingCoolingState.AUTO,
-        ].includes(value as number);
-        const tydomValue = shouldHeat ? "NORMAL" : "STOP";
-        await this.#writeHvacMode(tydomValue);
-        debugSetResult(TargetHeatingCoolingState, this.#service, value, tydomValue);
-        // The gateway does not echo a current-state change, so reflect it now.
-        this.#service
-          .getCharacteristic(CurrentHeatingCoolingState)
-          .updateValue(
-            shouldHeat ? CurrentHeatingCoolingState.HEAT : CurrentHeatingCoolingState.OFF,
+        const wantsCool = this.#canCool && value === TargetHeatingCoolingState.COOL;
+        const isOn =
+          wantsCool ||
+          [TargetHeatingCoolingState.HEAT, TargetHeatingCoolingState.AUTO].includes(
+            value as number,
           );
+        const hvacMode = isOn ? "NORMAL" : "STOP";
+
+        // `authorization` is written only by a device that advertises cooling.
+        // On a radiator this stays a single-property write, exactly as before —
+        // whether the gateway even accepts a write to `authorization` is
+        // untested on hardware that has no use for one.
+        const values: { name: string; value: unknown }[] = [{ name: "hvacMode", value: hvacMode }];
+        if (this.#canCool) {
+          values.push({
+            name: "authorization",
+            value: isOn ? (wantsCool ? "COOLING" : "HEATING") : "STOP",
+          });
+        }
+        await this.api.putDeviceData(this.deviceId, this.endpointId, values);
+        debugSetResult(TargetHeatingCoolingState, this.#service, value, hvacMode);
+
+        // The gateway does not echo a current-state change, so reflect it now.
+        const current = wantsCool
+          ? CurrentHeatingCoolingState.COOL
+          : isOn
+            ? CurrentHeatingCoolingState.HEAT
+            : CurrentHeatingCoolingState.OFF;
+        this.#service.getCharacteristic(CurrentHeatingCoolingState).updateValue(current);
       });
 
     this.#service.getCharacteristic(CurrentTemperature).onGet(async () => {
@@ -147,6 +190,17 @@ export class ThermostatAccessory extends BaseAccessory {
       switch (name) {
         case "authorization": {
           if (value !== "STOP") {
+            // A mode change the panel volunteered, on hardware that has modes
+            // to change between. Heat-only devices keep the previous
+            // behaviour of ignoring everything but STOP.
+            if (this.#canCool && (value === "COOLING" || value === "HEATING")) {
+              const next =
+                value === "COOLING"
+                  ? TargetHeatingCoolingState.COOL
+                  : TargetHeatingCoolingState.HEAT;
+              debugSetUpdate(TargetHeatingCoolingState, this.#service, next);
+              this.#service.updateCharacteristic(TargetHeatingCoolingState, next);
+            }
             break;
           }
           debugSetUpdate(CurrentHeatingCoolingState, this.#service, CurrentHeatingCoolingState.OFF);

@@ -53,7 +53,14 @@ export type {
   TydomMetaResponse,
 } from "../api/types.js";
 
-export type TydomDeviceThermostatAuthorization = "STOP" | "HEATING";
+/**
+ * What the panel currently permits.
+ *
+ * `COOLING` appears only on reversible hardware — a heat pump that can run in
+ * reverse. A radiator's metadata does not list it, which is how the accessory
+ * decides whether to offer HomeKit a cool mode at all.
+ */
+export type TydomDeviceThermostatAuthorization = "STOP" | "HEATING" | "COOLING";
 export type TydomDeviceThermostatHvacMode = "NORMAL" | "STOP" | "ANTI_FROST";
 export type TydomDeviceThermostatThermicLevel =
   | "ECO"
