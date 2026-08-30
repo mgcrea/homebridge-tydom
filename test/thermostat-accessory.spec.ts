@@ -6,7 +6,10 @@ import { createAccessoryHarness, meta, type TydomProp } from "./accessory-harnes
 const ALL_LEVELS = ["ECO", "MODERATO", "MEDIO", "COMFORT", "STOP", "ANTI_FROST"];
 
 const mount = (data: TydomProp[], levels: string[] = ALL_LEVELS) => {
-  const harness = createAccessoryHarness({ data, metadata: [meta("thermicLevel", levels)] });
+  const harness = createAccessoryHarness({
+    data,
+    metadata: [meta("thermicLevel", levels), meta("hvacMode", ["NORMAL", "STOP", "ANTI_FROST"])],
+  });
   const handler = new ThermostatAccessory(harness.deps);
   return { ...harness, handler, service: harness.serviceOf(harness.hap.Service.Thermostat) };
 };
@@ -20,6 +23,7 @@ const mountReversible = (data: TydomProp[]) => {
     data,
     metadata: [
       meta("thermicLevel", ALL_LEVELS),
+      meta("hvacMode", ["NORMAL", "STOP", "ANTI_FROST"]),
       meta("authorization", ["STOP", "HEATING", "COOLING"]),
     ],
   });
@@ -314,6 +318,128 @@ describe("ThermostatAccessory", () => {
       const { handler, service, hap } = mount(heating());
       handler.update([{ name: "authorization", value: "COOLING" }], "data");
       expect(service.currentValue(hap.Characteristic.TargetHeatingCoolingState)).toBeUndefined();
+    });
+  });
+
+  describe("newer firmware that renamed hvacMode to localMode (#185)", () => {
+    /**
+     * A Tybox 5100, from the metadata dump in #185.
+     *
+     * The salient part is what is missing: there is no `hvacMode` at all. The
+     * mode moved to `localMode`, which carries the same three values plus
+     * `ABSENCE`. `thermicLevel` narrowed to two values on this hardware.
+     */
+    const TYBOX_5100_METADATA = [
+      meta("authorization", ["STOP", "HEATING"]),
+      meta("comfortMode", ["STOP", "HEATING"]),
+      meta("thermicLevel", ["STOP", "ANTI_FROST"]),
+      meta("localMode", ["NORMAL", "STOP", "ANTI_FROST", "ABSENCE"]),
+      meta("useMode", ["SCHED", "OVERRIDE", "MANUAL"]),
+    ];
+
+    const mountTybox = (over: Record<string, unknown> = {}) => {
+      const data = Object.entries({
+        authorization: "HEATING",
+        localMode: "NORMAL",
+        setpoint: 21,
+        temperature: 19,
+        thermicLevel: "STOP",
+        ...over,
+      }).map(([name, value]) => ({ name, value }));
+      const harness = createAccessoryHarness({ data, metadata: TYBOX_5100_METADATA });
+      const handler = new ThermostatAccessory(harness.deps);
+      return { ...harness, handler, service: harness.serviceOf(harness.hap.Service.Thermostat) };
+    };
+
+    it("reads the target state instead of throwing", async () => {
+      // The reported bug: `getTydomDataPropValue` asserts on a missing
+      // property, so every read failed with
+      // `Missing property with name="hvacMode" in endpoint data` and the
+      // accessory errored on every HomeKit query.
+      const { service, hap } = mountTybox();
+      const c = service.getCharacteristic(hap.Characteristic.TargetHeatingCoolingState);
+      await expect(c.handleGet()).resolves.toBe(hap.Characteristic.TargetHeatingCoolingState.HEAT);
+    });
+
+    it("writes localMode rather than hvacMode", async () => {
+      const { service, puts, hap } = mountTybox();
+      const { TargetHeatingCoolingState } = hap.Characteristic;
+      await service
+        .getCharacteristic(TargetHeatingCoolingState)
+        .handleSet(TargetHeatingCoolingState.OFF);
+      expect(puts).toEqual([[{ name: "localMode", value: "STOP" }]]);
+    });
+
+    it("treats ABSENCE — which hvacMode never had — as off", async () => {
+      const { service, hap } = mountTybox({ localMode: "ABSENCE" });
+      const c = service.getCharacteristic(hap.Characteristic.TargetHeatingCoolingState);
+      expect(await c.handleGet()).toBe(hap.Characteristic.TargetHeatingCoolingState.OFF);
+    });
+
+    it("follows a localMode change pushed by the gateway", () => {
+      const { handler, service, hap } = mountTybox();
+      const { TargetHeatingCoolingState } = hap.Characteristic;
+      handler.update([{ name: "localMode", value: "ANTI_FROST" }], "data");
+      expect(service.currentValue(TargetHeatingCoolingState)).toBe(TargetHeatingCoolingState.OFF);
+    });
+
+    it("still reads temperature and setpoint, which did not move", async () => {
+      const { service, hap } = mountTybox({ temperature: 18, setpoint: 22 });
+      expect(
+        await service.getCharacteristic(hap.Characteristic.CurrentTemperature).handleGet(),
+      ).toBe(18);
+      expect(
+        await service.getCharacteristic(hap.Characteristic.TargetTemperature).handleGet(),
+      ).toBe(22);
+    });
+
+    it("drives its anti-frost switch off localMode", async () => {
+      const { accessory, hap } = mountTybox({ localMode: "ANTI_FROST" });
+      const sub = accessory.services.find((s) => s.serviceName === "Switch");
+      expect(sub?.subtype).toBe("thermicLevel_anti_frost");
+      // The switch reads `thermicLevel` for a named level, so it reports off
+      // here — what matters is that resolving it no longer throws.
+      await expect(sub!.getCharacteristic(hap.Characteristic.On).handleGet()).resolves.toBe(false);
+    });
+
+    it("does not offer cooling, since its authorization has no COOLING", () => {
+      const { service, hap } = mountTybox();
+      expect(
+        service.getCharacteristic(hap.Characteristic.TargetHeatingCoolingState).props[
+          "validValues"
+        ],
+      ).toEqual([0, 1]);
+    });
+
+    it("prefers hvacMode when a device somehow advertises both", async () => {
+      // Nothing changes for hardware that already worked.
+      const harness = createAccessoryHarness({
+        data: [
+          { name: "authorization", value: "HEATING" },
+          { name: "hvacMode", value: "NORMAL" },
+          { name: "localMode", value: "STOP" },
+          { name: "setpoint", value: 21 },
+          { name: "temperature", value: 19 },
+        ],
+        metadata: [...TYBOX_5100_METADATA, meta("hvacMode", ["NORMAL", "STOP", "ANTI_FROST"])],
+      });
+      const handler = new ThermostatAccessory(harness.deps);
+      expect(handler).toBeDefined();
+      const service = harness.serviceOf(harness.hap.Service.Thermostat);
+      const { TargetHeatingCoolingState } = harness.hap.Characteristic;
+      expect(await service.getCharacteristic(TargetHeatingCoolingState).handleGet()).toBe(
+        TargetHeatingCoolingState.HEAT,
+      );
+    });
+
+    it("warns when a thermostat advertises neither property", () => {
+      const harness = createAccessoryHarness({
+        data: [],
+        metadata: [meta("thermicLevel", ["STOP", "ANTI_FROST"])],
+      });
+      const handler = new ThermostatAccessory(harness.deps);
+      expect(handler).toBeDefined();
+      expect(harness.messages.join("\n")).toMatch(/advertises neither/);
     });
   });
 });

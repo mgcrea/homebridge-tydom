@@ -10,6 +10,7 @@ import {
   debugSetUpdate,
 } from "../platform/trace.js";
 import type {
+  TydomThermostatModeProp,
   TydomDeviceThermostatAuthorization,
   TydomDeviceThermostatData,
   TydomDeviceThermostatHvacMode,
@@ -42,9 +43,35 @@ export class ThermostatAccessory extends BaseAccessory {
    * app that silently does nothing.
    */
   readonly #canCool: boolean;
+  /**
+   * Which property carries the operating mode on this device.
+   *
+   * Delta Dore replaced `hvacMode` with `localMode` on newer thermostats — the
+   * Tybox 5100 and relatives carry no `hvacMode` at all. Reading a property
+   * that is not there throws, so on that hardware every
+   * `TargetHeatingCoolingState` query failed: the accessory was discovered and
+   * registered, then errored on every read. The values are the same apart from
+   * an added `ABSENCE`, so resolving the name is the whole fix.
+   *
+   * `hvacMode` wins when both are present, so nothing changes for hardware that
+   * already worked.
+   */
+  readonly #modeProp: TydomThermostatModeProp;
 
   constructor(deps: AccessoryDeps) {
     super(deps);
+    const metadata = deps.accessory.context.metadata;
+    const hasProp = (name: string): boolean => metadata.some((entry) => entry.name === name);
+    this.#modeProp = hasProp("hvacMode")
+      ? "hvacMode"
+      : hasProp("localMode")
+        ? "localMode"
+        : "hvacMode";
+    if (!hasProp("hvacMode") && !hasProp("localMode")) {
+      deps.platform.log.warn(
+        `Thermostat ${deps.accessory.displayName} advertises neither "hvacMode" nor "localMode"; its mode controls will not work.`,
+      );
+    }
     this.#canCool = Boolean(
       deps.accessory.context.metadata
         .find(({ name }) => name === "authorization")
@@ -95,7 +122,7 @@ export class ThermostatAccessory extends BaseAccessory {
       .onGet(async () => {
         debugGet(TargetHeatingCoolingState, this.#service);
         const data = await this.#read();
-        const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, "hvacMode");
+        const hvacMode = getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, this.#modeProp);
         const authorization = getTydomDataPropValue<TydomDeviceThermostatAuthorization>(
           data,
           "authorization",
@@ -123,7 +150,9 @@ export class ThermostatAccessory extends BaseAccessory {
         // On a radiator this stays a single-property write, exactly as before —
         // whether the gateway even accepts a write to `authorization` is
         // untested on hardware that has no use for one.
-        const values: { name: string; value: unknown }[] = [{ name: "hvacMode", value: hvacMode }];
+        const values: { name: string; value: unknown }[] = [
+          { name: this.#modeProp, value: hvacMode },
+        ];
         if (this.#canCool) {
           values.push({
             name: "authorization",
@@ -216,7 +245,10 @@ export class ThermostatAccessory extends BaseAccessory {
           );
           break;
         }
-        case "hvacMode": {
+        // Both names are accepted: only one of them ever arrives, and which
+        // depends on the firmware rather than on anything worth branching on.
+        case "hvacMode":
+        case "localMode": {
           const hvacMode = value as TydomDeviceThermostatHvacMode;
           if (hvacMode === "NORMAL") {
             break;
@@ -263,7 +295,7 @@ export class ThermostatAccessory extends BaseAccessory {
   }
 
   async #writeHvacMode(value: string): Promise<void> {
-    await this.api.putDeviceData(this.deviceId, this.endpointId, [{ name: "hvacMode", value }]);
+    await this.api.putDeviceData(this.deviceId, this.endpointId, [{ name: this.#modeProp, value }]);
   }
 
   /**
@@ -322,7 +354,7 @@ export class ThermostatAccessory extends BaseAccessory {
         const data = await this.#read();
         const nextValue =
           subtype === "hvacMode_absence"
-            ? getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, "hvacMode") ===
+            ? getTydomDataPropValue<TydomDeviceThermostatHvacMode>(data, this.#modeProp) ===
               "ANTI_FROST"
             : getTydomDataPropValue<TydomDeviceThermostatThermicLevel>(data, "thermicLevel") ===
               tydomValue;

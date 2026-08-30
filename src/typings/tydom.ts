@@ -61,7 +61,18 @@ export type {
  * decides whether to offer HomeKit a cool mode at all.
  */
 export type TydomDeviceThermostatAuthorization = "STOP" | "HEATING" | "COOLING";
-export type TydomDeviceThermostatHvacMode = "NORMAL" | "STOP" | "ANTI_FROST";
+/**
+ * The device's operating mode.
+ *
+ * Carried as `hvacMode` on the original firmware and as `localMode` on newer
+ * hardware — the Tybox 5100 and its relatives, which ship no `hvacMode` at all.
+ * The three original values are unchanged; `localMode` adds `ABSENCE`. Only the
+ * property name differs, which is why one type serves both.
+ */
+export type TydomDeviceThermostatHvacMode = "NORMAL" | "STOP" | "ANTI_FROST" | "ABSENCE";
+
+/** The two names the mode has gone by. See the type above. */
+export type TydomThermostatModeProp = "hvacMode" | "localMode";
 export type TydomDeviceThermostatThermicLevel =
   | "ECO"
   | "MODERATO"
