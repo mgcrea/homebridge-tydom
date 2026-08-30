@@ -1,7 +1,7 @@
 {
   "name": "homebridge-tydom",
   "displayName": "Tydom",
-  "version": "0.31.2",
+  "version": "0.32.0",
   "description": "Homebridge plugin to manage Tydom devices by Delta Dore",
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "repository": {
