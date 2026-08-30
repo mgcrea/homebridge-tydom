@@ -1,6 +1,5 @@
 import createDebug from "debug";
 import type { PlatformAccessory, Service } from "homebridge";
-import { blue } from "kolorist";
 import {
   styleGet,
   styleKeyword,
@@ -51,7 +50,7 @@ export const debugGet = (
   characteristic: NamedCharacteristic,
   target: IdentifiableAccessoryObject,
 ): void => {
-  debug(`${styleGet("→GET")}:${blue(characteristic.name)} for ${describe(target)} ...`);
+  debug(`${styleGet("→GET")}:${styleKeyword(characteristic.name)} for ${describe(target)} ...`);
 };
 
 export const debugGetResult = (
@@ -60,7 +59,7 @@ export const debugGetResult = (
   value: unknown,
 ): void => {
   debug(
-    `${styleGet("←GET")}:${blue(characteristic.name)} value=${styleVal(value)} for ${describe(target)}`,
+    `${styleGet("←GET")}:${styleKeyword(characteristic.name)} value=${styleVal(value)} for ${describe(target)}`,
   );
 };
 
@@ -70,7 +69,7 @@ export const debugSetUpdate = (
   value: unknown,
 ): void => {
   debug(
-    `${styleUpd("←UPD")}:${blue(characteristic.name)} value=${styleVal(value)} for ${describe(target)}`,
+    `${styleUpd("←UPD")}:${styleKeyword(characteristic.name)} value=${styleVal(value)} for ${describe(target)}`,
   );
 };
 
@@ -80,7 +79,7 @@ export const debugSet = (
   value: unknown,
 ): void => {
   debug(
-    `${styleSet("→SET")}:${blue(characteristic.name)} value=${styleVal(value)} for ${describe(target)} ...`,
+    `${styleSet("→SET")}:${styleKeyword(characteristic.name)} value=${styleVal(value)} for ${describe(target)} ...`,
   );
 };
 
@@ -91,7 +90,7 @@ export const debugSetResult = (
   tydomValue?: unknown,
 ): void => {
   debug(
-    `${styleSet("←SET")}:${blue(characteristic.name)} value=${styleVal(value)}${
+    `${styleSet("←SET")}:${styleKeyword(characteristic.name)} value=${styleVal(value)}${
       tydomValue !== undefined ? ` (tydomValue=${styleVal(tydomValue)})` : ""
     } for ${describe(target)}`,
   );
@@ -102,7 +101,9 @@ export const debugTydomPut = (
   target: IdentifiableAccessoryObject,
   value: unknown,
 ): void => {
-  debug(`${styleSet("→PUT")}:${blue(property)} value=${styleVal(value)} for ${describe(target)}`);
+  debug(
+    `${styleSet("→PUT")}:${styleKeyword(property)} value=${styleVal(value)} for ${describe(target)}`,
+  );
 };
 
 export const debugAddSubService = (service: Service, target: IdentifiableAccessoryObject): void => {

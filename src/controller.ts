@@ -1,7 +1,6 @@
 import { EventEmitter } from "node:events";
 import type { Logging } from "homebridge";
 import type { Categories } from "homebridge";
-import { blue, bold, green, yellow } from "kolorist";
 import { createTranslator, type Translator } from "./i18n/index.js";
 import { discoverDevices, expandCompanions } from "./api/discovery.js";
 import {
@@ -27,7 +26,14 @@ import type {
   TydomGroupsResponse,
   TydomMetaResponse,
 } from "./typings/tydom.js";
-import { styleJson, styleNumber, styleString } from "./util/style.js";
+import {
+  styleGet,
+  styleJson,
+  styleKeyword,
+  styleNumber,
+  styleString,
+  styleUpd,
+} from "./util/style.js";
 import { debug } from "./platform/trace.js";
 import { stringifyError } from "./util/error.js";
 import { resolveGatewayPassword } from "./util/deltadore.js";
@@ -438,14 +444,14 @@ export default class TydomController extends EventEmitter {
       const category = this.devices.get(uniqueId);
       if (category === undefined) {
         debug(
-          `${bold(yellow("\u2190PUT"))}:${blue("ignored")} for device id=${styleString(
+          `${styleUpd("\u2190PUT")}:${styleKeyword("ignored")} for device id=${styleString(
             deviceId,
           )} and endpointId=${styleNumber(endpointId)}`,
         );
         continue;
       }
       debug(
-        `${bold(green("\u2190PUT"))}:${blue("update")} for deviceId=${styleNumber(
+        `${styleGet("\u2190PUT")}:${styleKeyword("update")} for deviceId=${styleNumber(
           deviceId,
         )} and endpointId=${styleNumber(endpointId)}, updates:\n${styleJson(updates)}`,
       );
