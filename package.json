@@ -66,22 +66,22 @@
     "debug": "^4.4.3",
     "kolorist": "^1.8.0",
     "tydom-client": "^0.16.0",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "^24.0.1",
     "@tsconfig/strictest": "^2.0.8",
     "@types/debug": "^4.1.13",
-    "@types/node": "^25.2.3",
+    "@types/node": "^22",
     "@vitest/coverage-v8": "^4.1.11",
     "homebridge": "^2.4.0",
-    "oxfmt": "^0.61.0",
-    "oxlint": "^1.76.0",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
     "release-it": "^21.0.2",
     "tsdown": "^0.22.14",
-    "tsx": "^4.23.12",
+    "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11"
   },
-  "packageManager": "pnpm@11.23.0"
+  "packageManager": "pnpm@11.25.0"
 }
