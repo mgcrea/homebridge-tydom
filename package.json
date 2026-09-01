@@ -75,7 +75,7 @@
     "@types/node": "^25.2.3",
     "@vitest/coverage-v8": "^4.1.11",
     "homebridge": "^2.4.0",
-    "oxfmt": "^0.61.0",
+    "oxfmt": "^0.65.0",
     "oxlint": "^1.76.0",
     "release-it": "^21.0.2",
     "tsdown": "^0.22.14",
