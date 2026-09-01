@@ -2,14 +2,14 @@
   "extends": ["@tsconfig/node-lts/tsconfig.json", "@tsconfig/strictest/tsconfig.json"],
   "compilerOptions": {
     "lib": ["ES2023"],
+    "module": "Preserve",
+    "moduleResolution": "bundler",
     "target": "ES2023",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
     "noEmit": true,
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "types": ["node"],
-    "outDir": "./dist"
+    "outDir": "dist"
   },
   "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts", "*.config.ts"]
 }
