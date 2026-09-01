@@ -29,3 +29,6 @@ yarn-error.log*
 # misc
 .DS_Store
 *.code-workspace
+
+# Tarballs from `npm pack`; never committed.
+*.tgz
