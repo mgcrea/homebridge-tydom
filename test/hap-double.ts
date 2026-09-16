@@ -25,6 +25,8 @@ const CHARACTERISTIC_CONSTANTS: Record<string, Record<string, number>> = {
   SmokeDetected: { SMOKE_NOT_DETECTED: 0, SMOKE_DETECTED: 1 },
   CurrentHeatingCoolingState: { OFF: 0, HEAT: 1, COOL: 2 },
   TargetHeatingCoolingState: { OFF: 0, HEAT: 1, COOL: 2, AUTO: 3 },
+  CurrentDoorState: { OPEN: 0, CLOSED: 1, OPENING: 2, CLOSING: 3, STOPPED: 4 },
+  TargetDoorState: { OPEN: 0, CLOSED: 1 },
 };
 
 /** Looks like a HAP enum constant, as opposed to `name` or `prototype`. */

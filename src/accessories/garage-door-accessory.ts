@@ -36,6 +36,12 @@ export class GarageDoorAccessory extends BaseAccessory {
   readonly #toggleOnly: boolean;
 
   #currentDoorState: number;
+  /**
+   * Where the door was last asked to go. TargetDoorState only admits OPEN and
+   * CLOSED, so it cannot mirror the current state through OPENING, CLOSING or
+   * STOPPED.
+   */
+  #targetDoorState: number;
   #lastUpdatedAt = 0;
   #computedPosition = 0;
   #transition: NodeJS.Timeout | undefined;
@@ -51,6 +57,7 @@ export class GarageDoorAccessory extends BaseAccessory {
     const levelCmdValues = metadata.find((m) => m.name === "levelCmd")?.enum_values;
     this.#toggleOnly = levelCmdValues?.length === 1 && levelCmdValues[0] === "TOGGLE";
     this.#currentDoorState = CurrentDoorState.CLOSED;
+    this.#targetDoorState = TargetDoorState.CLOSED;
 
     // Older releases published this device as a Switch; drop it so the tile does
     // not linger alongside the door.
@@ -77,8 +84,8 @@ export class GarageDoorAccessory extends BaseAccessory {
       .onGet(async () => {
         debugGet(TargetDoorState, this.#service);
         if (this.#toggleOnly) {
-          debugGetResult(TargetDoorState, this.#service, this.#currentDoorState);
-          return this.#currentDoorState;
+          debugGetResult(TargetDoorState, this.#service, this.#targetDoorState);
+          return this.#targetDoorState;
         }
         const next = await this.#readDoorState();
         this.#lastUpdatedAt = Date.now();
@@ -152,6 +159,7 @@ export class GarageDoorAccessory extends BaseAccessory {
     this.#lastUpdatedAt = Date.now();
     this.#computedPosition = this.#positionNow();
 
+    this.#targetDoorState = targetDoorState;
     let next = this.#nextDoorState(targetDoorState);
     if (next === this.#currentDoorState) {
       debug(`nextCurrentDoorState=${styleNumber(next)} === currentDoorState, nothing to do`);
@@ -239,6 +247,7 @@ export class GarageDoorAccessory extends BaseAccessory {
   #applyKnownState(doorState: number): void {
     const { CurrentDoorState } = this.platform.Characteristic;
     this.#currentDoorState = doorState;
+    this.#settleTarget(doorState);
     this.#lastUpdatedAt = Date.now();
     this.#computedPosition = doorState === CurrentDoorState.OPEN ? 100 : 0;
   }
@@ -247,7 +256,18 @@ export class GarageDoorAccessory extends BaseAccessory {
     const { CurrentDoorState } = this.platform.Characteristic;
     debug(`assignCurrentDoorState=${styleString(this.#label(doorState))}`);
     this.#currentDoorState = doorState;
+    this.#settleTarget(doorState);
     this.#service.updateCharacteristic(CurrentDoorState, doorState);
+  }
+
+  /** A door at rest, open or closed, was headed exactly there. */
+  #settleTarget(doorState: number): void {
+    const { CurrentDoorState, TargetDoorState } = this.platform.Characteristic;
+    if (doorState === CurrentDoorState.OPEN) {
+      this.#targetDoorState = TargetDoorState.OPEN;
+    } else if (doorState === CurrentDoorState.CLOSED) {
+      this.#targetDoorState = TargetDoorState.CLOSED;
+    }
   }
 
   /** Where the door has got to, given how long it has been travelling. */
