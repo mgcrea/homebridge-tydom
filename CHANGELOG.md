@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.32.1](https://github.com/mgcrea/homebridge-tydom/compare/v0.32.0...v0.32.1) (2026-09-16)
+
+No accessory is re-registered by this release: rooms, names and automations are preserved.
+
+### Bug Fixes
+
+- **garage-door:** a gate driven by a toggle-only motor reports a valid target while it moves. Such a driver accepts nothing but `TOGGLE`, so the plugin simulates the travel, and it was answering `TargetDoorState` reads with that simulated current state. Once the gate was moving that meant `OPENING`, `CLOSING` or `STOPPED`, none of which `TargetDoorState` admits, and Homebridge logged `characteristic was supplied illegal value: number 2 exceeded maximum of 1` while the Home app lost track of where the gate was headed. The target is now the one last requested, and it follows the gate when it comes to rest open or closed, including after an auto-close.
+
+### Internals
+
+- The garage door has tests, against the in-memory HAP double, which now carries the real door-state values.
+- The toolchain and `@types/node` are aligned with the other repos; `@types/node` drops to `^22`, the oldest major in `engines.node`, so an API newer than what users run no longer type-checks.
+
 ## [0.32.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.31.2...v0.32.0) (2026-08-30)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. Nothing changes for a thermostat that already worked — both changes below activate only on hardware that reports itself differently.
