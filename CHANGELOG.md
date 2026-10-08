@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.32.2](https://github.com/mgcrea/homebridge-tydom/compare/v0.32.1...v0.32.2) (2026-10-08)
+
+No accessory is re-registered by this release: rooms, names and automations are preserved. Both changes are on the alarm panel; nothing else behaves differently.
+
+### Bug Fixes
+
+- **security-system:** the panel reports a valid target while the siren is going. `SecuritySystemTargetState` admits Home, Away, Night and Disarm, but it was answering reads with the current state, which carries a fifth value for a ringing alarm — so a triggered panel made Homebridge log `characteristic was supplied illegal value: number 4 exceeded maximum of 3`. The target now reports the mode the panel is set to, read from its arming mode rather than its siren, which is also right when Homebridge starts while the alarm is going off. The same change pushes the target whenever the panel changes mode, so arming from its own keypad no longer leaves the Home app showing the previous one — and asking it to arm from there no longer looks like it did nothing.
+- **security-system:** arming Home or Night with no zones configured says so. Both modes are built from the `aliases` setting, and with nothing listed there the plugin sent no command and logged nothing at all, so the Home app sat on "Arming…" until it timed out and fell back to disarmed. It now warns, naming the mode and the `aliases` entry to add ([#167](https://github.com/mgcrea/homebridge-tydom/issues/167)).
+
+### Internals
+
+- The alarm panel has tests, against the in-memory HAP double, which now carries the real security-system values. The arming-mode helper is split out of the current-state one, and its return type excludes the triggered value, so the target can no longer be handed something HAP would reject.
+
 ## [0.32.1](https://github.com/mgcrea/homebridge-tydom/compare/v0.32.0...v0.32.1) (2026-09-16)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved.
