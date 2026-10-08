@@ -292,14 +292,25 @@ export class SecuritySystemAccessory extends BaseAccessory {
       return;
     }
 
+    // Home and Night have no panel command of their own: they are a set of
+    // zones the user has to name, because only they know which zone covers
+    // what. Without that list there is nothing to send.
     const aliases = this.#settings.aliases ?? {};
-    const targetZones =
-      target === SecuritySystemTargetState.STAY_ARM ? aliases.stay : aliases.night;
-    if (Array.isArray(targetZones) && targetZones.length > 0) {
-      await this.#setZones(targetZones, "ON");
-      if (this.#service) {
-        debugSetResult(SecuritySystemTargetState, this.#service, target, "ON");
-      }
+    const isStay = target === SecuritySystemTargetState.STAY_ARM;
+    const alias = isStay ? "stay" : "night";
+    const targetZones = aliases[alias];
+    if (!Array.isArray(targetZones) || targetZones.length === 0) {
+      this.platform.log.warn(
+        `Cannot arm ${this.name} to ${isStay ? "Home" : "Night"}: no zones are configured for ` +
+          `that mode, so nothing was sent and the Home app will report the change as failed. ` +
+          `Add {"settings": {"${this.deviceId}": {"aliases": {"${alias}": [1]}}}} listing the ` +
+          `zones it should arm, numbered as they are on the panel's keypad.`,
+      );
+      return;
+    }
+    await this.#setZones(targetZones, "ON");
+    if (this.#service) {
+      debugSetResult(SecuritySystemTargetState, this.#service, target, "ON");
     }
   }
 

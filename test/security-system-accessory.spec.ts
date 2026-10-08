@@ -3,7 +3,10 @@ import { SecuritySystemAccessory } from "../src/accessories/security-system-acce
 import { createAccessoryHarness, type TydomProp } from "./accessory-harness.js";
 
 /** The panel in the state the arguments describe, with its services published. */
-const mount = async (over: Record<string, unknown> = {}) => {
+const mount = async (
+  over: Record<string, unknown> = {},
+  settings: Record<string, unknown> = {},
+) => {
   const data: TydomProp[] = Object.entries({
     alarmState: "OFF",
     alarmMode: "OFF",
@@ -13,7 +16,7 @@ const mount = async (over: Record<string, unknown> = {}) => {
     ...over,
   }).map(([name, value]) => ({ name, value }));
 
-  const harness = createAccessoryHarness({ data, settings: { pin: "123456" } });
+  const harness = createAccessoryHarness({ data, settings: { pin: "123456", ...settings } });
   const handler = new SecuritySystemAccessory(harness.deps);
   handler.start();
 
@@ -65,6 +68,47 @@ describe("SecuritySystemAccessory", () => {
     await vi.waitFor(() => {
       expect(current.value).toBe(SecuritySystemCurrentState.DISARMED);
       expect(target.value).toBe(SecuritySystemTargetState.DISARM);
+    });
+  });
+
+  /**
+   * Arming Home or Night sends a zone command built from the `aliases`
+   * settings. With nothing configured there was no command and no message, so
+   * the Home app sat on "Arming…" for its timeout and then fell back to
+   * disarmed — see https://github.com/mgcrea/homebridge-tydom/issues/167.
+   */
+  describe("arming a mode with no zones configured", () => {
+    it("says so rather than silently doing nothing", async () => {
+      const { hap, target, commands, messages } = await mount();
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.STAY_ARM);
+
+      expect(commands).toEqual([]);
+      expect(messages.filter((message) => message.startsWith("warn:")).join("\n")).toContain(
+        "stay",
+      );
+    });
+
+    it("treats an empty zone list as unconfigured", async () => {
+      const { hap, target, commands, messages } = await mount({}, { aliases: { night: [] } });
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.NIGHT_ARM);
+
+      expect(commands).toEqual([]);
+      expect(messages.filter((message) => message.startsWith("warn:")).join("\n")).toContain(
+        "night",
+      );
+    });
+
+    it("stays quiet and arms when the mode does have zones", async () => {
+      const { hap, target, commands, messages } = await mount({}, { aliases: { stay: [1, 2] } });
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.STAY_ARM);
+
+      expect(commands).toEqual([
+        { name: "zoneCmd", body: { value: "ON", pwd: "123456", zones: [1, 2] } },
+      ]);
+      expect(messages.filter((message) => message.startsWith("warn:"))).toEqual([]);
     });
   });
 });
