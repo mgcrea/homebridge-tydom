@@ -25,8 +25,10 @@ import {
   getActiveZones,
   getStateForActiveZones,
   getStateForAlarmData,
+  getTargetStateForAlarmData,
   isZoneArmed,
   type AlarmSettings,
+  type AlarmTargetStateValue,
 } from "./security-system-state.js";
 
 /** A TYXAL+ or CTX60 alarm panel. */
@@ -102,7 +104,7 @@ export class SecuritySystemAccessory extends BaseAccessory {
       .getCharacteristic(SecuritySystemTargetState)
       .onGet(async () => {
         debugGet(SecuritySystemTargetState, service);
-        const nextValue = await this.#currentState();
+        const nextValue = await this.#targetState();
         debugGetResult(SecuritySystemTargetState, service, nextValue);
         return nextValue;
       })
@@ -149,6 +151,18 @@ export class SecuritySystemAccessory extends BaseAccessory {
   async #currentState(): Promise<number> {
     const data = await this.#read();
     return getStateForAlarmData(data, this.#settings.aliases ?? {}, this.#settings);
+  }
+
+  /**
+   * The mode the panel is set to, which is what the target characteristic asks.
+   *
+   * Deliberately not `#currentState`: that one answers `ALARM_TRIGGERED` while
+   * the siren is going, and the target has no such value, so HAP rejected it.
+   * A ringing alarm says nothing about what the panel was armed to anyway.
+   */
+  async #targetState(): Promise<AlarmTargetStateValue> {
+    const data = await this.#read();
+    return getTargetStateForAlarmData(data, this.#settings.aliases ?? {}, this.#settings);
   }
 
   async #readZoneLabels(): Promise<SecuritySystemLabelCommandResultZone[]> {
@@ -305,7 +319,7 @@ export class SecuritySystemAccessory extends BaseAccessory {
   }
 
   #handleData(updates: Record<string, unknown>[]): void {
-    const { SecuritySystemCurrentState, ContactSensorState, On } = this.platform.Characteristic;
+    const { ContactSensorState, On } = this.platform.Characteristic;
     const aliases = this.#settings.aliases ?? {};
 
     for (const { name, value } of updates) {
@@ -318,9 +332,8 @@ export class SecuritySystemAccessory extends BaseAccessory {
               : value === "PART" || value === "ZONE"
                 ? getStateForActiveZones(getActiveZones(updates as never, this.#settings), aliases)
                 : undefined;
-        if (nextValue !== undefined && this.#service) {
-          debugSetUpdate(SecuritySystemCurrentState, this.#service, nextValue);
-          this.#service.updateCharacteristic(SecuritySystemCurrentState, nextValue);
+        if (nextValue !== undefined) {
+          this.#setState(nextValue);
         }
         // A whole-system mode change settles every zone switch at once. Any
         // per-zone property later in this same push refines it.
@@ -435,13 +448,24 @@ export class SecuritySystemAccessory extends BaseAccessory {
     }
   }
 
-  #setState(state: number): void {
+  /**
+   * Settle both arming characteristics from an authoritative mode.
+   *
+   * The target moves with the current state, so that arming from the panel's
+   * own keypad does not leave HomeKit showing the old mode — a stale target is
+   * what makes "arm away" in the Home app look like it did nothing. The
+   * parameter type excludes `ALARM_TRIGGERED`, so the target can never be
+   * handed a value it would reject.
+   */
+  #setState(state: AlarmTargetStateValue): void {
     if (!this.#service) {
       return;
     }
-    const { SecuritySystemCurrentState } = this.platform.Characteristic;
+    const { SecuritySystemCurrentState, SecuritySystemTargetState } = this.platform.Characteristic;
     debugSetUpdate(SecuritySystemCurrentState, this.#service, state);
     this.#service.updateCharacteristic(SecuritySystemCurrentState, state);
+    debugSetUpdate(SecuritySystemTargetState, this.#service, state);
+    this.#service.updateCharacteristic(SecuritySystemTargetState, state);
   }
 }
 

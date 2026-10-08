@@ -27,6 +27,16 @@ const CHARACTERISTIC_CONSTANTS: Record<string, Record<string, number>> = {
   TargetHeatingCoolingState: { OFF: 0, HEAT: 1, COOL: 2, AUTO: 3 },
   CurrentDoorState: { OPEN: 0, CLOSED: 1, OPENING: 2, CLOSING: 3, STOPPED: 4 },
   TargetDoorState: { OPEN: 0, CLOSED: 1 },
+  SecuritySystemCurrentState: {
+    STAY_ARM: 0,
+    AWAY_ARM: 1,
+    NIGHT_ARM: 2,
+    DISARMED: 3,
+    ALARM_TRIGGERED: 4,
+  },
+  // Note there is no ALARM_TRIGGERED here, and that DISARMED is spelt DISARM:
+  // the target cannot express a ringing alarm.
+  SecuritySystemTargetState: { STAY_ARM: 0, AWAY_ARM: 1, NIGHT_ARM: 2, DISARM: 3 },
 };
 
 /** Looks like a HAP enum constant, as opposed to `name` or `prototype`. */

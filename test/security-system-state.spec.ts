@@ -4,6 +4,7 @@ import {
   getActiveZones,
   getStateForActiveZones,
   getStateForAlarmData,
+  getTargetStateForAlarmData,
   isZoneArmed,
 } from "../src/accessories/security-system-state.js";
 import type { TydomEndpointData } from "../src/api/types.js";
@@ -149,5 +150,49 @@ describe("getStateForAlarmData", () => {
 
   it("reports disarmed rather than throwing on a partial payload", () => {
     expect(getStateForAlarmData(data({}), {}, {})).toBe(ALARM_STATE.DISARMED);
+  });
+});
+
+/**
+ * HomeKit splits arming into two characteristics: the current state, which has
+ * a value for "the siren is going off", and the target state, which does not.
+ * Answering a target read with `ALARM_TRIGGERED` made HAP reject the value
+ * outright — the panel's arming mode is what the target is asking about, and a
+ * ringing alarm says nothing about it.
+ */
+describe("getTargetStateForAlarmData", () => {
+  it.each(["DELAYED", "ON", "QUIET"])(
+    "keeps reporting the arming mode while alarmState=%s",
+    (alarmState) => {
+      expect(getTargetStateForAlarmData(data({ alarmState, alarmMode: "ON" }), {}, {})).toBe(
+        ALARM_STATE.AWAY_ARM,
+      );
+    },
+  );
+
+  it("reports a disarmed panel as disarmed even with the siren going", () => {
+    expect(getTargetStateForAlarmData(data({ alarmState: "ON", alarmMode: "OFF" }), {}, {})).toBe(
+      ALARM_STATE.DISARMED,
+    );
+  });
+
+  it("never answers with ALARM_TRIGGERED, which the target cannot hold", () => {
+    for (const alarmMode of ["ON", "OFF", "ZONE", "PART"]) {
+      for (const alarmState of ["DELAYED", "ON", "QUIET", "OFF"]) {
+        expect(getTargetStateForAlarmData(data({ alarmState, alarmMode }), {}, {})).not.toBe(
+          ALARM_STATE.ALARM_TRIGGERED,
+        );
+      }
+    }
+  });
+
+  it("resolves a zone arm through the aliases, as the current state does", () => {
+    const payload = data({
+      alarmState: "ON",
+      alarmMode: "ZONE",
+      zone1State: "ON",
+      zone2State: "OFF",
+    });
+    expect(getTargetStateForAlarmData(payload, { stay: [1] }, {})).toBe(ALARM_STATE.STAY_ARM);
   });
 });

@@ -18,6 +18,9 @@ export const ALARM_STATE = {
 
 export type AlarmStateValue = (typeof ALARM_STATE)[keyof typeof ALARM_STATE];
 
+/** The subset `SecuritySystemTargetState` admits: everything but a triggered alarm. */
+export type AlarmTargetStateValue = Exclude<AlarmStateValue, typeof ALARM_STATE.ALARM_TRIGGERED>;
+
 export type ZoneAliases = {
   stay?: number[];
   night?: number[];
@@ -59,7 +62,7 @@ export const getActiveZones = (alarmData: TydomEndpointData, settings: AlarmSett
 export const getStateForActiveZones = (
   activeZones: number[],
   aliases: ZoneAliases,
-): AlarmStateValue => {
+): AlarmTargetStateValue => {
   if (aliases.stay && sameArrays(activeZones, aliases.stay)) {
     return ALARM_STATE.STAY_ARM;
   }
@@ -90,19 +93,20 @@ export const isZoneArmed = (alarmData: TydomEndpointData, zoneProp: string): boo
   return alarmData.find((prop) => prop.name === zoneProp)?.value === "ON";
 };
 
-/** The HomeKit state for a full alarm data snapshot. */
-export const getStateForAlarmData = (
+/**
+ * The arming mode a data snapshot describes, ignoring whether the siren is on.
+ *
+ * This is what `SecuritySystemTargetState` asks for, and the reason it cannot
+ * share `getStateForAlarmData`: the target has no `ALARM_TRIGGERED`, so the
+ * return type excludes it and HAP can never be handed a value it would reject.
+ */
+export const getTargetStateForAlarmData = (
   alarmData: TydomEndpointData,
   aliases: ZoneAliases,
   settings: AlarmSettings,
-): AlarmStateValue => {
-  const find = (name: string): unknown => alarmData.find((prop) => prop.name === name)?.value;
-  const alarmState = find("alarmState");
-  const alarmMode = find("alarmMode");
+): AlarmTargetStateValue => {
+  const alarmMode = alarmData.find((prop) => prop.name === "alarmMode")?.value;
 
-  if (typeof alarmState === "string" && ["DELAYED", "ON", "QUIET"].includes(alarmState)) {
-    return ALARM_STATE.ALARM_TRIGGERED;
-  }
   if (alarmMode === "ON") {
     return ALARM_STATE.AWAY_ARM;
   }
@@ -110,4 +114,18 @@ export const getStateForAlarmData = (
     return getStateForActiveZones(getActiveZones(alarmData, settings), aliases);
   }
   return ALARM_STATE.DISARMED;
+};
+
+/** The HomeKit state for a full alarm data snapshot. */
+export const getStateForAlarmData = (
+  alarmData: TydomEndpointData,
+  aliases: ZoneAliases,
+  settings: AlarmSettings,
+): AlarmStateValue => {
+  const alarmState = alarmData.find((prop) => prop.name === "alarmState")?.value;
+
+  if (typeof alarmState === "string" && ["DELAYED", "ON", "QUIET"].includes(alarmState)) {
+    return ALARM_STATE.ALARM_TRIGGERED;
+  }
+  return getTargetStateForAlarmData(alarmData, aliases, settings);
 };
