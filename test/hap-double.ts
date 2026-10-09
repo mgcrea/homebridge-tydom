@@ -121,11 +121,19 @@ export class FakeCharacteristic {
     return this.value;
   }
 
-  /** Drive a HomeKit write, as the bridge would. */
+  /**
+   * Drive a HomeKit write, as the bridge would.
+   *
+   * The written value is recorded, because a real characteristic holds what it
+   * was last set to. Without that, a test cannot tell "the accessory pushed the
+   * right value" from "HomeKit was never told", which is the difference between
+   * a working target characteristic and a stale one.
+   */
   async handleSet(value: unknown): Promise<void> {
     if (!this.#set) {
       throw new Error(`Characteristic ${this.name} has no onSet handler`);
     }
+    this.value = value;
     await this.#set(value);
   }
 }

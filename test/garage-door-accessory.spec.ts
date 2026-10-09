@@ -19,6 +19,24 @@ const mountToggleOnly = () => {
   };
 };
 
+/** A gate configured to close itself again a while after it opens. */
+const mountAutoClosing = (autoCloseDelay: number) => {
+  const harness = createAccessoryHarness({
+    data: [{ name: "level", value: 0 }],
+    metadata: [meta("levelCmd", ["TOGGLE"])],
+    settings: { autoCloseDelay },
+  });
+  const handler = new GarageDoorAccessory(harness.deps);
+  const service = harness.serviceOf(harness.hap.Service.GarageDoorOpener);
+  const { CurrentDoorState, TargetDoorState } = harness.hap.Characteristic;
+  return {
+    ...harness,
+    handler,
+    current: service.getCharacteristic(CurrentDoorState),
+    target: service.getCharacteristic(TargetDoorState),
+  };
+};
+
 describe("GarageDoorAccessory", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -71,6 +89,30 @@ describe("GarageDoorAccessory", () => {
 
       expect(await current.handleGet()).toBe(CurrentDoorState.CLOSING);
       expect(await target.handleGet()).toBe(TargetDoorState.CLOSED);
+    });
+  });
+
+  /**
+   * The auto-close is the plugin's own decision, not the user's, so HomeKit has
+   * to be told the target moved. It only ever heard the OPEN the user wrote,
+   * and the accessory pushed the new current state without the new target —
+   * leaving the Home app showing a door that is open and headed open, forever.
+   * Reported in https://github.com/mgcrea/homebridge-tydom/pull/153.
+   */
+  describe("auto-close", () => {
+    it("tells HomeKit the target closed, not just the current state", async () => {
+      const { hap, current, target } = mountAutoClosing(300_000);
+      const { CurrentDoorState, TargetDoorState } = hap.Characteristic;
+
+      await target.handleSet(TargetDoorState.OPEN);
+      await vi.advanceTimersByTimeAsync(20_000);
+      expect(current.value).toBe(CurrentDoorState.OPEN);
+      expect(target.value).toBe(TargetDoorState.OPEN);
+
+      await vi.advanceTimersByTimeAsync(300_000);
+
+      expect(current.value).toBe(CurrentDoorState.CLOSED);
+      expect(target.value).toBe(TargetDoorState.CLOSED);
     });
   });
 });

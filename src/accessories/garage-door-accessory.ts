@@ -253,11 +253,18 @@ export class GarageDoorAccessory extends BaseAccessory {
   }
 
   #setDoorState(doorState: number): void {
-    const { CurrentDoorState } = this.platform.Characteristic;
+    const { CurrentDoorState, TargetDoorState } = this.platform.Characteristic;
     debug(`assignCurrentDoorState=${styleString(this.#label(doorState))}`);
     this.#currentDoorState = doorState;
     this.#settleTarget(doorState);
     this.#service.updateCharacteristic(CurrentDoorState, doorState);
+    // A simulated arrival is the plugin's own conclusion, so HomeKit still
+    // holds whatever target the user last wrote. Pushing the settled target
+    // matters most for the auto-close, which no one asked for: without it the
+    // Home app keeps showing a door that is closed and headed open.
+    if (doorState === CurrentDoorState.OPEN || doorState === CurrentDoorState.CLOSED) {
+      this.#service.updateCharacteristic(TargetDoorState, this.#targetDoorState);
+    }
   }
 
   /** A door at rest, open or closed, was headed exactly there. */
