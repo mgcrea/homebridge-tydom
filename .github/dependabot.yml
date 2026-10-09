@@ -25,6 +25,13 @@ updates:
       # so betas can install, and the version tracked here is the one the plugin
       # is developed against. Bumping it is a decision, not a chore.
       - dependency-name: homebridge
+      # `@types/node` tracks the OLDEST major in `engines.node`, not the newest,
+      # so that an API newer than what users run fails to type-check here rather
+      # than at their install. A major bump silently removes that guard, which
+      # is why only minor and patch are wanted.
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
