@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.33.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.32.3...v0.33.0) (2026-10-09)
+
+No accessory is re-registered by this release: rooms, names and automations are preserved. The one addition is opt-in per device, so nothing changes until you ask for it.
+
+### Features
+
+- **switch:** `autoShutdownDelay` switches a device off again on its own, for hardware that has no timer of its own. Set it per device, in milliseconds, and it applies to switches, outlets and fans:
+
+  ```json
+  "settings": { "1529094720": { "autoShutdownDelay": 600000 } }
+  ```
+
+  It follows the device's own button as well as the Home app, which is the point of it — nobody forgets to turn a light off from HomeKit. The delay is counted from the moment the device came on, not from the last thing the gateway reported, so the periodic refresh cannot postpone a shutdown for as long as the device happens to stay on. Requested in [#118](https://github.com/mgcrea/homebridge-tydom/issues/118).
+
 ## [0.32.3](https://github.com/mgcrea/homebridge-tydom/compare/v0.32.2...v0.32.3) (2026-10-09)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. Both fixes come out of reviewing long-standing pull requests, and both only change hardware that was already misbehaving.
