@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 import type { Logging } from "homebridge";
 import type { Categories } from "homebridge";
 import { createTranslator, type Translator } from "./i18n/index.js";
+import type { TydomTransport } from "./api/client.js";
 import { discoverDevices, expandCompanions } from "./api/discovery.js";
 import {
   classifyMessage,
@@ -42,6 +43,7 @@ import type TydomClient from "tydom-client";
 import {
   createClient as createTydomClient,
   type TydomHttpMessage,
+  type TydomRequestBody,
   type TydomResponse,
 } from "tydom-client";
 
@@ -54,10 +56,37 @@ export type ControllerUpdatePayload = {
   context: TydomAccessoryContext;
 };
 
+type ConnectionTarget = {
+  hostname: string;
+  type: "primary" | "local";
+};
+
+type TransportRetry = "safe" | "only-if-unsent";
+
+export type TydomControllerOptions = {
+  clientFactory?: typeof createTydomClient;
+  gatewayPasswordResolver?: typeof resolveGatewayPassword;
+};
+
+const RECONNECT_BASE_DELAY_MS = 5_000;
+const MAX_RECONNECT_DELAY_MS = 5 * 60_000;
+
 export default class TydomController extends EventEmitter {
   public client: TydomClient;
+  public readonly transport: TydomTransport;
   public config: TydomPlatformConfig;
   public log: Logging;
+  private readonly clientFactory: typeof createTydomClient;
+  private readonly gatewayPasswordResolver: typeof resolveGatewayPassword;
+  private readonly managedFallback: boolean;
+  private activeTarget: ConnectionTarget;
+  private transitionPromise: Promise<void> | undefined;
+  private transitionClient: TydomClient | undefined;
+  private initialClientAvailable = true;
+  private reconnectTimeout: NodeJS.Timeout | undefined;
+  private primaryRetryTimeout: NodeJS.Timeout | undefined;
+  private primaryProbeClient: TydomClient | undefined;
+  private reconnectAttempt = 0;
   /**
    * Known endpoints, by `deviceId:endpointId`.
    *
@@ -111,22 +140,44 @@ export default class TydomController extends EventEmitter {
   private gatewayPassword: string;
   /** Delta Dore label lookups, bound to the configured locale. */
   private readonly t: Translator;
-  constructor(log: Logging, config: TydomPlatformConfig) {
+  constructor(log: Logging, config: TydomPlatformConfig, options: TydomControllerOptions = {}) {
     super();
     this.config = config;
     this.log = log;
+    this.clientFactory = options.clientFactory ?? createTydomClient;
+    this.gatewayPasswordResolver = options.gatewayPasswordResolver ?? resolveGatewayPassword;
+    this.managedFallback = Boolean(config.localHostname);
     this.t = createTranslator(config.locale);
     // hostname/username/password are validated and resolved by parseConfig,
     // so there is nothing left to assert here.
-    const { hostname, username, password, email } = config;
-    this.log.info(
-      `Creating tydom client with username=${styleString(username)} and hostname=${styleString(hostname)}`,
-    );
+    const { hostname, password, email } = config;
     // With an e-mail configured, `password` belongs to the account rather than
     // the gateway, so the client starts out with no usable credential and
     // `connect` fills one in.
     this.gatewayPassword = email ? "" : password;
-    this.client = this.createClient(this.gatewayPassword);
+    this.activeTarget = { hostname, type: "primary" };
+    this.client = this.createClientForTarget(this.activeTarget);
+    this.transport = {
+      get: async (uri) => await this.runTransport((client) => client.get(uri), "safe"),
+      put: async (uri, body) =>
+        await this.runTransport(
+          (client) => client.put(uri, body as TydomRequestBody | undefined),
+          "only-if-unsent",
+        ),
+      post: async (uri, body) =>
+        await this.runTransport(
+          (client) => client.post(uri, body as TydomRequestBody | undefined),
+          "only-if-unsent",
+        ),
+      command: async (uri) => await this.runTransport((client) => client.command(uri), "safe"),
+    };
+    if (config.localHostname && process.env["NODE_TLS_REJECT_UNAUTHORIZED"] !== "0") {
+      this.log.warn(
+        `Local Tydom fallback hostname=${styleString(
+          config.localHostname,
+        )} is configured but NODE_TLS_REJECT_UNAUTHORIZED is not set to 0; its self-signed certificate may be rejected`,
+      );
+    }
   }
   /**
    * Build a client for `password` and wire its events up.
@@ -135,10 +186,26 @@ export default class TydomController extends EventEmitter {
    * arrive once `connect` has been able to await the account API, and the
    * client takes its password at construction time.
    */
-  private createClient(password: string): TydomClient {
-    const { hostname, username } = this.config;
-    const client = createTydomClient({ username, password, hostname, followUpDebounce: 500 });
+  private createClientForTarget(target: ConnectionTarget): TydomClient {
+    const { username } = this.config;
+    this.log.info(
+      `Creating ${target.type} tydom client with username=${styleString(username)} and hostname=${styleString(
+        target.hostname,
+      )}`,
+    );
+    const client = this.clientFactory({
+      username,
+      password: this.gatewayPassword,
+      hostname: target.hostname,
+      followUpDebounce: 500,
+      // A client which may be abandoned for another hostname must not keep an
+      // inaccessible reconnect timer alive behind the controller's back.
+      retryOnClose: !this.managedFallback,
+    });
     client.on("message", (message: TydomHttpMessage) => {
+      if (this.disposed || client !== this.client) {
+        return;
+      }
       try {
         this.handleMessage(message);
       } catch (err) {
@@ -148,16 +215,18 @@ export default class TydomController extends EventEmitter {
       }
     });
     client.on("connect", () => {
-      if (this.disposed) {
+      // Managed clients are activated only after their explicit /ping succeeds.
+      // Their socket emits `connect` before that handshake has completed.
+      if (this.disposed || this.managedFallback || client !== this.client) {
         return;
       }
       this.connected = true;
       this.log.info(
-        `Successfully connected to Tydom hostname=${styleString(hostname)} with username=${styleString(username)}`,
+        `Successfully connected to Tydom hostname=${styleString(target.hostname)} with username=${styleString(username)}`,
       );
       if (this.hasConnectedOnce) {
         this.log.warn(
-          `Reconnected to Tydom hostname=${styleString(hostname)}, re-syncing state...`,
+          `Reconnected to Tydom hostname=${styleString(target.hostname)}, re-syncing state...`,
         );
         this.resync().catch((err: unknown) => {
           this.log.error(`Failed to re-sync after reconnection: ${stringifyError(err as Error)}`);
@@ -166,16 +235,20 @@ export default class TydomController extends EventEmitter {
       this.emit("connect");
     });
     client.on("disconnect", () => {
+      if (client !== this.client) {
+        return;
+      }
       this.connected = false;
       if (this.disposed) {
         return;
       }
-      this.log.warn(`Disconnected from Tydom hostname=${styleString(hostname)}`);
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval);
-        this.refreshInterval = undefined;
-      }
+      this.log.warn(`Disconnected from Tydom hostname=${styleString(target.hostname)}`);
+      this.clearRefreshInterval();
+      this.clearPrimaryRetryTimeout();
       this.emit("disconnect");
+      if (this.managedFallback) {
+        this.scheduleReconnect();
+      }
     });
     return client;
   }
@@ -195,7 +268,7 @@ export default class TydomController extends EventEmitter {
     this.log.info(
       `Resolving the gateway password from the Delta Dore account of ${styleString(maskEmail(email))}...`,
     );
-    const password = await resolveGatewayPassword({
+    const password = await this.gatewayPasswordResolver({
       email,
       password: accountPassword,
       mac: username,
@@ -204,8 +277,10 @@ export default class TydomController extends EventEmitter {
     // The client takes its password at construction, so the placeholder built
     // in the constructor has to be replaced rather than reconfigured. Nothing
     // has connected yet, so there is no socket to migrate — only listeners.
-    this.client.removeAllListeners();
-    this.client = this.createClient(password);
+    this.retireClient(this.client);
+    this.activeTarget = { hostname: this.config.hostname, type: "primary" };
+    this.client = this.createClientForTarget(this.activeTarget);
+    this.initialClientAvailable = true;
     this.log.info(`Resolved the gateway password for username=${styleString(username)}`);
   }
   /** Whether a socket is up, however it got there. */
@@ -222,6 +297,10 @@ export default class TydomController extends EventEmitter {
     // `DeltaDoreAuthError` and stops rather than retrying it.
     await this.resolveGatewayPassword();
     try {
+      if (this.managedFallback) {
+        await this.startManagedTransition(false);
+        return;
+      }
       await this.client.connect();
       await asyncWait(250);
       // Initial intro handshake
@@ -234,30 +313,321 @@ export default class TydomController extends EventEmitter {
       throw err;
     }
   }
+
+  private get currentHostname(): string {
+    return this.activeTarget.hostname;
+  }
+
+  private connectionTargets(preferLocal: boolean): ConnectionTarget[] {
+    const primary: ConnectionTarget = { hostname: this.config.hostname, type: "primary" };
+    const localHostname = this.config.localHostname;
+    if (!localHostname) {
+      return [primary];
+    }
+    const local: ConnectionTarget = { hostname: localHostname, type: "local" };
+    return preferLocal ? [local, primary] : [primary, local];
+  }
+
+  /**
+   * Run one hostname transition at a time.
+   *
+   * The ordinary, single-host setup never reaches this path and keeps
+   * tydom-client's automatic reconnect behaviour unchanged. With a fallback,
+   * the controller is the sole retry owner so a retired primary cannot open a
+   * second socket after the local client has taken over.
+   */
+  private async startManagedTransition(preferLocal: boolean): Promise<void> {
+    if (this.disposed) {
+      throw new Error("Tydom controller is disposed");
+    }
+    if (this.transitionPromise) {
+      return this.transitionPromise;
+    }
+    this.clearReconnectTimeout();
+    const run = this.connectToFirstAvailableTarget(this.connectionTargets(preferLocal));
+    this.transitionPromise = run;
+    try {
+      await run;
+    } finally {
+      if (this.transitionPromise === run) {
+        this.transitionPromise = undefined;
+      }
+    }
+  }
+
+  private async connectToFirstAvailableTarget(targets: ConnectionTarget[]): Promise<void> {
+    let lastError: unknown;
+    for (const target of targets) {
+      try {
+        await this.connectToTarget(target);
+        return;
+      } catch (err) {
+        lastError = err;
+        this.log.warn(
+          `Failed to connect to ${target.type} Tydom hostname=${styleString(target.hostname)}: ${stringifyError(
+            err as Error,
+          )}`,
+        );
+      }
+    }
+    throw lastError instanceof Error
+      ? lastError
+      : new Error("Failed to connect to any Tydom hostname");
+  }
+
+  private async connectToTarget(target: ConnectionTarget): Promise<void> {
+    debug(`Connecting to ${target.type} hostname=${styleString(target.hostname)}...`);
+    const canUseInitialClient =
+      this.initialClientAvailable &&
+      target.type === this.activeTarget.type &&
+      target.hostname === this.activeTarget.hostname;
+    const candidate = canUseInitialClient ? this.client : this.createClientForTarget(target);
+    this.initialClientAvailable = false;
+    this.transitionClient = candidate;
+    try {
+      await candidate.connect();
+      await asyncWait(250);
+      await candidate.get("/ping");
+      if (this.disposed) {
+        throw new Error("Tydom controller was disposed while connecting");
+      }
+      this.activateManagedClient(candidate, target);
+    } catch (err) {
+      this.retireClient(candidate);
+      throw err;
+    } finally {
+      if (this.transitionClient === candidate) {
+        this.transitionClient = undefined;
+      }
+    }
+  }
+
+  private activateManagedClient(client: TydomClient, target: ConnectionTarget): void {
+    const previousClient = this.client;
+    const reconnecting = this.hasConnectedOnce;
+    this.client = client;
+    this.activeTarget = target;
+    this.connected = true;
+    this.hasConnectedOnce = true;
+    this.reconnectAttempt = 0;
+    this.clearReconnectTimeout();
+    if (target.type === "local") {
+      this.schedulePrimaryRetry();
+    } else {
+      this.clearPrimaryRetryTimeout();
+    }
+    if (previousClient !== client) {
+      this.retireClient(previousClient);
+    }
+    this.log.info(
+      `Successfully connected to ${target.type} Tydom hostname=${styleString(
+        target.hostname,
+      )} with username=${styleString(this.config.username)}`,
+    );
+    if (reconnecting) {
+      this.log.warn(
+        `Reconnected to Tydom hostname=${styleString(target.hostname)}, re-syncing state...`,
+      );
+      void this.resync().catch((err: unknown) => {
+        this.log.error(`Failed to re-sync after reconnection: ${stringifyError(err as Error)}`);
+      });
+    }
+    this.emit("connect");
+  }
+
+  private async runTransport<T>(
+    operation: (client: TydomClient) => Promise<T>,
+    retry: TransportRetry,
+  ): Promise<T> {
+    if (this.managedFallback && (!this.connected || this.transitionPromise)) {
+      await this.startManagedTransition(true);
+    }
+    const client = this.client;
+    try {
+      return await operation(client);
+    } catch (err) {
+      if (!this.managedFallback) {
+        throw err;
+      }
+
+      // The request may have started just before another caller completed the
+      // transition. Reads can move to the new socket; ambiguous writes cannot.
+      if (client !== this.client) {
+        if (retry === "safe" || (retry === "only-if-unsent" && this.wasDefinitelyNotSent(err))) {
+          return await operation(this.client);
+        }
+        throw err;
+      }
+
+      if (this.connected && !this.isTransportFailure(err)) {
+        throw err;
+      }
+      this.connected = false;
+      this.clearRefreshInterval();
+      try {
+        await this.startManagedTransition(true);
+      } catch {
+        this.scheduleReconnect();
+        throw err;
+      }
+      if (retry === "safe" || (retry === "only-if-unsent" && this.wasDefinitelyNotSent(err))) {
+        return await operation(this.client);
+      }
+      throw err;
+    }
+  }
+
+  private isTransportFailure(err: unknown): boolean {
+    const message = err instanceof Error ? err.message : String(err);
+    return /Required socket instance|Socket instance is closing\/closed|Socket closed while request was pending|Request timed out|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|fetch failed/i.test(
+      message,
+    );
+  }
+
+  /** Errors raised before `socket.send`, for which replay cannot duplicate an action. */
+  private wasDefinitelyNotSent(err: unknown): boolean {
+    const message = err instanceof Error ? err.message : String(err);
+    return /Required socket instance|Socket instance is closing\/closed/i.test(message);
+  }
+
+  private scheduleReconnect(): void {
+    if (this.disposed || !this.managedFallback || this.connected || this.transitionPromise) {
+      return;
+    }
+    this.clearReconnectTimeout();
+    this.reconnectAttempt += 1;
+    const delay = Math.min(
+      RECONNECT_BASE_DELAY_MS * 2 ** (this.reconnectAttempt - 1),
+      MAX_RECONNECT_DELAY_MS,
+    );
+    this.log.warn(`Reconnecting to Tydom in ${Math.round(delay / 1000)}s...`);
+    this.reconnectTimeout = setTimeout(() => {
+      this.reconnectTimeout = undefined;
+      void this.startManagedTransition(true).catch((err: unknown) => {
+        this.log.error(`Failed to reconnect to Tydom: ${stringifyError(err as Error)}`);
+        this.scheduleReconnect();
+      });
+    }, delay);
+    this.reconnectTimeout.unref?.();
+  }
+
+  private schedulePrimaryRetry(): void {
+    if (
+      this.disposed ||
+      !this.connected ||
+      this.activeTarget.type !== "local" ||
+      this.primaryProbeClient
+    ) {
+      return;
+    }
+    this.clearPrimaryRetryTimeout();
+    this.primaryRetryTimeout = setTimeout(() => {
+      this.primaryRetryTimeout = undefined;
+      void this.tryRestorePrimary().catch((err: unknown) => {
+        this.log.warn(
+          `Failed to restore primary Tydom hostname=${styleString(
+            this.config.hostname,
+          )}: ${stringifyError(err as Error)}`,
+        );
+        this.schedulePrimaryRetry();
+      });
+    }, this.config.primaryRetryIntervalMs);
+    this.primaryRetryTimeout.unref?.();
+  }
+
+  private async tryRestorePrimary(): Promise<void> {
+    if (this.disposed || !this.connected || this.activeTarget.type !== "local") {
+      return;
+    }
+    const localClient = this.client;
+    const target: ConnectionTarget = { hostname: this.config.hostname, type: "primary" };
+    const candidate = this.createClientForTarget(target);
+    this.primaryProbeClient = candidate;
+    let activated = false;
+    try {
+      this.log.info(
+        `Checking if primary Tydom hostname=${styleString(target.hostname)} is available again...`,
+      );
+      await candidate.connect();
+      await asyncWait(250);
+      await candidate.get("/ping");
+      if (
+        this.disposed ||
+        !this.connected ||
+        this.client !== localClient ||
+        this.activeTarget.type !== "local"
+      ) {
+        return;
+      }
+      activated = true;
+      this.primaryProbeClient = undefined;
+      this.activateManagedClient(candidate, target);
+      this.log.warn(
+        `Restored primary Tydom hostname=${styleString(target.hostname)}, switching back from local fallback`,
+      );
+    } finally {
+      if (this.primaryProbeClient === candidate) {
+        this.primaryProbeClient = undefined;
+      }
+      if (!activated) {
+        this.retireClient(candidate);
+      }
+    }
+  }
+
+  private clearRefreshInterval(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = undefined;
+    }
+  }
+
+  private clearReconnectTimeout(): void {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = undefined;
+    }
+  }
+
+  private clearPrimaryRetryTimeout(): void {
+    if (this.primaryRetryTimeout) {
+      clearTimeout(this.primaryRetryTimeout);
+      this.primaryRetryTimeout = undefined;
+    }
+  }
+
+  private retireClient(client: TydomClient): void {
+    try {
+      client.removeAllListeners();
+      client.close();
+    } catch (err) {
+      debug(`Ignoring error while closing a Tydom client: ${String(err)}`);
+    }
+  }
+
   async sync(): Promise<{
     config: TydomConfigResponse;
     groups: TydomGroupsResponse;
     meta: TydomMetaResponse;
   }> {
-    const { hostname } = this.config;
-    debug(`Syncing state from hostname=${styleString(hostname)}...`);
+    debug(`Syncing state from hostname=${styleString(this.currentHostname)}...`);
     // Checked rather than cast: everything downstream assumes these shapes, and
     // an unnoticed change here would surface as a TypeError deep inside
     // discovery instead of naming the endpoint that actually moved.
     const config = parseDiscoveryResponse(
       "/configs/file",
       tydomConfigResponseSchema,
-      await this.client.get("/configs/file"),
+      await this.transport.get("/configs/file"),
     );
     const groups = parseDiscoveryResponse(
       "/groups/file",
       tydomGroupsResponseSchema,
-      await this.client.get("/groups/file"),
+      await this.transport.get("/groups/file"),
     );
     const meta = parseDiscoveryResponse(
       "/devices/meta",
       tydomMetaResponseSchema,
-      await this.client.get("/devices/meta"),
+      await this.transport.get("/devices/meta"),
     );
     // Final outro handshake
     await this.refresh();
@@ -265,8 +635,8 @@ export default class TydomController extends EventEmitter {
     return { config, groups, meta };
   }
   async scan(): Promise<void> {
-    const { hostname, username, settings = {} } = this.config;
-    this.log.info(`Scanning devices from hostname=${styleString(hostname)}...`);
+    const { username, settings = {} } = this.config;
+    this.log.info(`Scanning devices from hostname=${styleString(this.currentHostname)}...`);
     const { config, groups, meta } = await this.sync();
 
     const { devices, skipped } = discoverDevices({
@@ -335,7 +705,7 @@ export default class TydomController extends EventEmitter {
   }
   async refresh(): Promise<void> {
     debug(`Refreshing Tydom controller ...`);
-    await this.client.post("/refresh/all");
+    await this.transport.post("/refresh/all");
   }
   /**
    * (Re-)install the periodic full refresh.
@@ -390,13 +760,14 @@ export default class TydomController extends EventEmitter {
   }
 
   private async runResync(): Promise<void> {
-    const { hostname } = this.config;
-    debug(`Re-syncing state after reconnection to hostname=${styleString(hostname)}...`);
+    debug(
+      `Re-syncing state after reconnection to hostname=${styleString(this.currentHostname)}...`,
+    );
     await asyncWait(250);
     if (this.disposed) {
       return;
     }
-    await this.client.get("/ping");
+    await this.transport.get("/ping");
     await this.refresh();
     if (this.disposed) {
       return;
@@ -415,16 +786,19 @@ export default class TydomController extends EventEmitter {
    */
   dispose(): void {
     this.disposed = true;
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-      this.refreshInterval = undefined;
+    this.connected = false;
+    this.clearRefreshInterval();
+    this.clearReconnectTimeout();
+    this.clearPrimaryRetryTimeout();
+    if (this.primaryProbeClient) {
+      this.retireClient(this.primaryProbeClient);
+      this.primaryProbeClient = undefined;
     }
-    try {
-      this.client.removeAllListeners();
-      this.client.close();
-    } catch (err) {
-      debug(`Ignoring error while closing the Tydom client: ${String(err)}`);
+    if (this.transitionClient && this.transitionClient !== this.client) {
+      this.retireClient(this.transitionClient);
+      this.transitionClient = undefined;
     }
+    this.retireClient(this.client);
   }
 
   handleMessage(message: TydomHttpMessage): void {

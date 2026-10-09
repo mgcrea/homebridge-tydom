@@ -2,8 +2,10 @@ import type { PlatformConfig } from "homebridge";
 import { describe, expect, it } from "vitest";
 import {
   ConfigError,
+  DEFAULT_PRIMARY_RETRY_INTERVAL_MS,
   DEFAULT_REFRESH_INTERVAL_MS,
   DEFAULT_STALE_AFTER_MS,
+  MIN_PRIMARY_RETRY_INTERVAL_MS,
   MIN_REFRESH_INTERVAL_MS,
   parseConfig,
 } from "../src/config.js";
@@ -22,11 +24,13 @@ describe("parseConfig", () => {
   it("parses a minimal config", () => {
     const config = parseConfig(base, {});
     expect(config.hostname).toBe("mediation.tydom.com");
+    expect(config.localHostname).toBeUndefined();
     expect(config.username).toBe("001A25123456");
     expect(config.password).toBe("s3cret");
     expect(config.debug).toBe(false);
     expect(config.locale).toBe("fr");
     expect(config.refreshIntervalMs).toBe(DEFAULT_REFRESH_INTERVAL_MS);
+    expect(config.primaryRetryIntervalMs).toBe(DEFAULT_PRIMARY_RETRY_INTERVAL_MS);
   });
 
   it("trims whitespace out of the hostname and username", () => {
@@ -154,6 +158,32 @@ describe("parseConfig", () => {
       expect(parseConfig({ ...base, refreshInterval: "soon" } as never, {}).refreshIntervalMs).toBe(
         DEFAULT_REFRESH_INTERVAL_MS,
       );
+    });
+  });
+
+  describe("local fallback", () => {
+    it("trims and keeps a distinct local hostname", () => {
+      const config = parseConfig(
+        { ...base, localHostname: "  192.168.1.42  ", primaryRetryInterval: 45 } as never,
+        {},
+      );
+      expect(config.localHostname).toBe("192.168.1.42");
+      expect(config.primaryRetryIntervalMs).toBe(45_000);
+    });
+
+    it("disables a fallback that names the primary endpoint", () => {
+      const config = parseConfig({ ...base, localHostname: " mediation.tydom.com " } as never, {});
+      expect(config.localHostname).toBeUndefined();
+    });
+
+    it("clamps an aggressive primary retry interval", () => {
+      const config = parseConfig({ ...base, primaryRetryInterval: 1 } as never, {});
+      expect(config.primaryRetryIntervalMs).toBe(MIN_PRIMARY_RETRY_INTERVAL_MS);
+    });
+
+    it("uses the default for a non-numeric primary retry interval", () => {
+      const config = parseConfig({ ...base, primaryRetryInterval: "soon" } as never, {});
+      expect(config.primaryRetryIntervalMs).toBe(DEFAULT_PRIMARY_RETRY_INTERVAL_MS);
     });
   });
 

@@ -23,6 +23,8 @@ export type TydomLocale = Locale;
 /** The platform's configuration, parsed once and normalised. */
 export type TydomConfig = {
   hostname: string;
+  /** Optional LAN endpoint used while the primary endpoint is unavailable. */
+  localHostname: string | undefined;
   username: string;
   /**
    * The password — of the account when `email` is set, of the gateway when it
@@ -54,6 +56,8 @@ export type TydomConfig = {
   excludedCategories: (string | number)[];
   /** User-facing seconds become milliseconds at the boundary. */
   refreshIntervalMs: number;
+  /** How often the primary endpoint is probed while the LAN fallback is active. */
+  primaryRetryIntervalMs: number;
   /**
    * How long a device reading is served from memory before a read repairs it
    * in the background. `0` reads through on every HomeKit query, which is what
@@ -71,8 +75,11 @@ export type TydomConfig = {
 
 export const DEFAULT_REFRESH_INTERVAL_MS = 4 * 60 * 60 * 1000;
 export const DEFAULT_STALE_AFTER_MS = 5 * 60 * 1000;
+export const DEFAULT_PRIMARY_RETRY_INTERVAL_MS = 5 * 60 * 1000;
 /** A refresh is a full `POST /refresh/all`; hammering the gateway helps nobody. */
 export const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
+/** Repeated TLS handshakes are not a useful way to monitor the relay. */
+export const MIN_PRIMARY_RETRY_INTERVAL_MS = 30 * 1000;
 
 const asArray = (value: unknown): (string | number)[] =>
   Array.isArray(value) ? (value as (string | number)[]) : [];
@@ -201,6 +208,11 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
     warnings.push(message);
   };
   const hostname = asString(config["hostname"]);
+  const configuredLocalHostname = asString(config["localHostname"]);
+  const localHostname =
+    configuredLocalHostname && configuredLocalHostname !== hostname
+      ? configuredLocalHostname
+      : undefined;
   const username = asString(config["username"]);
 
   // The base64-encoded env vars take precedence, so a shared config file need
@@ -241,6 +253,13 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
     ? Math.max(MIN_REFRESH_INTERVAL_MS, refreshSeconds * 1000)
     : DEFAULT_REFRESH_INTERVAL_MS;
 
+  const primaryRetrySeconds = Number(
+    config["primaryRetryInterval"] ?? DEFAULT_PRIMARY_RETRY_INTERVAL_MS / 1000,
+  );
+  const primaryRetryIntervalMs = Number.isFinite(primaryRetrySeconds)
+    ? Math.max(MIN_PRIMARY_RETRY_INTERVAL_MS, primaryRetrySeconds * 1000)
+    : DEFAULT_PRIMARY_RETRY_INTERVAL_MS;
+
   const staleSeconds = Number(config["staleAfter"] ?? DEFAULT_STALE_AFTER_MS / 1000);
   const staleAfterMs =
     Number.isFinite(staleSeconds) && staleSeconds >= 0
@@ -249,6 +268,7 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
 
   return {
     hostname,
+    localHostname,
     username,
     password,
     email,
@@ -262,6 +282,7 @@ export const parseConfig = (config: PlatformConfig, env: ConfigEnv = process.env
     includedCategories: asArray(config["includedCategories"]),
     excludedCategories: asArray(config["excludedCategories"]),
     refreshIntervalMs,
+    primaryRetryIntervalMs,
     staleAfterMs,
     warnings,
   };

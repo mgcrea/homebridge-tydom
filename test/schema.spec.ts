@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 import { PLATFORM_NAME } from "../src/config/env.js";
 import {
   DEFAULT_REFRESH_INTERVAL_MS,
+  DEFAULT_PRIMARY_RETRY_INTERVAL_MS,
   DEFAULT_STALE_AFTER_MS,
+  MIN_PRIMARY_RETRY_INTERVAL_MS,
   MIN_REFRESH_INTERVAL_MS,
   parseConfig,
 } from "../src/config.js";
@@ -44,9 +46,11 @@ describe("config.schema.json", () => {
       "hostname",
       "includedCategories",
       "includedDevices",
+      "localHostname",
       "locale",
       "password",
       "pin",
+      "primaryRetryInterval",
       "refreshInterval",
       "settings",
       "staleAfter",
@@ -86,6 +90,8 @@ describe("config.schema.json", () => {
     const props = schema.schema.properties;
     expect(props["refreshInterval"]?.default).toBe(DEFAULT_REFRESH_INTERVAL_MS / 1000);
     expect(props["refreshInterval"]?.minimum).toBe(MIN_REFRESH_INTERVAL_MS / 1000);
+    expect(props["primaryRetryInterval"]?.default).toBe(DEFAULT_PRIMARY_RETRY_INTERVAL_MS / 1000);
+    expect(props["primaryRetryInterval"]?.minimum).toBe(MIN_PRIMARY_RETRY_INTERVAL_MS / 1000);
     expect(props["staleAfter"]?.default).toBe(DEFAULT_STALE_AFTER_MS / 1000);
 
     const parsed = parseConfig(
