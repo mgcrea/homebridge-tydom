@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.32.2](https://github.com/mgcrea/homebridge-tydom/compare/v0.32.1...v0.32.2) (2026-10-08)
+## [0.32.3](https://github.com/mgcrea/homebridge-tydom/compare/v0.32.2...v0.32.3) (2026-10-09)
+
+No accessory is re-registered by this release: rooms, names and automations are preserved. Both fixes come out of reviewing long-standing pull requests, and both only change hardware that was already misbehaving.
+
+### Bug Fixes
+
+- **garage-door:** a door that closes itself tells HomeKit so. The auto-close is the plugin's own decision, and HomeKit had only ever heard the `OPEN` the user wrote, so the simulated arrival pushed the new current state without the new target — leaving the Home app showing a door that is closed and still headed open until something happened to re-read it. Reported in [#153](https://github.com/mgcrea/homebridge-tydom/pull/153), where the same symptom came from the same omission in the pre-rewrite accessory.
+- **thermostat:** an HVAC endpoint that reports no temperature no longer errors on every read. Some carry a thermic level and nothing numeric at all, no `setpoint` and no `temperature`, and the reader used for those properties asserts rather than resolving, so the accessory registered and then failed three of its four reads with `ERR_ASSERTION: Missing property with name="temperature" in endpoint data`. `CurrentTemperature` now falls back to the setpoint and then to HAP's own default, `TargetTemperature` no longer asserts partway through its existing fallback, and `CurrentHeatingCoolingState` reports OFF when it has no two numbers to compare — which is already what it reports for a unit that is authorised but not demanding. Reported in [#184](https://github.com/mgcrea/homebridge-tydom/pull/184).
+
+### Internals
+
+- `findTydomDataPropValue` is the non-asserting sibling of `getTydomDataPropValue`, for properties a device may genuinely not carry; the asserting one stays for those a device type guarantees.
+- The in-memory HAP double records a written value, as a real characteristic does. Without it a test cannot tell a pushed target from one HomeKit was never told about, which is exactly the garage door bug above.
+- Dependabot no longer proposes major `@types/node` bumps. The version tracked is the oldest major in `engines.node`, so that an API newer than what users run fails to type-check here rather than at their install, and a major bump silently removes that guard.
+
+## [0.32.2](https://github.com/mgcrea/homebridge-tydom/compare/v0.32.1...v0.32.2) (2026-10-09)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. Both changes are on the alarm panel; nothing else behaves differently.
 
