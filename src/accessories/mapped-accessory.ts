@@ -64,11 +64,31 @@ export type PropBinding = {
 export class MappedAccessory extends BaseAccessory {
   readonly #service: Service;
   readonly #bindings: PropBinding[];
+  /** How long after switching on to switch off again, if the user asked. */
+  readonly #autoShutdownMs: number | undefined;
+  /** The writable `On` binding, which is the only thing there is to switch off. */
+  readonly #onBinding: PropBinding | undefined;
+  #autoShutdownTimer: NodeJS.Timeout | undefined;
+  /**
+   * What the `On` characteristic last read, so a repeat can be told from a
+   * change. The periodic refresh pushes the current state whether or not it
+   * moved, and re-arming on those would push the shutdown out for as long as
+   * the device stayed on — which is the one thing it must not do.
+   */
+  #isOn: boolean | undefined;
 
   constructor(deps: AccessoryDeps, spec: AccessorySpec) {
     super(deps);
     this.#service = this.service(spec.service(this.platform.Service));
     this.#bindings = spec.bindings(this.platform.Characteristic);
+
+    const { autoShutdownDelay } = (this.accessory.context.settings ?? {}) as AutoShutdownSettings;
+    this.#autoShutdownMs = autoShutdownDelay;
+    const { On } = this.platform.Characteristic;
+    this.#onBinding = this.#bindings.find(
+      (binding) => binding.characteristic === On && binding.toTydom,
+    );
+
     for (const binding of this.#bindings) {
       this.#bind(binding);
     }
@@ -107,7 +127,52 @@ export class MappedAccessory extends BaseAccessory {
         { name: prop, value: tydomValue },
       ]);
       debugSetResult(characteristic, service, value, tydomValue);
+      this.#trackAutoShutdown(binding, value);
     });
+  }
+
+  /**
+   * Arm or stand down the auto-shutdown, following the device's on state.
+   *
+   * Called from both directions on purpose: the Home app is the case nobody
+   * needs help with, and a switch left on at the wall is the case the setting
+   * exists for.
+   */
+  #trackAutoShutdown(binding: PropBinding, value: CharacteristicValue): void {
+    if (this.#autoShutdownMs === undefined || binding !== this.#onBinding) {
+      return;
+    }
+    const isOn = value === true;
+    if (isOn === this.#isOn) {
+      return;
+    }
+    this.#isOn = isOn;
+    this.clearTimer(this.#autoShutdownTimer);
+    this.#autoShutdownTimer = undefined;
+    if (!isOn) {
+      return;
+    }
+    this.#autoShutdownTimer = this.setTimer(() => {
+      this.#autoShutdownTimer = undefined;
+      void this.#switchOff(binding);
+    }, this.#autoShutdownMs);
+  }
+
+  async #switchOff(binding: PropBinding): Promise<void> {
+    const { On } = this.platform.Characteristic;
+    this.#isOn = false;
+    try {
+      await this.api.putDeviceData(this.deviceId, this.endpointId, [
+        { name: binding.prop, value: binding.toTydom?.(false) },
+      ]);
+    } catch (err) {
+      this.platform.log.error(
+        `Failed to switch off ${this.accessory.displayName} after its shutdown delay: ${String(err)}`,
+      );
+      return;
+    }
+    debugSetUpdate(On, this.#service, false);
+    this.#service.updateCharacteristic(On, false);
   }
 
   /**
@@ -134,6 +199,7 @@ export class MappedAccessory extends BaseAccessory {
         const next = map(value as never);
         debugSetUpdate(binding.characteristic, this.#service, next);
         this.#service.updateCharacteristic(binding.characteristic, next);
+        this.#trackAutoShutdown(binding, next);
       }
     }
   }
@@ -146,6 +212,9 @@ export class MappedAccessory extends BaseAccessory {
  * those arrive on the platform instance — there is no module-level HAP to read
  * at import time, which is exactly what keeps this testable.
  */
+/** Per-device settings this accessory reads. */
+type AutoShutdownSettings = { autoShutdownDelay?: number };
+
 export type AccessorySpec = {
   service: (services: typeof Service) => ServiceClass;
   bindings: (characteristics: typeof Characteristic) => PropBinding[];

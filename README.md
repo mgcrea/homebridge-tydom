@@ -201,6 +201,7 @@ Pointing `hostname` at your gateway's IP (e.g. `192.168.0.42`) skips Delta Dore'
 | `name` | any | Rename the accessory. |
 | `category` | any | Pin the device to a HAP category, bypassing hardware detection. See [Category overrides](#category-overrides). |
 | `trigger` | switches | Publish a stateless switch that returns to off, rather than a toggle. |
+| `autoShutdownDelay` | switches, outlets, fans | Switch off again this many **milliseconds** after coming on, whether that was from HomeKit or from the device's own button. Off by default. |
 | `smokeDetector` | temperature sensors | Publish as a smoke detector instead. |
 | `delay` | garage doors | Travel time in **milliseconds**. Defaults to `20000`. |
 | `autoCloseDelay` | garage doors | Close again this many **milliseconds** after opening. Off by default. |

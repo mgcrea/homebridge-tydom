@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MappedAccessory, type AccessorySpec } from "../src/accessories/mapped-accessory.js";
 import type { AccessoryDeps } from "../src/accessories/base.js";
 import {
@@ -26,10 +26,11 @@ const mount = (
   // Passed in to rebuild a handler against an accessory that already exists,
   // which is what the platform does when a device's category changes.
   existing?: { accessory: FakeAccessory; hap: ReturnType<typeof createHapStatics> },
+  settings: Record<string, unknown> = {},
 ) => {
   const hap = existing?.hap ?? createHapStatics();
   const accessory = existing?.accessory ?? new FakeAccessory("Test Device", "uuid:test");
-  Object.assign(accessory.context, { deviceId: 1, endpointId: 2 });
+  Object.assign(accessory.context, { deviceId: 1, endpointId: 2, settings });
   const puts: TydomProp[][] = [];
 
   const deps = {
@@ -257,6 +258,110 @@ describe("MappedAccessory", () => {
       mount(contactSensorSpec, [], { accessory, hap });
       expect(accessory.services.filter((s) => s.serviceName === "ContactSensor")).toHaveLength(1);
       expect(accessory.services).toHaveLength(2);
+    });
+  });
+
+  /**
+   * Hardware with no timer of its own, switched off again a while after it
+   * comes on. The physical button matters as much as the Home app here: the
+   * point of the setting is a light nobody remembered to turn off, and nobody
+   * forgets via HomeKit. Requested in
+   * https://github.com/mgcrea/homebridge-tydom/issues/118.
+   */
+  describe("auto shutdown", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("switches the device off again after the delay", async () => {
+      const { service, puts, hap } = mount(switchSpec, [{ name: "level", value: 0 }], undefined, {
+        autoShutdownDelay: 60_000,
+      });
+      const { On } = hap.Characteristic;
+
+      await service.getCharacteristic(On).handleSet(true);
+      expect(puts).toEqual([[{ name: "level", value: 100 }]]);
+
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      expect(puts).toEqual([[{ name: "level", value: 100 }], [{ name: "level", value: 0 }]]);
+      expect(service.currentValue(On)).toBe(false);
+    });
+
+    it("arms when the device is switched on at the wall", async () => {
+      const { handler, puts, hap } = mount(switchSpec, [{ name: "level", value: 0 }], undefined, {
+        autoShutdownDelay: 60_000,
+      });
+
+      // What the gateway pushes when someone presses the physical button.
+      await handler.update([{ name: "level", value: 100 }], "data");
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      expect(puts).toEqual([[{ name: "level", value: 0 }]]);
+      expect(hap).toBeDefined();
+    });
+
+    it("stands down when the device goes off first", async () => {
+      const { service, puts, hap } = mount(switchSpec, [{ name: "level", value: 0 }], undefined, {
+        autoShutdownDelay: 60_000,
+      });
+      const { On } = hap.Characteristic;
+
+      await service.getCharacteristic(On).handleSet(true);
+      await vi.advanceTimersByTimeAsync(30_000);
+      await service.getCharacteristic(On).handleSet(false);
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      // The two the user asked for, and no third from a timer left running.
+      expect(puts).toEqual([[{ name: "level", value: 100 }], [{ name: "level", value: 0 }]]);
+    });
+
+    it("leaves devices alone when the setting is absent", async () => {
+      const { service, puts, hap } = mount(switchSpec, [{ name: "level", value: 0 }]);
+      const { On } = hap.Characteristic;
+
+      await service.getCharacteristic(On).handleSet(true);
+      await vi.advanceTimersByTimeAsync(10 * 60_000);
+
+      expect(puts).toEqual([[{ name: "level", value: 100 }]]);
+    });
+
+    it("is not postponed by a refresh repeating the state", async () => {
+      const { service, handler, puts, hap } = mount(
+        switchSpec,
+        [{ name: "level", value: 0 }],
+        undefined,
+        { autoShutdownDelay: 60_000 },
+      );
+      const { On } = hap.Characteristic;
+
+      await service.getCharacteristic(On).handleSet(true);
+      await vi.advanceTimersByTimeAsync(30_000);
+      // The periodic refresh re-reports the current state, unchanged.
+      await handler.update([{ name: "level", value: 100 }], "data");
+      await vi.advanceTimersByTimeAsync(30_000);
+
+      // 60s after switching on, not 60s after the last thing the gateway said.
+      expect(puts).toEqual([[{ name: "level", value: 100 }], [{ name: "level", value: 0 }]]);
+    });
+
+    it("writes the off value the device itself uses", async () => {
+      const { service, puts, hap } = mount(
+        outletSpec,
+        [{ name: "plugCmd", value: "OFF" }],
+        undefined,
+        { autoShutdownDelay: 60_000 },
+      );
+      const { On } = hap.Characteristic;
+
+      await service.getCharacteristic(On).handleSet(true);
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      expect(puts.at(-1)).toEqual([{ name: "plugCmd", value: "OFF" }]);
     });
   });
 });
