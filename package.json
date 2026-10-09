@@ -75,10 +75,10 @@
     "@types/node": "^22",
     "@vitest/coverage-v8": "^4.1.11",
     "homebridge": "^2.4.0",
-    "oxfmt": "^0.65.0",
+    "oxfmt": "^0.72.0",
     "oxlint": "^1.80.0",
     "release-it": "^21.0.2",
-    "tsdown": "^0.22.14",
+    "tsdown": "^0.23.0",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11"
