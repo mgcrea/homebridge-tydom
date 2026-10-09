@@ -1,4 +1,4 @@
-import { getTydomDataPropValue } from "../api/types.js";
+import { findTydomDataPropValue, getTydomDataPropValue } from "../api/types.js";
 import type { CharacteristicProps, Service } from "homebridge";
 import {
   debug,
@@ -27,6 +27,15 @@ import type { AccessoryDeps } from "./base.js";
  * ANTI_FROST); publishing all of them buries the thermostat under switches.
  */
 const EXPOSED_THERMIC_LEVELS = new Set(["ANTI_FROST", "ECO", "COMFORT"]);
+
+/**
+ * What to report when the endpoint carries no temperature at all.
+ *
+ * HAP's own default for `CurrentTemperature`, so a device with no thermometer
+ * looks the same as one that has not answered yet, rather than inventing a
+ * reading.
+ */
+const UNKNOWN_TEMPERATURE = 0;
 
 /** An electric heating controller (Delta Dore RF4890, RF6600FP). */
 export class ThermostatAccessory extends BaseAccessory {
@@ -99,12 +108,20 @@ export class ThermostatAccessory extends BaseAccessory {
           data,
           "authorization",
         );
-        const setpoint = getTydomDataPropValue<number>(data, "setpoint");
-        const temperature = getTydomDataPropValue<number>(data, "temperature");
+        // Both may be absent on a thermic-level-only endpoint, and this state
+        // is a comparison between them, so there is nothing to decide. OFF is
+        // already what the characteristic reports for a unit that is
+        // authorised but not currently demanding.
+        const setpoint = findTydomDataPropValue<number | null>(data, "setpoint");
+        const temperature = findTydomDataPropValue<number | null>(data, "temperature");
         // Symmetrical with the heating case: this characteristic reports what
         // the device is doing now, not what it is allowed to do, so an
         // authorised unit sitting at its setpoint reads OFF either way.
         let nextValue: number = CurrentHeatingCoolingState.OFF;
+        if (typeof setpoint !== "number" || typeof temperature !== "number") {
+          debugGetResult(CurrentHeatingCoolingState, this.#service, nextValue);
+          return nextValue;
+        }
         if (authorization === "HEATING" && setpoint > temperature) {
           nextValue = CurrentHeatingCoolingState.HEAT;
         } else if (authorization === "COOLING" && temperature > setpoint) {
@@ -173,7 +190,14 @@ export class ThermostatAccessory extends BaseAccessory {
 
     this.#service.getCharacteristic(CurrentTemperature).onGet(async () => {
       debugGet(CurrentTemperature, this.#service);
-      const temperature = getTydomDataPropValue<number>(await this.#read(), "temperature");
+      // A device with no thermometer still has to answer this one, since
+      // HomeKit requires it on a Thermostat. The setpoint is the least wrong
+      // stand-in and reads as "at target", which is what no measurement means.
+      const data = await this.#read();
+      const temperature =
+        findTydomDataPropValue<number | null>(data, "temperature") ??
+        findTydomDataPropValue<number | null>(data, "setpoint") ??
+        UNKNOWN_TEMPERATURE;
       debugGetResult(CurrentTemperature, this.#service, temperature);
       return temperature;
     });
@@ -193,8 +217,9 @@ export class ThermostatAccessory extends BaseAccessory {
         // characteristic's own value instead would just replay whatever null
         // HomeKit was given first.
         const setpoint =
-          getTydomDataPropValue<number | null>(data, "setpoint") ??
-          getTydomDataPropValue<number>(data, "temperature");
+          findTydomDataPropValue<number | null>(data, "setpoint") ??
+          findTydomDataPropValue<number | null>(data, "temperature") ??
+          UNKNOWN_TEMPERATURE;
         debugGetResult(TargetTemperature, this.#service, setpoint);
         return setpoint;
       })

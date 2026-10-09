@@ -442,4 +442,62 @@ describe("ThermostatAccessory", () => {
       expect(harness.messages.join("\n")).toMatch(/advertises neither/);
     });
   });
+
+  /**
+   * Some HVAC endpoints carry a thermic level and nothing numeric at all — no
+   * `setpoint`, no `temperature`. Reading a property that is not there throws,
+   * so the accessory registered and then failed every temperature read with an
+   * assertion. Same shape as the `hvacMode`/`localMode` case above.
+   * See https://github.com/mgcrea/homebridge-tydom/pull/184.
+   */
+  describe("endpoints with no temperature data", () => {
+    const mountLevelOnly = () => {
+      const harness = createAccessoryHarness({
+        data: [
+          { name: "authorization", value: "HEATING" },
+          { name: "hvacMode", value: "NORMAL" },
+          { name: "thermicLevel", value: "COMFORT" },
+        ],
+        metadata: [meta("thermicLevel", ALL_LEVELS), meta("hvacMode", ["NORMAL", "STOP"])],
+      });
+      const handler = new ThermostatAccessory(harness.deps);
+      return { ...harness, handler, service: harness.serviceOf(harness.hap.Service.Thermostat) };
+    };
+
+    it("answers a current temperature read instead of throwing", async () => {
+      const { service, hap } = mountLevelOnly();
+      const { CurrentTemperature } = hap.Characteristic;
+
+      await expect(service.getCharacteristic(CurrentTemperature).handleGet()).resolves.toEqual(
+        expect.any(Number),
+      );
+    });
+
+    it("answers a target temperature read instead of throwing", async () => {
+      const { service, hap } = mountLevelOnly();
+      const { TargetTemperature } = hap.Characteristic;
+
+      await expect(service.getCharacteristic(TargetTemperature).handleGet()).resolves.toEqual(
+        expect.any(Number),
+      );
+    });
+
+    it("reports OFF for the current state, having nothing to compare", async () => {
+      const { service, hap } = mountLevelOnly();
+      const { CurrentHeatingCoolingState } = hap.Characteristic;
+
+      expect(await service.getCharacteristic(CurrentHeatingCoolingState).handleGet()).toBe(
+        CurrentHeatingCoolingState.OFF,
+      );
+    });
+
+    it("still drives the mode, which is all such a device really has", async () => {
+      const { service, hap } = mountLevelOnly();
+      const { TargetHeatingCoolingState } = hap.Characteristic;
+
+      expect(await service.getCharacteristic(TargetHeatingCoolingState).handleGet()).toBe(
+        TargetHeatingCoolingState.HEAT,
+      );
+    });
+  });
 });

@@ -157,6 +157,22 @@ export const parseDiscoveryResponse = <T>(
  * device is not the shape the accessory was built for — which is a bug in the
  * signature table, not a value HomeKit should be handed.
  */
+/**
+ * The value of a property the hardware may simply not carry.
+ *
+ * `getTydomDataPropValue` asserts, which is right for a property the device
+ * type guarantees. Delta Dore's HVAC range guarantees less than it looks: some
+ * endpoints expose a thermic level and no numbers at all, no `setpoint` and no
+ * `temperature`, and asserting on those turned every read into an error.
+ */
+export const findTydomDataPropValue = <
+  V extends AnyTydomDataValue = AnyTydomDataValue,
+  T extends TydomEndpointData = TydomEndpointData,
+>(
+  data: T,
+  name: string,
+): V | undefined => data.find((prop) => prop.name === name)?.value as V | undefined;
+
 export const getTydomDataPropValue = <
   V extends AnyTydomDataValue = AnyTydomDataValue,
   T extends TydomEndpointData = TydomEndpointData,
