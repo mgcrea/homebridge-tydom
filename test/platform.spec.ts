@@ -207,20 +207,76 @@ describe("TydomPlatform", () => {
   });
 
   it("releases an accessory the startup sweep removed", async () => {
-    const context = deviceContext({ accessoryId: "a" });
-    const { platform, calls, log, announce } = createPlatform([context]);
+    const gone = deviceContext({ accessoryId: "a" });
+    const kept = deviceContext({ accessoryId: "b", name: "Lampe Cuisine" });
+    const { platform, calls, log, announce } = createPlatform([gone, kept]);
     await platform.didFinishLaunching();
 
-    // The gateway no longer reports the device, so the sweep unregisters it.
-    announce([]);
+    // The gateway still reports `b` but no longer reports `a`, so the sweep
+    // unregisters `a`. A scan that reported neither would instead be treated as
+    // an unreliable scan and prune nothing — see the zero-device test below.
+    announce([kept]);
     await platform.didFinishLaunching();
     expect(platform.accessories.has("uuid:a")).toBe(false);
     expect(platform.handlers.has("uuid:a")).toBe(false);
     expect(disposed).toContain("uuid:a");
+    expect(platform.accessories.has("uuid:b")).toBe(true);
     // The count used to include what the sweep had just removed.
-    expect(log.messages).toContain("Properly loaded 0-accessories");
-    expect(calls.map((call) => call.op)).toEqual(["register", "unregister"]);
+    expect(log.messages).toContain("Properly loaded 1-accessories");
+    expect(calls.filter((call) => call.op === "unregister")).toEqual([
+      { op: "unregister", uuids: ["uuid:a"] },
+    ]);
     expectNoPrematureUpdate(calls);
+  });
+
+  /**
+   * A gateway that answers but reports nothing is indistinguishable, from the
+   * sweep's point of view, from a user who deleted every device: discovery
+   * announces nothing either way. A Tydom box does exactly that while it is
+   * still booting, and the tolerant discovery schemas turn an empty
+   * `/configs/file` into a clean scan of zero devices rather than an error.
+   *
+   * Unregistering is not recoverable: HomeKit drops the room assignment, the
+   * name, and every scene and automation that referenced the accessory.
+   */
+  it("keeps every accessory when a scan discovers nothing at all", async () => {
+    const context = deviceContext({ accessoryId: "a" });
+    const { platform, calls, log, announce } = createPlatform([context]);
+    await platform.didFinishLaunching();
+
+    announce([]);
+    await platform.didFinishLaunching();
+
+    expect(platform.accessories.has("uuid:a")).toBe(true);
+    expect(platform.handlers.has("uuid:a")).toBe(true);
+    expect(disposed).not.toContain("uuid:a");
+    expect(calls.filter((call) => call.op === "unregister")).toEqual([]);
+    expect(log.messages.join("\n")).toMatch(/reported no devices/i);
+  });
+
+  /**
+   * The shape a mediation outage actually takes: the relay accepts the login,
+   * then every request on the socket dies. It used to surface as a bare
+   * "Failed to finish launching", which reads like a plugin fault and sent
+   * people hunting through their config for a mistake that was not there.
+   */
+  it("blames the gateway, not the credentials, when a scan fails after connecting", async () => {
+    const context = deviceContext({ accessoryId: "a" });
+    const { platform, calls, log } = createPlatform([context]);
+    await platform.didFinishLaunching();
+
+    platform.controller!.scan = async () => {
+      throw new Error("Socket closed while request was pending");
+    };
+    await platform.didFinishLaunching();
+
+    const messages = log.messages.join("\n");
+    expect(messages).toMatch(/login was accepted/i);
+    expect(messages).toMatch(/Socket closed while request was pending/);
+    expect(messages).not.toMatch(/Failed to finish launching/);
+    // The accessories outlive a failed scan.
+    expect(platform.accessories.has("uuid:a")).toBe(true);
+    expect(calls.filter((call) => call.op === "unregister")).toEqual([]);
   });
 
   it("forgets a companion link when the primary is swept", async () => {
@@ -237,11 +293,13 @@ describe("TydomPlatform", () => {
       deviceType: "alarm-sensors",
       companionOf: "alarm",
     });
-    const { platform, announce } = createPlatform([primary, companion]);
+    // A survivor, so the sweep trusts the scan enough to prune at all.
+    const kept = deviceContext({ accessoryId: "b", name: "Lampe Cuisine" });
+    const { platform, announce } = createPlatform([primary, companion, kept]);
     await platform.didFinishLaunching();
     expect(platform.companions.get("uuid:alarm")).toEqual(["uuid:alarm:sensors"]);
 
-    announce([]);
+    announce([kept]);
     await platform.didFinishLaunching();
     expect(platform.companions.size).toBe(0);
   });

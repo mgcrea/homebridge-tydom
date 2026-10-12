@@ -36,6 +36,13 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   readonly Characteristic: typeof Characteristic;
 
   cleanupAccessoriesIds = new Set<string>();
+  /**
+   * How many devices the current scan announced.
+   *
+   * The sweep needs to tell "the gateway says these are gone" from "the gateway
+   * told us nothing", and those look identical from the cleanup set alone.
+   */
+  discoveredDevices = 0;
   accessories = new Map<string, PlatformAccessory<TydomAccessoryContext>>();
   /** Live handlers, keyed by the same UUID as `accessories`. */
   handlers = new Map<string, TydomAccessory>();
@@ -175,6 +182,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
   async didFinishLaunching(): Promise<void> {
     assert(this.controller);
     this.cleanupAccessoriesIds = new Set(this.accessories.keys());
+    this.discoveredDevices = 0;
 
     const maxRetries = 10;
     const maxDelay = 5 * 60 * 1000; // 5 minutes
@@ -217,8 +225,41 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
       }
     }
 
-    await this.controller.scan();
+    try {
+      await this.controller.scan();
+    } catch (err) {
+      // Reaching here means the socket came up and the login was accepted, so
+      // the credentials are not the problem however much the raw error looks
+      // like it. Saying that outright saves people searching their config for a
+      // fault that is at the other end of the wire. `tydom-client` keeps
+      // reconnecting underneath, and `resync` picks the scan back up.
+      this.log.error(
+        `Connected to ${this.config.hostname} but could not read the device list: ` +
+          `${stringifyError(err as Error)}. The login was accepted, so this is the ` +
+          `gateway not answering rather than a credentials problem — check it responds ` +
+          `in the Tydom app. The existing accessories are kept, and the plugin retries ` +
+          `when the connection comes back.`,
+      );
+      return;
+    }
     await this.settlePendingDevices();
+    // A scan that found nothing is not evidence that nothing is there. An
+    // empty `/configs/file` parses into a perfectly valid zero-device scan, and
+    // a firmware that renames the metadata the matcher keys on produces the
+    // same result with a full config. Either way, deleting the accessories
+    // costs the user every room assignment, scene and automation that
+    // referenced them, and none of that comes back on the next scan.
+    if (this.discoveredDevices === 0 && this.accessories.size > 0) {
+      this.log.warn(
+        `The gateway reported no devices, so the ${this.accessories.size} known ` +
+          `accessories were kept rather than deleted. This is usually a gateway that ` +
+          `is still starting up, or one whose radio is down — check it answers in the ` +
+          `Tydom app, then restart Homebridge. Remove them from the Homebridge UI if ` +
+          `they really are gone.`,
+      );
+      this.log.info(`Properly loaded ${this.accessories.size}-accessories`);
+      return;
+    }
     this.cleanupAccessoriesIds.forEach((accessoryId) => {
       const accessory = this.accessories.get(accessoryId);
       if (!accessory) return;
@@ -288,6 +329,7 @@ export default class TydomPlatform implements DynamicPlatformPlugin {
     const existingAccessory = this.accessories.get(id);
     const hasNewCategory = existingAccessory?.category !== category;
     debug(`[${deviceId}] ${existingAccessory?.category} vs ${category}`);
+    this.discoveredDevices += 1;
     // Prevent automatic cleanup
     this.cleanupAccessoriesIds.delete(id);
     if (existingAccessory) {
