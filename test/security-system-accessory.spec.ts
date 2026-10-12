@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { SecuritySystemAccessory } from "../src/accessories/security-system-accessory.js";
-import { createAccessoryHarness, type TydomProp } from "./accessory-harness.js";
+import { alarmCmd, createAccessoryHarness, type TydomProp } from "./accessory-harness.js";
 
 /** The panel in the state the arguments describe, with its services published. */
 const mount = async (
   over: Record<string, unknown> = {},
   settings: Record<string, unknown> = {},
+  commands = [alarmCmd(["ON", "OFF", "FORCED_ON", "MAINTENANCE", "PANIC"])],
 ) => {
   const data: TydomProp[] = Object.entries({
     alarmState: "OFF",
@@ -16,7 +17,11 @@ const mount = async (
     ...over,
   }).map(([name, value]) => ({ name, value }));
 
-  const harness = createAccessoryHarness({ data, settings: { pin: "123456", ...settings } });
+  const harness = createAccessoryHarness({
+    data,
+    commands,
+    settings: { pin: "123456", ...settings },
+  });
   const handler = new SecuritySystemAccessory(harness.deps);
   handler.start();
 
@@ -109,6 +114,113 @@ describe("SecuritySystemAccessory", () => {
         { name: "zoneCmd", body: { value: "ON", pwd: "123456", zones: [1, 2] } },
       ]);
       expect(messages.filter((message) => message.startsWith("warn:"))).toEqual([]);
+    });
+  });
+
+  /**
+   * Firmware from about 2022 added `PANIC` to `alarmCmd`, which is the red
+   * button in the official app: the siren sounds with nothing armed and no
+   * detector tripped. Older panels, and every CTX60, do not offer it — hence
+   * the probe rather than a flag. See
+   * https://github.com/mgcrea/homebridge-tydom/issues/139.
+   */
+  describe("panic switch", () => {
+    const sosSubtype = "panic";
+
+    it("sounds the siren and springs back off", async () => {
+      const { hap, accessory, commands } = await mount({}, { panicSwitch: true });
+      const service = accessory.getServiceById(hap.Service.Switch, sosSubtype);
+      const { On } = hap.Characteristic;
+      expect(service).toBeDefined();
+
+      await service?.getCharacteristic(On).handleSet(true);
+
+      expect(commands).toEqual([{ name: "alarmCmd", body: { value: "PANIC", pwd: "123456" } }]);
+      // A latched switch would leave the Home app claiming the siren is still
+      // sounding long after the panel has stopped.
+      expect(service?.currentValue(On)).toBe(false);
+    });
+
+    it("sends nothing when switched off", async () => {
+      const { hap, accessory, commands } = await mount({}, { panicSwitch: true });
+      const service = accessory.getServiceById(hap.Service.Switch, sosSubtype);
+
+      await service?.getCharacteristic(hap.Characteristic.On).handleSet(false);
+
+      expect(commands).toEqual([]);
+    });
+
+    it("is not published unless asked for", async () => {
+      const { hap, accessory } = await mount();
+      expect(accessory.getServiceById(hap.Service.Switch, sosSubtype)).toBeUndefined();
+    });
+
+    it("is not published on a panel that does not advertise PANIC", async () => {
+      const { hap, accessory, messages } = await mount({}, { panicSwitch: true }, [
+        alarmCmd(["ON", "OFF", "FORCED_ON"]),
+      ]);
+      expect(accessory.getServiceById(hap.Service.Switch, sosSubtype)).toBeUndefined();
+      expect(messages.join("\n")).toMatch(/does not accept/i);
+    });
+
+    it("is not published when the gateway gave no command metadata", async () => {
+      const { hap, accessory } = await mount({}, { panicSwitch: true }, []);
+      expect(accessory.getServiceById(hap.Service.Switch, sosSubtype)).toBeUndefined();
+    });
+  });
+
+  /**
+   * `FORCED_ON` is advertised by every panel in every dump, old and new, and
+   * arms despite an open door or window — the case that otherwise refuses to
+   * arm at all.
+   */
+  describe("forced arming", () => {
+    it("arms away with FORCED_ON when asked", async () => {
+      const { hap, target, commands } = await mount({}, { forceArm: true });
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.AWAY_ARM);
+
+      expect(commands).toEqual([{ name: "alarmCmd", body: { value: "FORCED_ON", pwd: "123456" } }]);
+    });
+
+    it("arms zones with FORCED_ON too", async () => {
+      const { hap, target, commands } = await mount(
+        {},
+        { forceArm: true, aliases: { stay: [1, 2] } },
+      );
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.STAY_ARM);
+
+      expect(commands).toEqual([
+        { name: "zoneCmd", body: { value: "FORCED_ON", pwd: "123456", zones: [1, 2] } },
+      ]);
+    });
+
+    it("still disarms with OFF", async () => {
+      const { hap, target, commands } = await mount({ alarmMode: "ON" }, { forceArm: true });
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.DISARM);
+
+      expect(commands).toEqual([{ name: "alarmCmd", body: { value: "OFF", pwd: "123456" } }]);
+    });
+
+    it("arms normally when the panel does not advertise FORCED_ON", async () => {
+      const { hap, target, commands, messages } = await mount({}, { forceArm: true }, [
+        alarmCmd(["ON", "OFF"]),
+      ]);
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.AWAY_ARM);
+
+      expect(commands).toEqual([{ name: "alarmCmd", body: { value: "ON", pwd: "123456" } }]);
+      expect(messages.join("\n")).toMatch(/does not accept/i);
+    });
+
+    it("arms with ON when not asked", async () => {
+      const { hap, target, commands } = await mount();
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.AWAY_ARM);
+
+      expect(commands).toEqual([{ name: "alarmCmd", body: { value: "ON", pwd: "123456" } }]);
     });
   });
 });

@@ -208,6 +208,8 @@ Pointing `hostname` at your gateway's IP (e.g. `192.168.0.42`) skips Delta Dore'
 | `pin` | alarm | PIN for this alarm, overriding the platform-level one. |
 | `aliases` | alarm | Which armed-zone combinations map to HomeKit's Home and Night. See [Security system](#security-system). |
 | `sensors` | alarm | Set to `false` to drop the companion accessory holding the opening detectors. On by default. |
+| `forceArm` | alarm | Arm with `FORCED_ON`, which arms despite an open door or window rather than refusing. |
+| `panicSwitch` | alarm | Publish a switch that sounds the siren on demand, with nothing armed and no detector tripped. Needs a panel whose `alarmCmd` accepts `PANIC` — Delta Dore added it around 2022, and a CTX60 cannot do it. |
 | `legacy` | alarm | Force the CTX60 protocol. Detected automatically — only set this if detection is wrong. |
 
 ### Security system

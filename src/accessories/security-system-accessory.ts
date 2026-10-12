@@ -1,4 +1,4 @@
-import { getTydomDataPropValue } from "../api/types.js";
+import { findCommandValues, getTydomDataPropValue } from "../api/types.js";
 import type { Service } from "homebridge";
 import type { TydomUpdateType } from "../api/types.js";
 import {
@@ -36,6 +36,14 @@ export class SecuritySystemAccessory extends BaseAccessory {
   readonly #settings: AlarmSettings;
   readonly #legacy: boolean;
   readonly #pin: string | undefined;
+  /**
+   * What `alarmCmd` accepts on this panel.
+   *
+   * Firmware from about 2022 added `PANIC`; a CTX60 drives parts and offers
+   * neither it nor `alarmCmd` at all. Probed rather than configured, so a user
+   * cannot ask for something their hardware will refuse.
+   */
+  readonly #armCommandValues: string[];
 
   #service: Service | undefined;
   #systOpenIssue: Service | undefined;
@@ -49,6 +57,8 @@ export class SecuritySystemAccessory extends BaseAccessory {
     this.#settings = this.accessory.context.settings as AlarmSettings;
     this.#legacy = this.#settings.legacy ?? false;
     this.#pin = this.#settings.pin ?? this.platform.config.pin;
+    this.#armCommandValues =
+      findCommandValues(this.accessory.context.commands ?? [], "alarmCmd", "value") ?? [];
 
     if (!this.#pin) {
       this.platform.log.warn(
@@ -126,7 +136,70 @@ export class SecuritySystemAccessory extends BaseAccessory {
     this.#preAlarm = this.#addContactSensor("preAlarm", this.t("PREALARM"));
     this.#preAlarm.getCharacteristic(Characteristic.ContactSensorState).updateValue(false);
 
+    this.#setupPanicSwitch();
     this.#setupZones(initialData, zones);
+  }
+
+  /**
+   * A switch that sounds the siren with nothing armed and no detector tripped,
+   * which is what the red button in the official Tydom app does.
+   *
+   * Stateless: the panel stops on its own and never reports that it has, so a
+   * latched switch would leave the Home app claiming the siren is still going.
+   */
+  #setupPanicSwitch(): void {
+    if (!this.#settings.panicSwitch) {
+      return;
+    }
+    const { Characteristic, Service: Services } = this.platform;
+    const { On } = Characteristic;
+    if (!this.#armCommandValues.includes("PANIC")) {
+      this.platform.log.warn(
+        `${this.name} does not accept the PANIC command, so no siren switch was published. ` +
+          `Delta Dore added it to \`alarmCmd\` around 2022 — an older panel, or a CTX60, cannot sound one on demand.`,
+      );
+      return;
+    }
+
+    const service = this.subService(Services.Switch, this.t("DISTRESS_V3"), "panic");
+    debugAddSubService(service, this.accessory);
+    this.#service?.addLinkedService(service);
+    service
+      .getCharacteristic(On)
+      .onSet(async (value) => {
+        debugSet(On, service, value);
+        if (!value || !this.#pin) {
+          return;
+        }
+        await this.api.putCommand(this.deviceId, this.endpointId, "alarmCmd", {
+          value: "PANIC",
+          pwd: this.#pin,
+        });
+        debugSetResult(On, service, value, "PANIC");
+        service.updateCharacteristic(On, false);
+      })
+      .updateValue(false);
+  }
+
+  /**
+   * The value that arms this panel.
+   *
+   * `FORCED_ON` arms despite an open door or window, which a plain `ON` refuses
+   * to do. Every panel in every dump advertises it, but it is checked anyway:
+   * the cost of being wrong is an alarm that silently did not arm.
+   */
+  #armValue(): string {
+    if (!this.#settings.forceArm) {
+      return "ON";
+    }
+    if (!this.#armCommandValues.includes("FORCED_ON")) {
+      this.platform.log.warn(
+        `${this.name} does not accept FORCED_ON, so "forceArm" was ignored and it will arm normally — ` +
+          `which an open door or window may refuse.`,
+      );
+      return "ON";
+    }
+    return "FORCED_ON";
   }
 
   protected override apply(updates: Record<string, unknown>[], type: TydomUpdateType): void {
@@ -272,7 +345,7 @@ export class SecuritySystemAccessory extends BaseAccessory {
       target === SecuritySystemTargetState.AWAY_ARM ||
       target === SecuritySystemTargetState.DISARM
     ) {
-      const tydomValue = target === SecuritySystemTargetState.DISARM ? "OFF" : "ON";
+      const tydomValue = target === SecuritySystemTargetState.DISARM ? "OFF" : this.#armValue();
       if (this.#legacy) {
         for (const part of [1, 2, 3, 4]) {
           await this.api.putCommand(this.deviceId, this.endpointId, "partCmd", {
@@ -308,13 +381,13 @@ export class SecuritySystemAccessory extends BaseAccessory {
       );
       return;
     }
-    await this.#setZones(targetZones, "ON");
+    await this.#setZones(targetZones, this.#armValue());
     if (this.#service) {
       debugSetResult(SecuritySystemTargetState, this.#service, target, "ON");
     }
   }
 
-  async #setZones(zoneIds: number[], value: "ON" | "OFF"): Promise<void> {
+  async #setZones(zoneIds: number[], value: string): Promise<void> {
     if (!this.#legacy) {
       await this.api.putCommand(this.deviceId, this.endpointId, "zoneCmd", {
         value,

@@ -28,6 +28,14 @@ export type ZoneAliases = {
 
 export type AlarmSettings = {
   legacy?: boolean;
+  /**
+   * Publish a switch that sounds the siren outright, for a panel whose
+   * `alarmCmd` accepts `PANIC`. Opt-in: a switch that makes a siren wail is not
+   * something to put in someone's Home app uninvited.
+   */
+  panicSwitch?: boolean;
+  /** Arm with `FORCED_ON`, which arms despite an open door or window. */
+  forceArm?: boolean;
   aliases?: ZoneAliases;
   sensors?: boolean;
   pin?: string;
