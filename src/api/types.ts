@@ -102,6 +102,64 @@ export const tydomMetaResponseSchema = z.array(
 export type TydomMetaResponse = z.infer<typeof tydomMetaResponseSchema>;
 
 /**
+ * One parameter of a command, as `/devices/cmeta` describes it.
+ *
+ * `enum_values` is the interesting part: it is how a capability is probed
+ * rather than assumed. The same `alarmCmd` accepts `PANIC` on a TYXAL+ running
+ * 2022-or-later firmware and refuses it on an older one, and nothing else in
+ * the gateway's answers says which you are talking to.
+ */
+export const tydomCommandParameterSchema = looseObject({
+  name: z.string(),
+  type: z.string().default("string"),
+  enum_values: z.array(z.string()).optional(),
+  max: z.number().optional(),
+  min: z.number().optional(),
+  size: z.number().optional(),
+  step: z.number().optional(),
+  unit: z.string().optional(),
+}).loose();
+export type TydomCommandParameter = z.infer<typeof tydomCommandParameterSchema>;
+
+export const tydomCommandSchema = looseObject({
+  name: z.string(),
+  permission: z.string().default("w"),
+  parameters: z.array(tydomCommandParameterSchema).default([]),
+}).loose();
+export type TydomCommand = z.infer<typeof tydomCommandSchema>;
+
+export const tydomCommandMetaEndpointSchema = looseObject({
+  id: z.number(),
+  error: z.number().default(0),
+  cmetadata: z.array(tydomCommandSchema).default([]),
+}).loose();
+
+/** `GET /devices/cmeta` */
+export const tydomCommandMetaResponseSchema = z.array(
+  looseObject({
+    id: z.number(),
+    endpoints: z.array(tydomCommandMetaEndpointSchema).default([]),
+  }).loose(),
+);
+export type TydomCommandMetaResponse = z.infer<typeof tydomCommandMetaResponseSchema>;
+
+/**
+ * The values a command's parameter accepts, or `undefined` when the endpoint
+ * does not advertise that command or the parameter carries no enum.
+ *
+ * `undefined` rather than an empty array on purpose: "not offered" and "offered
+ * with no constraint" are different answers, and only the first should stop a
+ * feature being published.
+ */
+export const findCommandValues = (
+  commands: TydomCommand[],
+  command: string,
+  parameter: string,
+): string[] | undefined =>
+  commands.find(({ name }) => name === command)?.parameters.find(({ name }) => name === parameter)
+    ?.enum_values;
+
+/**
  * `null` is not defensive padding — the gateway really sends it. A thermostat
  * driven by thermic levels reports `setpoint: null` on every single read, and
  * omitting it here is what let a null reach a HomeKit characteristic.

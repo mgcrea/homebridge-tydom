@@ -6,7 +6,9 @@ import {
   TydomSchemaError,
   tydomConfigResponseSchema,
   tydomGroupsResponseSchema,
+  tydomCommandMetaResponseSchema,
   tydomMetaResponseSchema,
+  findCommandValues,
 } from "../src/api/types.js";
 
 describe("discovery schemas", () => {
@@ -140,6 +142,73 @@ describe("discovery schemas", () => {
 const setpointData = (value: unknown): TydomEndpointData => [
   { name: "setpoint", value: value as never, validity: "upToDate" },
 ];
+
+/**
+ * `/devices/cmeta` says which commands an endpoint accepts and which values
+ * each takes. It is how a capability gets probed rather than assumed: a TYXAL+
+ * on 2022-or-later firmware advertises `PANIC` on `alarmCmd`, and one on older
+ * firmware does not.
+ */
+describe("/devices/cmeta", () => {
+  const alarmCmeta = [
+    {
+      id: 1,
+      endpoints: [
+        {
+          id: 1,
+          cmetadata: [
+            {
+              name: "alarmCmd",
+              permission: "w",
+              parameters: [
+                { name: "pwd", type: "hexstring", size: 6 },
+                {
+                  name: "value",
+                  type: "string",
+                  enum_values: ["ON", "OFF", "FORCED_ON", "MAINTENANCE", "PANIC"],
+                },
+              ],
+            },
+            { name: "histo", permission: "r", parameters: [] },
+          ],
+        },
+      ],
+    },
+  ];
+
+  it("parses a command metadata response", () => {
+    const parsed = parseDiscoveryResponse(
+      "/devices/cmeta",
+      tydomCommandMetaResponseSchema,
+      alarmCmeta,
+    );
+    expect(parsed[0]?.endpoints[0]?.cmetadata[0]?.name).toBe("alarmCmd");
+  });
+
+  it("defaults a missing cmetadata array rather than throwing", () => {
+    const parsed = parseDiscoveryResponse("/devices/cmeta", tydomCommandMetaResponseSchema, [
+      { id: 1, endpoints: [{ id: 1 }] },
+    ]);
+    expect(parsed[0]?.endpoints[0]?.cmetadata).toEqual([]);
+  });
+
+  describe("findCommandValues", () => {
+    const commands = alarmCmeta[0]!.endpoints[0]!.cmetadata;
+
+    it("returns the values a command parameter accepts", () => {
+      expect(findCommandValues(commands, "alarmCmd", "value")).toContain("PANIC");
+      expect(findCommandValues(commands, "alarmCmd", "value")).toContain("FORCED_ON");
+    });
+
+    it("returns undefined for a command the endpoint does not advertise", () => {
+      expect(findCommandValues(commands, "partCmd", "value")).toBeUndefined();
+    });
+
+    it("returns undefined for a parameter that carries no enum", () => {
+      expect(findCommandValues(commands, "alarmCmd", "pwd")).toBeUndefined();
+    });
+  });
+});
 
 describe("getTydomDataPropValue", () => {
   it("returns the value", () => {

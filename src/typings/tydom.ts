@@ -22,6 +22,13 @@ export type TydomAccessoryContext<
   group?: TydomConfigGroup | undefined;
   manufacturer?: string | undefined;
   metadata: TydomMetaElement[];
+  /**
+   * The commands the endpoint advertises. Optional because an accessory cached
+   * by a release that never fetched `/devices/cmeta` carries none, and a
+   * capability probed through it must then read as unsupported rather than
+   * throw.
+   */
+  commands?: TydomCommand[] | undefined;
   model?: string | undefined;
   name: string;
   serialNumber?: string | undefined;
@@ -37,12 +44,19 @@ export type TydomAccessoryUpdateContext = Pick<
 // Wire types live in the framework-free api layer. Imported for use by the
 // device-specific aliases below, and re-exported so the accessories keep a
 // single import point during the phase 6 conversion.
-import type { TydomConfigGroup, TydomDataElement, TydomMetaElement } from "../api/types.js";
+import type {
+  TydomCommand,
+  TydomConfigGroup,
+  TydomDataElement,
+  TydomMetaElement,
+} from "../api/types.js";
 
 export type {
   AnyTydomDataValue,
   TydomConfigEndpoint,
   TydomConfigGroup,
+  TydomCommand,
+  TydomCommandMetaResponse,
   TydomConfigResponse,
   TydomDataElement,
   TydomEndpointData,

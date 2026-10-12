@@ -6,6 +6,7 @@ import {
   type DiscoverDevicesInput,
 } from "../src/api/discovery.js";
 import type {
+  TydomCommandMetaResponse,
   TydomConfigResponse,
   TydomGroupsResponse,
   TydomMetaResponse,
@@ -62,6 +63,26 @@ const meta: TydomMetaResponse = [
 ];
 
 const baseInput: DiscoverDevicesInput = { username: "012345GATEWAY", config, groups, meta };
+
+/** What `/devices/cmeta` says device 2 accepts. */
+const cmeta: TydomCommandMetaResponse = [
+  {
+    id: 2,
+    endpoints: [
+      {
+        id: 2,
+        error: 0,
+        cmetadata: [
+          {
+            name: "levelCmd",
+            permission: "w",
+            parameters: [{ name: "value", type: "string", enum_values: ["ON", "OFF", "TOGGLE"] }],
+          },
+        ],
+      },
+    ],
+  },
+];
 
 describe("discoverDevices", () => {
   it("produces the exact accessoryId every HomeKit UUID is seeded from", () => {
@@ -161,6 +182,7 @@ describe("expandCompanions", () => {
     deviceType: "alarm" as const,
     category: CATEGORY.SECURITY_SYSTEM,
     metadata: [],
+    commands: [],
     settings: {},
     group: undefined,
     firstUsage: "alarm",
@@ -198,5 +220,29 @@ describe("expandCompanions", () => {
   it("leaves non-alarm devices alone", () => {
     const light = { ...alarm, deviceType: "lightbulb" as const };
     expect(expandCompanions(light)).toEqual([light]);
+  });
+});
+
+/**
+ * Commands travel with the device so an accessory can ask what its own
+ * hardware accepts, which is the only way to tell a panel that can sound a
+ * panic alarm from one that cannot.
+ */
+describe("command metadata", () => {
+  it("carries an endpoint's commands onto the device", () => {
+    const { devices } = discoverDevices({ ...baseInput, cmeta });
+    const light = devices.find((device) => device.deviceId === 2);
+    expect(light?.commands).toEqual(cmeta[0]?.endpoints[0]?.cmetadata);
+  });
+
+  it("gives an endpoint with no advertised commands an empty list", () => {
+    const { devices } = discoverDevices({ ...baseInput, cmeta });
+    const shutter = devices.find((device) => device.deviceId === 1);
+    expect(shutter?.commands).toEqual([]);
+  });
+
+  it("works when the gateway answered no command metadata at all", () => {
+    const { devices } = discoverDevices(baseInput);
+    expect(devices.every((device) => Array.isArray(device.commands))).toBe(true);
   });
 });

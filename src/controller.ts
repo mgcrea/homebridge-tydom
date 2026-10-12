@@ -13,6 +13,7 @@ import {
   parseDiscoveryResponse,
   tydomConfigResponseSchema,
   tydomGroupsResponseSchema,
+  tydomCommandMetaResponseSchema,
   tydomMetaResponseSchema,
   type TydomUpdateType,
 } from "./api/types.js";
@@ -24,6 +25,7 @@ import type {
   TydomAccessoryUpdateContext,
   TydomConfigResponse,
   TydomGroupsResponse,
+  TydomCommandMetaResponse,
   TydomMetaResponse,
 } from "./typings/tydom.js";
 import {
@@ -238,6 +240,7 @@ export default class TydomController extends EventEmitter {
     config: TydomConfigResponse;
     groups: TydomGroupsResponse;
     meta: TydomMetaResponse;
+    cmeta: TydomCommandMetaResponse;
   }> {
     const { hostname } = this.config;
     debug(`Syncing state from hostname=${styleString(hostname)}...`);
@@ -259,21 +262,38 @@ export default class TydomController extends EventEmitter {
       tydomMetaResponseSchema,
       await this.client.get("/devices/meta"),
     );
+    // Which commands each endpoint accepts, and with which values. Tolerated
+    // rather than required: it is only used to decide whether to publish an
+    // optional capability, so a gateway that will not answer should lose that
+    // capability, not its whole scan.
+    let cmeta: TydomCommandMetaResponse = [];
+    try {
+      cmeta = parseDiscoveryResponse(
+        "/devices/cmeta",
+        tydomCommandMetaResponseSchema,
+        await this.client.get("/devices/cmeta"),
+      );
+    } catch (err) {
+      this.log.warn(
+        `Could not read command metadata, so optional device capabilities stay off: ${stringifyError(err as Error)}`,
+      );
+    }
     // Final outro handshake
     await this.refresh();
     this.scheduleRefresh();
-    return { config, groups, meta };
+    return { config, groups, meta, cmeta };
   }
   async scan(): Promise<void> {
     const { hostname, username, settings = {} } = this.config;
     this.log.info(`Scanning devices from hostname=${styleString(hostname)}...`);
-    const { config, groups, meta } = await this.sync();
+    const { config, groups, meta, cmeta } = await this.sync();
 
     const { devices, skipped } = discoverDevices({
       username,
       config,
       groups,
       meta,
+      cmeta,
       settings,
       filters: {
         includedDevices: this.config.includedDevices,

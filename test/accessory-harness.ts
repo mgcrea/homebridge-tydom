@@ -1,5 +1,5 @@
 import type { AccessoryDeps } from "../src/accessories/base.js";
-import type { TydomMetaElement } from "../src/api/types.js";
+import type { TydomCommand, TydomMetaElement } from "../src/api/types.js";
 import { createHapStatics, FakeAccessory, type FakeService } from "./hap-double.js";
 
 export type TydomProp = { name: string; value: unknown };
@@ -18,6 +18,8 @@ export type HapStatics = ReturnType<typeof createHapStatics>;
 export type HarnessOptions = {
   data?: TydomProp[];
   metadata?: TydomMetaElement[];
+  /** What `/devices/cmeta` said this endpoint accepts. */
+  commands?: TydomCommand[];
   settings?: Record<string, unknown>;
   staleAfterMs?: number;
   existing?: { accessory: FakeAccessory; hap: HapStatics };
@@ -31,6 +33,16 @@ export const meta = (name: string, enumValues?: string[]): TydomMetaElement => (
   ...(enumValues ? { enum_values: enumValues } : {}),
 });
 
+/** An `alarmCmd` advertising exactly the values given. */
+export const alarmCmd = (values: string[]): TydomCommand => ({
+  name: "alarmCmd",
+  permission: "w",
+  parameters: [
+    { name: "pwd", type: "hexstring", size: 6 },
+    { name: "value", type: "string", enum_values: values },
+  ],
+});
+
 export const createAccessoryHarness = (options: HarnessOptions = {}) => {
   const hap = options.existing?.hap ?? createHapStatics();
   const accessory = options.existing?.accessory ?? new FakeAccessory("Test Device", "uuid:test");
@@ -38,6 +50,7 @@ export const createAccessoryHarness = (options: HarnessOptions = {}) => {
     deviceId: 1,
     endpointId: 2,
     metadata: options.metadata ?? [],
+    commands: options.commands ?? [],
     settings: options.settings ?? {},
   });
 

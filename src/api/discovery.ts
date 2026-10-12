@@ -9,6 +9,8 @@ import {
 } from "./device-type.js";
 import { getAccessoryId, getUniqueId } from "./messages.js";
 import type {
+  TydomCommand,
+  TydomCommandMetaResponse,
   TydomConfigGroup,
   TydomConfigResponse,
   TydomGroupsResponse,
@@ -33,6 +35,7 @@ export type DiscoveryFilters = {
 
 export type DiscoveredDevice = {
   accessoryId: string;
+  commands: TydomCommand[];
   uniqueId: string;
   deviceId: number;
   endpointId: number;
@@ -68,6 +71,14 @@ export const findEndpointMetadata = (
 ): TydomMetaElement[] | undefined =>
   meta.find(({ id }) => id === deviceId)?.endpoints.find(({ id }) => id === endpointId)?.metadata;
 
+/** The commands an endpoint advertises, from `/devices/cmeta`. */
+export const findEndpointCommands = (
+  deviceId: number,
+  endpointId: number,
+  cmeta: TydomCommandMetaResponse,
+): TydomCommand[] | undefined =>
+  cmeta.find(({ id }) => id === deviceId)?.endpoints.find(({ id }) => id === endpointId)?.cmetadata;
+
 export const findEndpointGroupId = (
   deviceId: number,
   endpointId: number,
@@ -85,6 +96,13 @@ export type DiscoverDevicesInput = {
   config: TydomConfigResponse;
   groups: TydomGroupsResponse;
   meta: TydomMetaResponse;
+  /**
+   * Optional: a gateway that does not answer `/devices/cmeta`, or a cached
+   * accessory restored by a release that never asked for it, simply has no
+   * command metadata — every capability probed through it then reads as
+   * unsupported, which is the safe direction.
+   */
+  cmeta?: TydomCommandMetaResponse;
   settings?: Record<string, DeviceSettings>;
   filters?: DiscoveryFilters;
 };
@@ -96,7 +114,7 @@ export type DiscoverDevicesInput = {
  * seed for every HomeKit UUID — directly testable.
  */
 export const discoverDevices = (input: DiscoverDevicesInput): DiscoveryResult => {
-  const { username, config, groups, meta, settings = {}, filters = {} } = input;
+  const { username, config, groups, meta, cmeta = [], settings = {}, filters = {} } = input;
   const {
     includedDevices = [],
     excludedDevices = [],
@@ -127,6 +145,7 @@ export const discoverDevices = (input: DiscoverDevicesInput): DiscoveryResult =>
 
     const userSettings = settings[deviceId] ?? {};
     const metadata = findEndpointMetadata(deviceId, endpointId, meta) ?? [];
+    const commands = findEndpointCommands(deviceId, endpointId, cmeta) ?? [];
 
     // A numeric `category` in the user's settings pins the endpoint, bypassing
     // signature resolution entirely.
@@ -181,6 +200,7 @@ export const discoverDevices = (input: DiscoverDevicesInput): DiscoveryResult =>
       deviceType,
       category,
       metadata,
+      commands,
       // A fresh object: implied settings must never be written back into the
       // user's live config, which is what the previous Object.assign did.
       settings: { ...userSettings, ...impliedSettings },
