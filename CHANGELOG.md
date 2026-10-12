@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.34.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.33.0...v0.34.0) (2026-10-12)
+
+No accessory is re-registered by this release: rooms, names and automations are preserved. Both additions are opt-in per device and only appear on hardware that advertises them, so nothing changes until you ask.
+
+### Features
+
+- **security-system:** `panicSwitch` publishes a switch that sounds the siren outright — nothing armed, no detector tripped — which is what the red button in the official Tydom app does:
+
+  ```json
+  "settings": { "1657464": { "panicSwitch": true } }
+  ```
+
+  It is stateless, because the panel stops on its own and never reports that it has, so a latched switch would leave the Home app claiming the siren is still going. Opt-in rather than automatic: a switch that makes a siren wail is not something to put in a Home app uninvited. It needs a panel whose `alarmCmd` accepts `PANIC`, which Delta Dore added around 2022 — an older panel, or a CTX60, says so in the log instead of publishing a switch that cannot work. Requested in [#139](https://github.com/mgcrea/homebridge-tydom/issues/139).
+- **security-system:** `forceArm` arms with `FORCED_ON`, which arms despite an open door or window instead of refusing. Every panel advertises it, and it is still checked, because the cost of being wrong is an alarm that silently did not arm.
+
+### Internals
+
+- The gateway's `/devices/cmeta` is read alongside the config, groups and meta, and each endpoint's commands travel with the device as `commands`. It is the only thing that says which values a command accepts, and so the only way to tell a panel that can sound a panic alarm from one that cannot. The read is wrapped: command metadata decides whether an optional capability is published, so a gateway that will not answer loses that capability rather than its whole scan, and an accessory cached by an earlier release carries none and reads as unsupported.
+
 ## [0.33.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.32.3...v0.33.0) (2026-10-09)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. The one addition is opt-in per device, so nothing changes until you ask for it.
