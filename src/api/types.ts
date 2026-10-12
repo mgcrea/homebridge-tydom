@@ -144,20 +144,26 @@ export const tydomCommandMetaResponseSchema = z.array(
 export type TydomCommandMetaResponse = z.infer<typeof tydomCommandMetaResponseSchema>;
 
 /**
- * The values a command's parameter accepts, or `undefined` when the endpoint
- * does not advertise that command or the parameter carries no enum.
+ * Whether an endpoint's command takes `value` for one of its parameters.
  *
- * `undefined` rather than an empty array on purpose: "not offered" and "offered
- * with no constraint" are different answers, and only the first should stop a
- * feature being published.
+ * A parameter that carries no enum accepts anything: "offered with no
+ * constraint" is a different answer from "not offered", and only the second
+ * should stop a feature being published.
  */
-export const findCommandValues = (
+export const acceptsCommandValue = (
   commands: TydomCommand[],
   command: string,
   parameter: string,
-): string[] | undefined =>
-  commands.find(({ name }) => name === command)?.parameters.find(({ name }) => name === parameter)
-    ?.enum_values;
+  value: string,
+): boolean => {
+  const found = commands
+    .find(({ name }) => name === command)
+    ?.parameters.find(({ name }) => name === parameter);
+  if (!found) {
+    return false;
+  }
+  return found.enum_values?.includes(value) ?? true;
+};
 
 /**
  * `null` is not defensive padding — the gateway really sends it. A thermostat

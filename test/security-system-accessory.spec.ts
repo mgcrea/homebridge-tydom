@@ -1,12 +1,26 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SecuritySystemAccessory } from "../src/accessories/security-system-accessory.js";
-import { alarmCmd, createAccessoryHarness, type TydomProp } from "./accessory-harness.js";
+import type { TydomCommand } from "../src/api/types.js";
+import {
+  alarmCmd,
+  command,
+  createAccessoryHarness,
+  type HarnessOptions,
+  type TydomProp,
+} from "./accessory-harness.js";
+
+/** What a 2022-or-later TYXAL+ advertises, as in every recent dump. */
+const TYXAL_COMMANDS = [
+  alarmCmd(["ON", "OFF", "FORCED_ON", "MAINTENANCE", "PANIC"]),
+  command("zoneCmd", ["ON", "OFF", "FORCED_ON", "MAINTENANCE", "PANIC"]),
+];
 
 /** The panel in the state the arguments describe, with its services published. */
 const mount = async (
   over: Record<string, unknown> = {},
   settings: Record<string, unknown> = {},
-  commands = [alarmCmd(["ON", "OFF", "FORCED_ON", "MAINTENANCE", "PANIC"])],
+  commands: TydomCommand[] = TYXAL_COMMANDS,
+  existing?: HarnessOptions["existing"],
 ) => {
   const data: TydomProp[] = Object.entries({
     alarmState: "OFF",
@@ -21,6 +35,7 @@ const mount = async (
     data,
     commands,
     settings: { pin: "123456", ...settings },
+    ...(existing ? { existing } : {}),
   });
   const handler = new SecuritySystemAccessory(harness.deps);
   handler.start();
@@ -127,7 +142,12 @@ describe("SecuritySystemAccessory", () => {
   describe("panic switch", () => {
     const sosSubtype = "panic";
 
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("sounds the siren and springs back off", async () => {
+      vi.useFakeTimers();
       const { hap, accessory, commands } = await mount({}, { panicSwitch: true });
       const service = accessory.getServiceById(hap.Service.Switch, sosSubtype);
       const { On } = hap.Characteristic;
@@ -136,8 +156,11 @@ describe("SecuritySystemAccessory", () => {
       await service?.getCharacteristic(On).handleSet(true);
 
       expect(commands).toEqual([{ name: "alarmCmd", body: { value: "PANIC", pwd: "123456" } }]);
-      // A latched switch would leave the Home app claiming the siren is still
-      // sounding long after the panel has stopped.
+      // HAP stores the written value once the handler returns, so the reset
+      // has to come after it. A latched switch would leave the Home app
+      // claiming the siren is still sounding long after the panel has stopped.
+      expect(service?.currentValue(On)).toBe(true);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(service?.currentValue(On)).toBe(false);
     });
 
@@ -166,6 +189,58 @@ describe("SecuritySystemAccessory", () => {
     it("is not published when the gateway gave no command metadata", async () => {
       const { hap, accessory } = await mount({}, { panicSwitch: true }, []);
       expect(accessory.getServiceById(hap.Service.Switch, sosSubtype)).toBeUndefined();
+    });
+
+    it("is published when alarmCmd puts no constraint on its value", async () => {
+      // Offered with no enum is not the same answer as not offered.
+      const { hap, accessory } = await mount({}, { panicSwitch: true }, [command("alarmCmd")]);
+      expect(accessory.getServiceById(hap.Service.Switch, sosSubtype)).toBeDefined();
+    });
+
+    it("springs back off without a pin, having sent nothing", async () => {
+      vi.useFakeTimers();
+      const { hap, accessory, commands } = await mount({}, { panicSwitch: true, pin: undefined });
+      const service = accessory.getServiceById(hap.Service.Switch, sosSubtype);
+      const { On } = hap.Characteristic;
+
+      await service?.getCharacteristic(On).handleSet(true);
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(commands).toEqual([]);
+      expect(service?.currentValue(On)).toBe(false);
+    });
+
+    it("is removed from a cached accessory once no longer asked for", async () => {
+      // A switch left behind has no handler: it toggles in the Home app and
+      // sounds nothing, which is worse than no switch at all.
+      const first = await mount({}, { panicSwitch: true });
+      expect(first.accessory.getServiceById(first.hap.Service.Switch, sosSubtype)).toBeDefined();
+
+      const { hap, accessory } = await mount({}, {}, TYXAL_COMMANDS, {
+        accessory: first.accessory,
+        hap: first.hap,
+      });
+
+      // The rebuilt handler finds the panel service already there, so mount
+      // returns before setup has run.
+      await vi.waitFor(() =>
+        expect(accessory.getServiceById(hap.Service.Switch, sosSubtype)).toBeUndefined(),
+      );
+    });
+
+    it("is removed from a cached accessory once the panel stops advertising PANIC", async () => {
+      const first = await mount({}, { panicSwitch: true });
+
+      const { hap, accessory } = await mount({}, { panicSwitch: true }, [], {
+        accessory: first.accessory,
+        hap: first.hap,
+      });
+
+      // The rebuilt handler finds the panel service already there, so mount
+      // returns before setup has run.
+      await vi.waitFor(() =>
+        expect(accessory.getServiceById(hap.Service.Switch, sosSubtype)).toBeUndefined(),
+      );
     });
   });
 
@@ -213,6 +288,76 @@ describe("SecuritySystemAccessory", () => {
 
       expect(commands).toEqual([{ name: "alarmCmd", body: { value: "ON", pwd: "123456" } }]);
       expect(messages.join("\n")).toMatch(/does not accept/i);
+    });
+
+    it("arms zones with ON when zoneCmd does not advertise FORCED_ON", async () => {
+      // Checked against the command actually sent: alarmCmd accepting it says
+      // nothing about zoneCmd.
+      const { hap, target, commands } = await mount(
+        {},
+        { forceArm: true, aliases: { stay: [1, 2] } },
+        [alarmCmd(["ON", "OFF", "FORCED_ON"]), command("zoneCmd", ["ON", "OFF"])],
+      );
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.STAY_ARM);
+
+      expect(commands).toEqual([
+        { name: "zoneCmd", body: { value: "ON", pwd: "123456", zones: [1, 2] } },
+      ]);
+    });
+
+    it("arms a single zone switch with FORCED_ON", async () => {
+      const { hap, accessory, commands } = await mount({ zone1State: "OFF" }, { forceArm: true });
+      const zone = accessory.getServiceById(hap.Service.Switch, "zone_1");
+
+      await zone?.getCharacteristic(hap.Characteristic.On).handleSet(true);
+
+      expect(commands).toEqual([
+        { name: "zoneCmd", body: { value: "FORCED_ON", pwd: "123456", zones: [1] } },
+      ]);
+    });
+
+    it("still disarms a single zone switch with OFF", async () => {
+      const { hap, accessory, commands } = await mount({ zone1State: "ON" }, { forceArm: true });
+      const zone = accessory.getServiceById(hap.Service.Switch, "zone_1");
+
+      await zone?.getCharacteristic(hap.Characteristic.On).handleSet(false);
+
+      expect(commands).toEqual([
+        { name: "zoneCmd", body: { value: "OFF", pwd: "123456", zones: [1] } },
+      ]);
+    });
+
+    it("arms a CTX60 with FORCED_ON, which only has partCmd", async () => {
+      // A CTX60 offers no alarmCmd at all; probing that alone ignored forceArm
+      // on every one of them.
+      const { hap, target, commands } = await mount({}, { forceArm: true, legacy: true }, [
+        command("partCmd", ["OFF", "ON", "FORCED_ON"]),
+      ]);
+
+      await target.handleSet(hap.Characteristic.SecuritySystemTargetState.AWAY_ARM);
+
+      expect(commands.map(({ body }) => (body as { value: string }).value)).toEqual([
+        "FORCED_ON",
+        "FORCED_ON",
+        "FORCED_ON",
+        "FORCED_ON",
+      ]);
+    });
+
+    it("warns once, not on every arm, when FORCED_ON is not advertised", async () => {
+      const { hap, target, messages } = await mount({}, { forceArm: true }, [
+        alarmCmd(["ON", "OFF"]),
+      ]);
+      const { AWAY_ARM } = hap.Characteristic.SecuritySystemTargetState;
+
+      await target.handleSet(AWAY_ARM);
+      await target.handleSet(AWAY_ARM);
+      await target.handleSet(AWAY_ARM);
+
+      expect(messages.filter((message) => /does not accept FORCED_ON/.test(message))).toHaveLength(
+        1,
+      );
     });
 
     it("arms with ON when not asked", async () => {

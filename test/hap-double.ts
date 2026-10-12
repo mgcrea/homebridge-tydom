@@ -133,8 +133,10 @@ export class FakeCharacteristic {
     if (!this.#set) {
       throw new Error(`Characteristic ${this.name} has no onSet handler`);
     }
-    this.value = value;
     await this.#set(value);
+    // HAP stores the written value only once the handler has resolved, so an
+    // update made from inside the handler is overwritten by it.
+    this.value = value;
   }
 }
 
@@ -210,6 +212,13 @@ export class FakeAccessory {
     const service = new FakeService(name, hapClass.name, subtype);
     this.services.push(service);
     return service;
+  }
+
+  removeService(service: FakeService): void {
+    const index = this.services.indexOf(service);
+    if (index !== -1) {
+      this.services.splice(index, 1);
+    }
   }
 
   on(event: string, handler: (...args: unknown[]) => void): this {

@@ -33,15 +33,21 @@ export const meta = (name: string, enumValues?: string[]): TydomMetaElement => (
   ...(enumValues ? { enum_values: enumValues } : {}),
 });
 
-/** An `alarmCmd` advertising exactly the values given. */
-export const alarmCmd = (values: string[]): TydomCommand => ({
-  name: "alarmCmd",
+/**
+ * A command advertising exactly the values given, or a `value` parameter with
+ * no enum at all when none are.
+ */
+export const command = (name: string, values?: string[]): TydomCommand => ({
+  name,
   permission: "w",
   parameters: [
     { name: "pwd", type: "hexstring", size: 6 },
-    { name: "value", type: "string", enum_values: values },
+    { name: "value", type: "string", ...(values ? { enum_values: values } : {}) },
   ],
 });
+
+/** An `alarmCmd` advertising exactly the values given. */
+export const alarmCmd = (values: string[]): TydomCommand => command("alarmCmd", values);
 
 export const createAccessoryHarness = (options: HarnessOptions = {}) => {
   const hap = options.existing?.hap ?? createHapStatics();

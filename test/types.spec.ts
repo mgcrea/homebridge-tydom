@@ -8,7 +8,7 @@ import {
   tydomGroupsResponseSchema,
   tydomCommandMetaResponseSchema,
   tydomMetaResponseSchema,
-  findCommandValues,
+  acceptsCommandValue,
 } from "../src/api/types.js";
 
 describe("discovery schemas", () => {
@@ -192,20 +192,29 @@ describe("/devices/cmeta", () => {
     expect(parsed[0]?.endpoints[0]?.cmetadata).toEqual([]);
   });
 
-  describe("findCommandValues", () => {
+  describe("acceptsCommandValue", () => {
     const commands = alarmCmeta[0]!.endpoints[0]!.cmetadata;
 
-    it("returns the values a command parameter accepts", () => {
-      expect(findCommandValues(commands, "alarmCmd", "value")).toContain("PANIC");
-      expect(findCommandValues(commands, "alarmCmd", "value")).toContain("FORCED_ON");
+    it("accepts a value the parameter advertises", () => {
+      expect(acceptsCommandValue(commands, "alarmCmd", "value", "PANIC")).toBe(true);
+      expect(acceptsCommandValue(commands, "alarmCmd", "value", "FORCED_ON")).toBe(true);
     });
 
-    it("returns undefined for a command the endpoint does not advertise", () => {
-      expect(findCommandValues(commands, "partCmd", "value")).toBeUndefined();
+    it("refuses a value the parameter does not advertise", () => {
+      expect(acceptsCommandValue(commands, "alarmCmd", "value", "SELF_DESTRUCT")).toBe(false);
     });
 
-    it("returns undefined for a parameter that carries no enum", () => {
-      expect(findCommandValues(commands, "alarmCmd", "pwd")).toBeUndefined();
+    it("refuses a command the endpoint does not advertise", () => {
+      expect(acceptsCommandValue(commands, "partCmd", "value", "ON")).toBe(false);
+    });
+
+    it("refuses a parameter the command does not have", () => {
+      expect(acceptsCommandValue(commands, "alarmCmd", "zones", "1")).toBe(false);
+    });
+
+    it("accepts anything for a parameter that carries no enum", () => {
+      // Offered with no constraint is not the same answer as not offered.
+      expect(acceptsCommandValue(commands, "alarmCmd", "pwd", "123456")).toBe(true);
     });
   });
 });
