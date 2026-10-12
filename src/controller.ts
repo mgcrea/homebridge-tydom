@@ -340,6 +340,7 @@ export default class TydomController extends EventEmitter {
         category: category as Categories,
         deviceType: device.deviceType,
         metadata: device.metadata,
+        commands: device.commands,
         settings: device.settings,
         group: device.group,
         deviceId,

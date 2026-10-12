@@ -2,6 +2,7 @@ import type { Logging } from "homebridge";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import TydomController from "../src/controller.js";
 import type { TydomPlatformConfig } from "../src/platform.js";
+import type { TydomAccessoryContext } from "../src/typings/tydom.js";
 
 /**
  * Stand a controller up without a socket.
@@ -183,6 +184,74 @@ describe("TydomController", () => {
       controller.dispose();
       controller.dispose();
       expect(calls.filter((call) => call === "close")).toHaveLength(2);
+    });
+  });
+
+  describe("scan", () => {
+    /** One alarm panel, as the four discovery endpoints describe it. */
+    const responses: Record<string, unknown> = {
+      "/configs/file": {
+        endpoints: [
+          {
+            id_device: 7,
+            id_endpoint: 7,
+            name: "Alarme",
+            first_usage: "alarm",
+            last_usage: "alarm",
+            picto: "p",
+          },
+        ],
+        groups: [],
+      },
+      "/groups/file": { groups: [] },
+      "/devices/meta": [
+        {
+          id: 7,
+          endpoints: [
+            {
+              id: 7,
+              error: 0,
+              metadata: [{ name: "alarmMode", permission: "r", type: "string" }],
+            },
+          ],
+        },
+      ],
+      "/devices/cmeta": [
+        {
+          id: 7,
+          endpoints: [
+            {
+              id: 7,
+              error: 0,
+              cmetadata: [
+                {
+                  name: "alarmCmd",
+                  permission: "w",
+                  parameters: [{ name: "value", type: "string", enum_values: ["ON", "PANIC"] }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    it("hands each device's commands to its accessory", async () => {
+      // Discovery found them all along; it was the context the controller
+      // built that left them out, so in production no panel ever offered PANIC
+      // or FORCED_ON, while every accessory test, which sets the context
+      // directly, passed.
+      const { controller } = createController();
+      (controller.client as unknown as Record<string, unknown>)["get"] = async (uri: string) =>
+        responses[uri];
+      const contexts: TydomAccessoryContext[] = [];
+      controller.on("device", (context: TydomAccessoryContext) => contexts.push(context));
+
+      await controller.scan();
+      controller.dispose();
+
+      const panel = contexts.find((context) => context.deviceType === "alarm");
+      expect(panel?.commands?.map(({ name }) => name)).toEqual(["alarmCmd"]);
     });
   });
 });
