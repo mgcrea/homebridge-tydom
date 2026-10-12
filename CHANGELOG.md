@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.34.1](https://github.com/mgcrea/homebridge-tydom/compare/v0.34.0...v0.34.1) (2026-10-12)
+
+No accessory is re-registered by this release: rooms, names and automations are preserved. Both features 0.34.0 announced were inert in it, and this is the release in which they actually work.
+
+### Bug Fixes
+
+- **security-system:** `panicSwitch` and `forceArm` now reach the panel. Discovery read what each endpoint accepts from `/devices/cmeta`, but that never made it into the accessory, so every panel read as offering neither `PANIC` nor `FORCED_ON`: no siren switch was published, `forceArm` armed with a plain `ON`, and the log said the hardware was too old for either.
+- **security-system:** the panic switch springs back off. It reset itself at a moment HomeKit overwrites, so it would have stayed on after every press, as if the siren were still sounding. It also springs back when no PIN is configured, rather than latching on having sent nothing.
+- **security-system:** a panic switch is removed again once `panicSwitch` is turned off, or once the panel stops advertising `PANIC`, instead of staying in the Home app as a switch that toggles and sounds nothing.
+- **security-system:** `forceArm` is checked against the command actually sent. Home and Night arm through `zoneCmd` and a CTX60 arms through `partCmd`, which it is the only one to offer, so a CTX60 had `forceArm` ignored outright. The zone switches honour it too, and a panel that refuses `FORCED_ON` says so once instead of on every arm.
+
 ## [0.34.0](https://github.com/mgcrea/homebridge-tydom/compare/v0.33.0...v0.34.0) (2026-10-12)
 
 No accessory is re-registered by this release: rooms, names and automations are preserved. Both additions are opt-in per device and only appear on hardware that advertises them, so nothing changes until you ask.
